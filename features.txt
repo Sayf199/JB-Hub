@@ -109,10 +109,20 @@
 --------------------------------------------------------------
   COSMETICS  [H]
 --------------------------------------------------------------
-  Color, Texture, Horn, Rim, Spoiler, Tire Style, Tire Sticker
+  Color .................... Exclusive body, wheel and spoiler colors
+                             (HyperShift, Hyper Lvl 5, Vantablack...)
+  Texture .................. Exclusive body textures
+  Horn ..................... Exclusive horn sounds
+  Rim ...................... Exclusive rims
+  Spoiler .................. Exclusive spoilers 
+  Tire Style ............... Exclusive tire models
+  Tire Sticker ............. Exclusive tire stickers
+  Plate .................... Puts "JB HUB" on your license plate
   Apply Selected ........... Applies your selection once
   Apply Cosmetics Bind ..... Applies your selection on a key
   Loop Cosmetics ........... Re-applies it every time you get in
+
+ !!! ServerSide Cosmetics 
 
 
 --------------------------------------------------------------
