@@ -1,1 +1,130 @@
+==============================================================
+                     JB HUB  -  FEATURES
+                  Jailbreak script for Matcha
+                       made by uhq7k
+==============================================================
 
+  [H] = requires Matcha Hybrid Mode
+
+
+--------------------------------------------------------------
+  MISC
+--------------------------------------------------------------
+  No Fall Damage ........... Take no damage from falls (2 methods)
+  No Laser Damage .......... Lasers in robberies no longer hurt you
+  No Turret Damage ......... Disables Military, Oil Rig, Cargo Ship
+                             and Home turrets
+  Disable Forcefields ...... Walk through the Military Base dome and
+                             ignore the Mansion CEO aura blast
+  Anti Taser Ragdoll ....... Get back up instantly when tased
+  Unlock Weapons Slots ..... Switch weapons while holding a bag
+  Infinity Jetpack ......... Unlimited jetpack fuel
+  Auto-Solve Puzzle ........ Solves the Power Plant puzzle on a key
+  Show Puzzle Path ......... Draws the solution path on screen
+  Force Reset .............. Instantly respawns your character
+
+
+--------------------------------------------------------------
+  ESP
+--------------------------------------------------------------
+  Airdrop ESP .............. Shows airdrops with their color
+  Keycard ESP .............. Shows keycards on the map
+  Crimekey ESP ............. Shows crime keys on the map
+  Cash Dropped ESP ......... Shows dropped cash and its amount
+  Bounty ESP ............... Shows players with a bounty
+                             (custom color and minimum bounty)
+
+
+--------------------------------------------------------------
+  CASINO  /  TOMB
+--------------------------------------------------------------
+  Get Casino Code [H] ...... Reads the vault code
+  Open Casino Door [H] ..... Opens the casino door
+  Auto Glass [H] ........... Breaks the glass automatically
+  Auto Vault [H] ........... Opens the vault automatically
+  Auto Collect Loot [H] .... Collects the loot automatically
+
+  No Spike Damage .......... Tomb spikes no longer hurt you
+  No Dart Damage ........... Tomb darts no longer hurt you
+  Safe Bridge .............. The Tomb bridge no longer collapses
+  No Cart Barrier Damage ... Cart barriers no longer hurt you
+
+
+--------------------------------------------------------------
+  MODIFIERS
+--------------------------------------------------------------
+  Sword No Cooldown ........ Swing the sword without delay
+  Sword Always Lunge ....... Every swing is a lunge
+  Punch No Cooldown ........ Punch without delay
+  Instant Interaction ...... Doors, buttons and more open instantly
+  Instant Plasma Pistol .... Empties the whole magazine at once
+  Rocket Instant Lock ...... Rocket Launcher locks on instantly
+  No Recoil ................ Removes weapon recoil
+  No Spread ................ Removes bullet spread
+  Auto Shoot ............... Makes every weapon fully automatic
+
+
+--------------------------------------------------------------
+  WEAPONS
+--------------------------------------------------------------
+  Nerf Skins ............... Pistol and Revolver use Nerf models
+  Skin Changer ............. Apply any weapon skin (client-side)
+  Hit Sound ................ Custom sound when you hit a player
+
+
+--------------------------------------------------------------
+  KILLAURA
+--------------------------------------------------------------
+  PlasmaPistol Killaura [H]  Auto-shoots nearby targets
+                             (selectable target team)
+
+
+--------------------------------------------------------------
+  NPC
+--------------------------------------------------------------
+  Kill All NPCs ............ Kills nearby guards and NPCs
+  Make Guards Disabled ..... Guards stop attacking you
+  Make Guards Attack CEO ... Guards fight the Mansion boss
+  Range .................... Distance used by the NPC features
+
+
+--------------------------------------------------------------
+  VEHICLE
+--------------------------------------------------------------
+  Vehicle Fly .............. Fly with any vehicle (adjustable speed)
+  Engine Boost ............. Increases vehicle speed
+  Instant Brake ............ Stops your vehicle instantly
+  Anti Tires Pop ........... Spikes can no longer pop your tires
+  Anti Flip ................ Keeps your vehicle upright
+  Infinity Nitro ........... Unlimited nitro
+
+
+--------------------------------------------------------------
+  POLICE
+--------------------------------------------------------------
+  Instant Auto Cuff ........ Arrests nearby criminals instantly
+  Auto Taser ............... Tases criminals in range automatically
+
+
+--------------------------------------------------------------
+  COSMETICS  [H]
+--------------------------------------------------------------
+  Color, Texture, Horn, Rim, Spoiler, Tire Style, Tire Sticker
+  Apply Selected ........... Applies your selection once
+  Apply Cosmetics Bind ..... Applies your selection on a key
+  Loop Cosmetics ........... Re-applies it every time you get in
+
+
+--------------------------------------------------------------
+  WORLD
+--------------------------------------------------------------
+  Sky Color ................ Changes the sky color
+  Water Customizer ......... Changes water color and sea state
+
+
+--------------------------------------------------------------
+  CONFIG
+--------------------------------------------------------------
+  Save / Load .............. Save and load your settings by name
+
+==============================================================
