@@ -84,7 +84,6 @@
 --------------------------------------------------------------
   Hitbox Expander .......... Giant visible hitboxes on every guard,
                              Mansion boss included
-  Target ................... NPC's or Mansion Boss or Both
   Hitbox X / Y / Z ......... Size of the hitbox on each axis
 
 
