@@ -43,6 +43,7 @@
   Auto Glass [H] ........... Breaks the glass automatically
   Auto Vault [H] ........... Opens the vault automatically
   Auto Collect Loot [H] .... Collects the loot automatically
+  Auto Computers [H] ....... Completes the casino computers automatically
 
   No Spike Damage .......... Tomb spikes no longer hurt you
   No Dart Damage ........... Tomb darts no longer hurt you
