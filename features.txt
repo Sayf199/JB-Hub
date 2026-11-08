@@ -69,8 +69,13 @@
   WEAPONS
 --------------------------------------------------------------
   Nerf Skins ............... Pistol and Revolver use Nerf models
-  Skin Changer ............. Apply any weapon skin (client-side)
+  Skin Changer ............. Apply any weapon skin (client-side,
+                             Sniper included)
   Hit Sound ................ Custom sound when you hit a player
+  Hit Markers .............. Server-confirmed hit markers
+                             (Cross / Rust) with damage popups
+  Kill Message ............. Minecraft-style kill message with
+                             Double / Triple Kill
 
 
 --------------------------------------------------------------
@@ -95,6 +100,14 @@
   Make Guards Disabled ..... Guards stop attacking you
   Make Guards Attack CEO ... Guards fight the Mansion boss
   Range .................... Distance used by the NPC features
+
+
+--------------------------------------------------------------
+  HUD
+--------------------------------------------------------------
+  Robbery State ............ Live status of every robbery, players
+                             inside with avatar and bounty, and a
+                             notification when a robbery opens
 
 
 --------------------------------------------------------------
@@ -139,6 +152,10 @@
 --------------------------------------------------------------
   Sky Color ................ Changes the sky color
   Water Customizer ......... Changes water color and sea state
+  Time Changer ............. Pick a preset or set any hour
+                             (Sky Mood included)
+  Fast Cycle ............... Speeds up the day/night cycle
+  Matrix Mode .............. Turns the whole map into the Matrix
 
 
 --------------------------------------------------------------
