@@ -1,1 +1,168 @@
-local Y={"P*JVQP2*8<tA>","PF>";"PbKd1u,9>.]pIpn[k\"Kofk*R=mEi","PRF941b;:k7,U>r*k>gY<\'IKPp\'3i/lEi","P3Um8=k>;m0h\"j;&MFg","PG?ZWO2dDC";"PDOh]PtbjUV";"Pb/G)LtbjUV","PkrTPs\'Q","P@iC6NgCYp`b;:COGof2]";"Pb;:k7\'q";"Pp-;f;tGLPn\'Q";"P\'c9uqgKU53k\"$","PG?elK\'Q","Pkr7o3b,cm";"P1tR\\(";"PgMM?q2\'","Pg/=.","P=E8bq";"Pbo\'1Ek.nW^P+<";"PbKd1u,9>.]GBEH";"Pp8d<TgM?","P25.S@,#$Y(P!@6M,Z6OtgCN:TkB_EF\'kO-61k+Bbk>gu\'kDXr";"P@iCkcb;:k7\'q","P(`CB";"PbKd1u,9>.]pIpn[k\"KoqgCs\"._6";"Pp`,B<tG2","Pp-!MQk>t","P,<T1GgC)","PpIpn[k\"Kofk*R&AEkEYP@iCkc,s;2@k>t";"PGuPg+,gJIH","P\'c9uqgK#","Pg%f`";"P@iCkcb;:k7,aE,f,<m","PpI4\'uk.&>Qtb>\"qt_";"Pb/Z^+";"Pi5E\'jPK`O0h`ga","P=WI0+t0K>","PbKd1u,9>.]pIpn[k\"KoqgK(l*tb*L+k3";"Pi^moN","PpIp]I\'Q","P*J^\\M1m\'4^k\\2";"PRp","PpID<9k*R6M,=18@tG?Yf@nNN$,Z6CDk>gY<\'Q";"P2JBsatO-","P3UtY=\'6Q\'6(aB6B_j7&L";"P=hg7d@\"O","PtG\'7Qk.<0?!3Pc\'H\'<>8","P,T-5\\gS","Ptqhpet=b";"PinO[^2df;Mkh","P(SN:JA>","PDQ\\*]","PbKd1u,9>.]b%YS0gCn#O,gJQ<_+.c","P@rC*!k3","PGuU56k>g+";"P=E834k>t";"PDQ\\*]\'q","PtqhD)k\"KoqgC)","PFi","P25[6$\'6J6<,Uu;qtG,mck3";"PgK3","PEVEcCM$TIUEV(Im3:6XCEr","PpVeZXPo+>\\@nNN$,Z6%$g/YaEER`ZDk>gY<\'I/GekDXi";"PDQ\\*]b/Z^+";"P,<!e","P(R%%MA>","PRd","P@nNN$,ZW"}local function V(V)return Y[V-64561]end for V,I in ipairs({{1;69};{1;46},{47;69}})do while I[1]<I[2]do Y[I[1]],Y[I[2]],I[1],I[2]=Y[I[2]],Y[I[1]],I[1]+1,I[2]-1 end end do local V=string.sub local I=Y local g={F=39,u=16;K=5;j=23,S=38;p=25;["3"]=19,o=18,d=20;["4"]=53,C=62,E=26,v=49,H=44,R=36;["7"]=42;t=46;U=4;l=40;A=10;["9"]=21;I=12,P=41;O=51,b=7,["8"]=58;s=52,k=1;L=9,h=30;n=57,["/"]=59;q=35;N=32,["1"]=15,a=28;["0"]=50;J=63,["5"]=11;B=48;M=54;["2"]=17;["6"]=0,["+"]=2;Y=43,X=45,f=22,Z=34;r=31;Q=47,w=37;c=27;T=14,y=24;z=29,x=13;m=56;i=33,g=8,V=55,W=6,G=60;D=61;e=3}local e=string.char local k={["\\"]=18;["("]=12;L=46,["%"]=40;T=8,["."]=50;[";"]=42,["+"]=71;["`"]=1;P=34;["@"]=23;["&"]=84;b=26;["*"]=15;["3"]=11;j=43,t=31,Y=82;Q=54,X=60;["-"]=56;q=81,D=22,S=30,l=59,H=17,["8"]=52,G=25,[":"]=3;O=80;["6"]=66,f=77;["0"]=53;["["]=58,I=57,["="]=27;["$"]=74,a=0;["?"]=45;["4"]=76;["5"]=48,Z=61,E=10;e=79;B=44,i=24;[")"]=5,N=55,["7"]=62,[","]=37;u=72;J=20;["\'"]=36;["!"]=16,["\""]=49,["1"]=38,["/"]=68,A=19,K=69;d=75,h=39,c=64;p=21;["^"]=47;R=29,g=35,["<"]=9;M=13,r=78;W=65;["]"]=67,["2"]=33;n=73,[">"]=51,o=70;_=14,s=7;F=28,k=32;["#"]=2;m=4;U=6;C=41;V=83;["9"]=63}local P=string.len local t=table.concat local U=type local O=table.insert local q=math.floor for Y=1,#I,1 do local d=I[Y]if U(d)=="string"then local U=V(d,1,1)if U=="y"then d=V(d,2)local k=P(d)local U={}local a=1 local Q=0 local F=0 while a<=k do local Y=V(d,a,a)local I=g[Y]if I then Q=Q+I*(64^((3-F)))F=F+1 if F==4 then F=0 local Y=q(Q/65536)local V=q((Q%65536)/256)local I=Q%256 O(U,e(Y,V,I))Q=0 end elseif Y=="="then O(U,e(q(Q/65536)))if a>=k or V(d,a+1,a+1)~="="then O(U,e(q((Q%65536)/256)))end break end a=a+1 end I[Y]=t(U)elseif U=="P"then d=V(d,2)local g=P(d)local U={}local a=1 while a<=g do local Y=(g-a)+1 local I=Y>=5 and 5 or Y local P=0 local t=I>1 for Y=0,4,1 do local g if Y<I then local I=V(d,a+Y,a+Y)g=k[I]if not g then t=false break end else g=84 end P=P*85+g end if t then local Y=q(P/16777216)%256 local V=q(P/65536)%256 local g=q(P/256)%256 local k=P%256 if I==5 then O(U,e(Y,V,g,k))elseif I==4 then O(U,e(Y,V,g))elseif I==3 then O(U,e(Y,V))elseif I==2 then O(U,e(Y))end end a=a+I end I[Y]=t(U)end end end end return(function(...)local Y=game:GetService(V(64594))local I=Y[V(64575)]local g=V(64630)local e=30 local k=V(64599)local P=V(64607)local t=Color3[V(64622)](125,150,255)local U={[V(64621)]=Color3[V(64622)](255,200,60);[V(64595)]=Color3[V(64622)](90,220,140)}local O=Drawing[V(64596)][V(64627)]local q=15 local d=Vector3[V(64571)](0,-4.5,0)local a=300 local Q=V(64625)local F=V(64628)local A={}local K={}local w={}local function N()pcall(function()math[V(64620)](math[V(64616)](tick()*1000)%2147483647)end)local Y=V(64586)local I={}for g=1,24,1 do local e=math[V(64570)](1,#Y)I[g]=string[V(64604)](Y,e,e)end return table[V(64588)](I)end local n=N()local function h()local Y=g..(V(64608)..(n..(V(64605)..(tostring(game[V(64593)])..(V(64590)..tostring(I[V(64585)]))))))local e,k=pcall(httpget,Y)if not e or type(k)~=V(64567)then return false end print(V(64611)..k)local t=string[V(64624)](k,V(64584))if not t then return false end local U={}for Y in string[V(64583)](t,V(64563))do U[tonumber(Y)]=P end local O=string[V(64624)](k,V(64612))if O then for Y,V in string[V(64583)](O,V(64601))do if U[tonumber(Y)]then U[tonumber(Y)]=V end end end if not U[I[V(64585)]]then return false end A=U return true end local function c()pcall(httpget,g..(V(64580)..n))A={}end local function x()for Y,V in pairs(K)do V:Remove()K[Y]=nil w[Y]=nil end end local function B(Y,I)local g=K[Y]if not g then g=Drawing[V(64571)](V(64626))g[V(64566)]=true g[V(64613)]=true g[V(64576)]=false pcall(function()g[V(64591)]=O end)pcall(function()g[V(64603)]=q end)pcall(function()g[V(64574)]=q end)K[Y]=g end if w[Y]~=I then g[V(64626)]=V(64581)..(I..V(64606))g[V(64579)]=U[I]or t w[Y]=I end return g end UI[V(64565)](V(64572),function(Y)local I=Y:Section(V(64618),V(64578))I:Toggle(k,V(64602),false)I:Text(F)end)task[V(64587)](function()local Y=0 while true do local g=UI[V(64614)](k)==true if Q==V(64625)and g then Q=V(64597)F=V(64564)UI[V(64615)](k,false)if h()then Q=V(64600)Y=tick()F=V(64610)..tostring(A[I[V(64585)]])UI[V(64615)](k,true)notify(V(64568),V(64562),3)else Q=V(64625)F=V(64577)notify(V(64582),V(64562),4)end elseif Q==V(64600)and not g then Q=V(64625)F=V(64628)c()elseif Q==V(64600)and tick()-Y>=e then if not h()then F=V(64592)else F=V(64610)..tostring(A[I[V(64585)]])end Y=tick()end task[V(64623)](.2)end end)task[V(64587)](function()while true do if Q==V(64600)then local I={}local g=workspace[V(64573)]local e=g and g[V(64629)][V(64569)]for Y,g in ipairs(Y:GetPlayers())do local k=g[V(64585)]local P=A[k]local t=P and g[V(64619)]local U=t and t:FindFirstChild(V(64617))if U and e then local Y=B(k,P)I[k]=true local g=U[V(64569)]+d local t,O=WorldToScreen(g)if O and((g-e))[V(64589)]<=a then Y[V(64569)]=Vector2[V(64571)](t[V(64598)],t[V(64609)])Y[V(64576)]=true else Y[V(64576)]=false end end end for Y,g in pairs(K)do if not I[Y]then g:Remove()K[Y]=nil w[Y]=nil end end task[V(64623)]()else x()task[V(64623)](.2)end end end)end)(...)
+local Players = game:GetService("Players")
+local lp = Players.LocalPlayer
+
+local BASE_URL = "https://jb-hub-online.uhq7k.workers.dev"
+local PING_INTERVAL = 5
+local TOGGLE_ID = "hub_roles_enabled"
+local DEFAULT_LABEL = "JB Hub"
+local DEFAULT_COLOR = Color3.fromRGB(125, 150, 255)
+local ROLE_COLORS = { Owner = Color3.fromRGB(255, 200, 60), Tester = Color3.fromRGB(90, 220, 140) }
+local TAG_FONT = Drawing.Fonts.SystemBold
+local TAG_SIZE = 15
+local TAG_OFFSET = Vector3.new(0, -4.5, 0)
+local MAX_DISTANCE = 300
+
+local state = "off"
+local statusText = "Status: Off"
+local hubUsers = {}
+local tags = {}
+local tagLabels = {}
+
+local function makeClientId()
+    pcall(function() math.randomseed(math.floor(tick() * 1000) % 2147483647) end)
+    local chars = "abcdef0123456789"
+    local out = {}
+    for i = 1, 24 do
+        local n = math.random(1, #chars)
+        out[i] = string.sub(chars, n, n)
+    end
+    return table.concat(out)
+end
+
+local clientId = makeClientId()
+
+local function pingPresence()
+    local url = BASE_URL .. "/ping?id=" .. clientId .. "&job=" .. tostring(game.JobId) .. "&uid=" .. tostring(lp.UserId)
+    local ok, body = pcall(httpget, url)
+    if not ok or type(body) ~= "string" then return false end
+    local list = string.match(body, '"users":%[(.-)%]')
+    if not list then return false end
+    local fresh = {}
+    for uid in string.gmatch(list, "%d+") do
+        fresh[tonumber(uid)] = DEFAULT_LABEL
+    end
+    local roleList = string.match(body, '"roles":{(.-)}')
+    if roleList then
+        for uid, role in string.gmatch(roleList, '"(%d+)":"([^"]+)"') do
+            if fresh[tonumber(uid)] then
+                fresh[tonumber(uid)] = role
+            end
+        end
+    end
+    if not fresh[lp.UserId] then return false end
+    hubUsers = fresh
+    return true
+end
+
+local function leavePresence()
+    pcall(httpget, BASE_URL .. "/leave?id=" .. clientId)
+    hubUsers = {}
+end
+
+local function clearTags()
+    for userId, tag in pairs(tags) do
+        tag:Remove()
+        tags[userId] = nil
+        tagLabels[userId] = nil
+    end
+end
+
+local function getTag(userId, label)
+    local tag = tags[userId]
+    if not tag then
+        tag = Drawing.new("Text")
+        tag.Center = true
+        tag.Outline = true
+        tag.Visible = false
+        pcall(function() tag.Font = TAG_FONT end)
+        pcall(function() tag.FontSize = TAG_SIZE end)
+        pcall(function() tag.Size = TAG_SIZE end)
+        tags[userId] = tag
+    end
+    if tagLabels[userId] ~= label then
+        tag.Text = "[" .. label .. "]"
+        tag.Color = ROLE_COLORS[label] or DEFAULT_COLOR
+        tagLabels[userId] = label
+    end
+    return tag
+end
+
+UI.AddTab("Hub Roles Test", function(tab)
+    local sec = tab:Section("Roles", "Left")
+    sec:Toggle(TOGGLE_ID, "Display JB Hub Roles - Server Sided", false)
+    sec:Text(statusText)
+end)
+
+task.spawn(function()
+    local lastPing = 0
+    while true do
+        local wanted = UI.GetValue(TOGGLE_ID) == true
+        if state == "off" and wanted then
+            state = "connecting"
+            statusText = "Status: Connecting..."
+            UI.SetValue(TOGGLE_ID, false)
+            if pingPresence() then
+                state = "on"
+                lastPing = tick()
+                statusText = "Status: Connected as " .. tostring(hubUsers[lp.UserId])
+                UI.SetValue(TOGGLE_ID, true)
+                notify("Connected to JB Hub server", "Hub Roles", 3)
+            else
+                state = "off"
+                statusText = "Status: Connection failed"
+                notify("Could not reach JB Hub server", "Hub Roles", 4)
+            end
+        elseif state == "on" and not wanted then
+            state = "off"
+            statusText = "Status: Off"
+            leavePresence()
+        elseif state == "on" and tick() - lastPing >= PING_INTERVAL then
+            if not pingPresence() then
+                statusText = "Status: Reconnecting..."
+            else
+                statusText = "Status: Connected as " .. tostring(hubUsers[lp.UserId])
+            end
+            lastPing = tick()
+        end
+        task.wait(0.2)
+    end
+end)
+
+task.spawn(function()
+    while true do
+        if state == "on" then
+            local seen = {}
+            local camera = workspace.CurrentCamera
+            local camPos = camera and camera.CFrame.Position
+            for _, player in ipairs(Players:GetPlayers()) do
+                local userId = player.UserId
+                local label = hubUsers[userId]
+                local char = label and player.Character
+                local root = char and char:FindFirstChild("HumanoidRootPart")
+                if root and camPos then
+                    local tag = getTag(userId, label)
+                    seen[userId] = true
+                    local worldPos = root.Position + TAG_OFFSET
+                    local screenPos, onScreen = WorldToScreen(worldPos)
+                    if onScreen and (worldPos - camPos).Magnitude <= MAX_DISTANCE then
+                        tag.Position = Vector2.new(screenPos.X, screenPos.Y)
+                        tag.Visible = true
+                    else
+                        tag.Visible = false
+                    end
+                end
+            end
+            for userId, tag in pairs(tags) do
+                if not seen[userId] then
+                    tag:Remove()
+                    tags[userId] = nil
+                    tagLabels[userId] = nil
+                end
+            end
+            task.wait()
+        else
+            clearTags()
+            task.wait(0.2)
+        end
+    end
+end)
