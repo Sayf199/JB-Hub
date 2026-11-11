@@ -19,8 +19,8 @@
   Anti Taser Ragdoll ....... Get back up instantly when tased
   Unlock Weapons Slots ..... Switch weapons while holding a bag
   Infinity Jetpack ......... Unlimited jetpack fuel
-  Auto-Solve Puzzle ........ Solves the Power Plant puzzle on a key
-  Show Puzzle Path ......... Draws the solution path on screen
+  Force Reset Bind ......... Respawns your character on a key
+                             (R by default, hold mode, rebindable)
   Force Reset .............. Instantly respawns your character
 
 
@@ -36,7 +36,7 @@
 
 
 --------------------------------------------------------------
-  CASINO  /  TOMB
+  CASINO  /  TOMB  /  POWER PLANT
 --------------------------------------------------------------
   Get Casino Code [H] ...... Reads the vault code
   Open Casino Door [H] ..... Opens the casino door
@@ -49,6 +49,11 @@
   No Dart Damage ........... Tomb darts no longer hurt you
   Safe Bridge .............. The Tomb bridge no longer collapses
   No Cart Barrier Damage ... Cart barriers no longer hurt you
+
+  Auto-Solve Puzzle ........ Solves the Power Plant puzzle on a key
+  Show Puzzle Path ......... Draws the solution path on screen
+  No Barbed Wire Damage .... Barbed wire no longer hurts you
+  No Piston Damage ......... Pistons no longer hurt you
 
 
 --------------------------------------------------------------
@@ -97,8 +102,10 @@
   NPC
 --------------------------------------------------------------
   Kill All NPCs ............ Kills nearby guards and NPCs
-  Make Guards Disabled ..... Guards stop attacking you
-  Make Guards Attack CEO ... Guards fight the Mansion boss
+  Make Guards Disabled ..... Guards stop attacking you, even right
+                             after spawning or from long range
+  Make Guards Attack CEO ... Guards fight the Mansion boss, every
+                             wave, with the number you control
   Range .................... Distance used by the NPC features
 
 
@@ -152,8 +159,9 @@
 --------------------------------------------------------------
   Sky Color ................ Changes the sky color
   Water Customizer ......... Changes water color and sea state
-  Time Changer ............. Pick a preset or set any hour
-                             (Sky Mood included)
+  Time Changer ............. Pick a preset or set any hour, day
+                             or night: the moon, lighting and sky
+                             tint follow the time (Sky Mood included)
   Fast Cycle ............... Speeds up the day/night cycle
   Matrix Mode .............. Turns the whole map into the Matrix
 
