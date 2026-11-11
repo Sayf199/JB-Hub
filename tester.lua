@@ -10,7 +10,7 @@ local ROLE_COLORS = { Owner = Color3.fromRGB(255, 200, 60), Tester = Color3.from
 local TAG_FONT = Drawing.Fonts.SystemBold
 local TAG_SIZE = 15
 local TAG_OFFSET = Vector3.new(0, -4.5, 0)
-local MAX_DISTANCE = 300
+local MAX_DISTANCE = math.huge
 
 local state = "off"
 local statusText = "Status: Off"
