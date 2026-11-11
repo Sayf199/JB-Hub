@@ -1,3 +1,4 @@
+-- hello 
 local Players = game:GetService("Players")
 local lp = Players.LocalPlayer
 
@@ -8,15 +9,19 @@ local DEFAULT_LABEL = "JB Hub"
 local DEFAULT_COLOR = Color3.fromRGB(125, 150, 255)
 local ROLE_COLORS = { Owner = Color3.fromRGB(255, 200, 60), Tester = Color3.fromRGB(90, 220, 140) }
 local TAG_FONT = Drawing.Fonts.SystemBold
-local TAG_SIZE = 15
-local TAG_OFFSET = Vector3.new(0, -4.5, 0)
-local MAX_DISTANCE = math.huge
+local TAG_SIZE_NEAR = 15
+local TAG_SIZE_FAR = 9
+local TAG_NEAR = 30
+local TAG_FAR = 500
+local TAG_OFFSET = Vector3.new(0, -3, 0)
+local TAG_PADDING = 4
 
 local state = "off"
 local statusText = "Status: Off"
 local hubUsers = {}
 local tags = {}
 local tagLabels = {}
+local tagSizes = {}
 
 local function makeClientId()
     pcall(function() math.randomseed(math.floor(tick() * 1000) % 2147483647) end)
@@ -59,15 +64,26 @@ local function leavePresence()
     hubUsers = {}
 end
 
+local function removeTag(userId)
+    local tag = tags[userId]
+    if tag then tag:Remove() end
+    tags[userId] = nil
+    tagLabels[userId] = nil
+    tagSizes[userId] = nil
+end
+
 local function clearTags()
-    for userId, tag in pairs(tags) do
-        tag:Remove()
-        tags[userId] = nil
-        tagLabels[userId] = nil
+    for userId in pairs(tags) do
+        removeTag(userId)
     end
 end
 
-local function getTag(userId, label)
+local function sizeForDistance(distance)
+    local alpha = math.clamp((distance - TAG_NEAR) / (TAG_FAR - TAG_NEAR), 0, 1)
+    return math.floor(TAG_SIZE_NEAR + (TAG_SIZE_FAR - TAG_SIZE_NEAR) * alpha + 0.5)
+end
+
+local function getTag(userId, label, size)
     local tag = tags[userId]
     if not tag then
         tag = Drawing.new("Text")
@@ -75,14 +91,17 @@ local function getTag(userId, label)
         tag.Outline = true
         tag.Visible = false
         pcall(function() tag.Font = TAG_FONT end)
-        pcall(function() tag.FontSize = TAG_SIZE end)
-        pcall(function() tag.Size = TAG_SIZE end)
         tags[userId] = tag
     end
     if tagLabels[userId] ~= label then
         tag.Text = "[" .. label .. "]"
         tag.Color = ROLE_COLORS[label] or DEFAULT_COLOR
         tagLabels[userId] = label
+    end
+    if tagSizes[userId] ~= size then
+        pcall(function() tag.FontSize = size end)
+        pcall(function() tag.Size = size end)
+        tagSizes[userId] = size
     end
     return tag
 end
@@ -140,23 +159,22 @@ task.spawn(function()
                 local char = label and player.Character
                 local root = char and char:FindFirstChild("HumanoidRootPart")
                 if root and camPos then
-                    local tag = getTag(userId, label)
-                    seen[userId] = true
                     local worldPos = root.Position + TAG_OFFSET
+                    local distance = (worldPos - camPos).Magnitude
+                    local tag = getTag(userId, label, sizeForDistance(distance))
+                    seen[userId] = true
                     local screenPos, onScreen = WorldToScreen(worldPos)
-                    if onScreen and (worldPos - camPos).Magnitude <= MAX_DISTANCE then
-                        tag.Position = Vector2.new(screenPos.X, screenPos.Y)
+                    if onScreen then
+                        tag.Position = Vector2.new(screenPos.X, screenPos.Y + TAG_PADDING)
                         tag.Visible = true
                     else
                         tag.Visible = false
                     end
                 end
             end
-            for userId, tag in pairs(tags) do
+            for userId in pairs(tags) do
                 if not seen[userId] then
-                    tag:Remove()
-                    tags[userId] = nil
-                    tagLabels[userId] = nil
+                    removeTag(userId)
                 end
             end
             task.wait()
