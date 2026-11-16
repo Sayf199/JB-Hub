@@ -1,14 +1,11918 @@
---[[
+local JB_PLACE_ID = 606849621
+local JB_GAME_ID = 245662005
+local placeOk, placeId = pcall(function() return game.PlaceId end)
+local gameOk, gameId = pcall(function() return game.GameId end)
+if not ((placeOk and placeId == JB_PLACE_ID) or (gameOk and gameId == JB_GAME_ID)) then
+    local msg = "[JB Hub] Wrong game (PlaceId " .. tostring(placeId) .. ")"
+    if not pcall(warn, msg) then print(msg) end
+    pcall(function() notify("Wrong game, JB Hub not loaded", "[JB Hub]", 5) end)
+    return
+end
+_G.JB_gen = (_G.JB_gen or 0) + 1
+local myGen = _G.JB_gen
+local S = "_" .. tostring(math.floor(tick() * 1000))
+local function uid(base) return base .. S end
 
-     ██╗██████╗    ██╗  ██╗██╗   ██╗██████╗
-     ██║██╔══██╗   ██║  ██║██║   ██║██╔══██╗
-     ██║██████╔╝   ███████║██║   ██║██████╔╝
-██   ██║██╔══██╗   ██╔══██║██║   ██║██╔══██╗
-╚█████╔╝██████╔╝   ██║  ██║╚██████╔╝██████╔╝
- ╚════╝ ╚═════╝    ╚═╝  ╚═╝ ╚═════╝ ╚═════╝
+SPLASH = {
+    BASE = "https://raw.githubusercontent.com/Sayf199/JB-Hub/main/assets/",
+    FILES = { "logo.png", "glow_red.png", "glow_blue.png", "vignette.png", "bar.png" },
+    VERSION = "v2.5.1",
+    DOWNLOAD_TIMEOUT = 6,
+    MIN_TIME = 3,
+    STEP_TIME = 0.32,
+    TIMEOUT = 25,
+    ROWS = 4,
+    TAGS = {
+        ok = { "[  OK  ]", Color3.fromRGB(90, 220, 130) },
+        warn = { "[ WARN ]", Color3.fromRGB(255, 190, 70) },
+        fail = { "[ FAIL ]", Color3.fromRGB(255, 85, 85) },
+    },
+    objects = {},
+    queue = {},
+    log = {},
+    info = {},
+    target = 0,
+    shown = 0,
+    labelAt = 0,
+    finishing = false,
+    started = false,
+    done = false,
+}
 
- ─────────────  made by uhq7k  ─────────────
+function SPLASH.clear()
+    for _, d in ipairs(SPLASH.objects) do pcall(function() d:Remove() end) end
+    SPLASH.objects = {}
+    _G.JB_SPLASH = nil
+    SPLASH.done = true
+end
 
-]]
--- yooo
-local m={"7QKY[E-=t2SHG]It-:o","79)\'A*/@-I";"7o0tiV5(=7Xbs)B*-?hW*-f(I","7Hj`/gHCL8PJ7";"7\"9Jie7C514J<3";"7ltI*F";"7\"/dr8r?Z/","7sU@)[rN";"75Q;[","70(";"7!Mn;C\"5*F&Q60L","7/b6!U(cH78s9gB","7QKYk=-?_$ks!1D","7JP]","79f9>e5Z-C,\"(R_D0D";"7MFV$QsU$kA-f.[";"7s#gJXJPHAY^*";"7rbSqp","79_I58s/BN_s/B^";"7M-*$SQKYkN","7(.ELC5ZFV.\"(R_D0D";"7!Mn;C\"5*F&9qT5h/>D^E","79_4CKJ7";"75*[O\'!&r*H/S/%b\"5*Co9;","7s#g)_rU";"792sNeo$23I+6XsCQas";"7!86VTbHqdl@oX259.T@A";"7!:m$%HDr;t-f;t","7QAQqArN","7\"Nd1qrU","7lW<4J(f&Gu";"77%b4B7c)2&s/+;","77iMT?s9n4","7!^6s3";"7QAQ<@b(","7Hj`.l5]_n";"7(*^Rh-=VKnM>:7]","7QAC3K7*\"+t";"7o0tiV5(=7XbsI(_st+O\'HDEMV","7ltt/4ltt/4","77*2=","7-:DfSHDs","7\"t@OYsUB>VHDHj5-?P25H:e=cM>jL)";"7Q+QqEJLM4p";"7/B/][HD%";"7/b1_ArN";"7Qa.@@5n3lO\"5*Co9;","7925;E+6s[^(V","7M>:1usU\\(3","7s#Uc\'H@";"7-2%fW";"7\"!O&Z-XPtN-f(?0","7Qotu&Mr#5`MJo","71]b#!HLg3oiD","75D\'L\'rU";"7s/+6ksUk^J-A","79R&m07iZ#gJ88T/s!:&=s!DMOH@","7!XW$_JP47)","7/Y]UesUlI67*,O6H%DJg7r","7()!W";"7rljL[\"!qdf^*";"7!Xg?F^[MN?s:";"7Jh,LtM5";"70>CRK-f4;2";"75i+rM","7J_/gVpje?s","7MJHfF";"7!.dp$H10NObsJ4OJh2X2-+";"7o0tifbs1n:/le/^M-^@]b-$GQ-f%*?";"7(hH5I+6sMIQas","7(c8=fQotu&Mr3","79pM!:-f4;I-f?N\"7*sc","7QKYkN";"7/V*.j\"(uaI]WgK5\"1","7/@>\\EsU\\K1";"7/la","7rY1d2rO&*PMJf:Vs9LP";"7H\"?h>QkME@","7\"\"#u(/SUDU(.t_K!\\";"7phGYpph\'h1phGY1p.-GOph\'^[phGH[l(TrKl!)5jphGY1p.-GOlQ","7-8Ut";"7(Z=A?)l>XH","7!:m;\'HD66GMF>?;HDs","75TrdKJ_Kf7";"755_Lq";"7bHeF";"7/>DY`";"75D;rNrN";"7rljLkM`]i","7(Cbr<JqUZeJ?","7!8jU\'HDaP2","7QKYk=-?hc3s!?N";"7MVZ*/H%o","77Z-C8-fjU29)5uL","7p1:kMsdo";"77*5uQs!I1%r&FF#(iFH";"79LJpI7*\"+t","7s#g)_","7!Xg:D-fl","7^*","7Qm\"(fbsJ(FHfg*r","7\"!OnJJh\"B2b(","7MJHN#H@","70>CReQAQPFMr)f>-:^";"7sU@r6-8g+i","7\"j`_CQg_YA!X/7#Qas","7l6^;WHTt","7Q6&qK!MLU-\"\"1?","7o0tiV5(=7Xbs)B*-?h-OJ_uA3M/M\"t-fY","7QW>)^";"798KpG\"1","77C,_/@oq\'irU","7MWW,Bph3","77QsK4H]X!YMJ8g>";"7l!)5#l!)5#l!)A;lQ","7MS>_RMs4\'AHl";"7H\"(0F7ia","77QsK4H]q^fH%DS","7+KXY.s/*MVrU";"7(Pt.:bs.C`rY4]QQW#ILsaf6q";"75\"+J@sgV7trU";"7Q+%7*-fB\'5-fqbQ-fjU2b-lZib(","7H#0","7(*MC%J?";"7/IfZLQa:#6!Mn;C\"5*`","7/lmR\'p*Cc\"-=P$U";"7MS>_(","7/l\\\'*Jhi`I7*[Dp";"7sU@)k7c)O","7^soAb!8IZh","7Qm2dNsUk^J-A","7o0tiV5(=7XbsJ4YHTY*","7(Z[.Kbrh017c>gPp1=H+rl(87MSVoorbLZ";"7\"j`_CQ_";"7/4&^n!X/4O0IZuV!+","7HTOBgM>f(S7V","7!O@[\'/SULh92X`";"7Q0MYXrU","7rY1;\\s/]\\","7]gT6J/IO","7s9L8OMFV9","7!8#VYbs7.L-=Snm";"7H5Bb>J.hD&s!DC";"7M-]D4Q,/1KH@","7phGYpph\'h1phGY1p.-GOph\'^[phGH[l!>Dml!)5jphGH[p.-GOpO","7!&_\\n+6%X&!\\","7Qm\"(fbsJ4FJh\"S\\bH+?*M/-W.21","7HTOBT(c8:a";"71]Zd2^[r3ZHd7","7sNB)bMs(\'as/h","7rBQ=CJhQMnM->","7r&P([MVWj\"7c1\"K1p]sJ)OXr<R`,m7";"77QsK4H]qp,-f87?MS[","7rYpA_^gCL";"7rl5g>-2B>nJ_un;r&\'";"7!Y(tt9X,fZ\"5g";"70>*paJqNlN-fZ";"7rYpY";"75D;BG-=0d/bHBd8rbSQ*";"7phGYpph\'h1phGY1l!>Dml!)5jphGH[l!>Dml!)5jphGH[p.-GOlQ";"7\"Nd1q!8IZh","70D";"7!8(7A0>CRe","7MJ7Q[rA8TlM>;LjH%c";"79_4CKJL7","7M-]D49_Il.HD%","7M>jUd";"7QkZ>Ls!=c?s/AG","7(Pt#Zsp";"7s!?IjH@","7/VQiD+N1O3()/RO\"\"<1-!YB";"70>BRIrFA,3HCS!hH@";"7o(WPXH1_Poot]";"7l(TrKl!)A[phGH[phGYmph\'h1l!>D[p.-\\mph\'^[phGY1l(TrKlQ","7o0tiV5(=7Xbs9uh-:<2@\"53k";"7\"NLr&","7QKY[E-=#e5-fqb/-qq1fH)GP(HDD;VJ_07brN","7-140","7!XgA`s9D";"77*QXE-XF";"7MFal\"","7iSkT%HD%","7MSs";"7rlDClsto","7Bm>)DMul_CltI*FbrEKXH(p*sbrh0ib0pNjHf\\X-Bk=eDHl";"7-fD7krN","7/lm]*","7HjVJ1Qe#07-+","7rY1Sb^[J","7!:,;;";"77C,_/7CG+5";"7o0tiV5(=7Xbs)B*-`iTbJP4Hi9P[V)Jhd","7Q\\3dYrbLCXs/QV","79L1*`bra92brRX<@oX25HTO9lM5","7H5l*","7l(TrKl!)5jphGY1l(TrKph\'h1phGH[phGYpl!)5jphGH[p.-GOpO","755dp.!f+8UHl","7M-*$SQ+QqL7ia","7(PU(M7C[.RQW#I&";"7\"t@OY7*];[brh017c>gPbraLrs9nJT^[$:>";"7QKY[<";"7QA3r_HG\\DNs!D%Usp","7ltIUY";"7J<tqms/l3XMVa","7QW4ts7iK--J_u%us/l*";"7!Xg_P7*,OB5(TAY7cpo\'-84W0180^;p1@FkboYa*R>Dc22d:ONbD";"77QsK4H]B\\CH@";"75(jpOrIMGYHZs5FR$","7-22X$HDs";"7b-]hSrY4]Q-X3QgbsH%Tp1=H!JF3]b-::j!J_uATbJ?60-ffA>rAf0!s/*MVrU";"7MS>_iMF%","7sU@rf7*,Y";"79Ebd,HDa\\(-f#pis/+4cp1:2M7*c=1-fCg3QQ=.HsL?fiH\"(%cbol(u";"77*5SiJP47$","77C,_/-22X$HD-h","7rYD1kM5","7Qo6>+J7","7)?","7+KXG,@$_";"7/O!8UJh,O\\";"7!89;:H%fK3Jfo9T7*\"Z";"7l!>ajph\'^[1BFV;l!>ajph\'h[";"77%b4B7c1En","7rY1Q]7*,O6@k>f2Hl","7925;E+N7_#9X2760m?-N";"77iMWLJ_g!Fs/+u3HDX","7!fCt.rYl";"7st?9c";"79_I:u7*2(N-80VK-8Ut","77Z-C_s/BQgHl","7/lm9";"7/4&$C";"71]WNJ716SsiD";"7+\"A","7/IfTK\"Df","7pj$@^-+","7s9nJT-fB,\'b(";"75D;?`-::f!^WrSh-bTcKJ<t$","7-.BV)Hl";"7-=gNRH#X/FHT9";"7\"UR6GH@";"7brR9(";"79LIYt7*\"=";"7/^*E3","7sK[";"7]*","7\"UR6DMubW5M5";"7b-]hSrY4]Qs/+6ksU$qU7B(C)9ra[","77neS","7b0m","7QAQ<@rU";"7Qa.7n!+","7BoXX2iD";"7rO]*/rU";"7-:DfBrYD$A-=K%";"7sU@MSHDaNUMm&GeHl","79.T7q1r","7p1=^R-2%FUb-YWbJr%epMSVosH%c","7/>DWa+anS8+NDf8/>@","7bJD!RHDEgVHl";"7Qd";"7-pNUU","7QA\"u`HDs","7-22e","7H\"(%c";"7Bk:[`1=,1klttVY";"7!Xg@aH%f.P-X,]";"7rY14Ss9D";"77i].h7ia";"75ZN]%!@+>N","7s/+6;-p&GTMF>?;","77CG+5M$cgBJ)5O2MIOts-=KmVHEpb0rHteO^HhE!HD-_rH\"?j","7//";"7Qo#qFM/MsGb0EX\'p_[$f";"7H5O,1";"7\"G@U*/V*.c+63J%9;";"7!Y#JcQ6I","77Z-C`s/BB#rN","7!8(@N-XO>ZH(.n\'J_00","7(3>E.M`t";"7-ffA>rOa";"7Q0MYX";"7(iFHc";"7\"Nd/NHGlKfJhS","7(cH7A9.T7q";"7p.-GOph\'^[phGH[l!>Dml!)5ql(Trql!>Dml!)5jphGH[l!>DmlQ","7/b6!UMFEm";"7J_0QBQmS","77CH[";"7o0tiV5(=7XbHO*`MVooI7*87\"JF*HYJ_un;r&\'";"7J<tY";"7\"a3u8\"gpE","7@Ng.4X(80L","7\"G@U*()!\\I";"7HDhKS^*","7-pNUUJ?";"7/B/][HD6JI-f1K";"79=L$\'";"7(.E*.!MnEF]\\<A\'","79_I587*T4iH@","7s/@,)5\"+k-","7s/@,)QA3uC(iFH";"7!:m$%HDr;t-f;U(!Xg:D-f16";"7\"%(6o","7Qm[Se-2\"0lQ$<0KJ.h+YHGO(#7*Ta";"7iNT\'_H)=qsrA8%i^sbNbltFpR-2Zk^!f3pk-X3o";"7Bo,\"[^[rfc";"7/>DWa+N(DU(<G";"7QkME@HDET","7rbSQ*";"70>*!_HZ@D%safD","7rO]-KMIW";"7Qo6q69hYpOJ?";"7(F","798Kp%(.LlO]\\<dH/SUL*\"DVA%5l";"77cRmc";"7p.-GOl!)5jphGY1p.-GOph\'h1phGH[phGYpl!)5jphGH[p.-GOpO";"79pM!;lQ","70>BRIrAq`fJ_00";"7l!>Dml!)5jphGH[l!>Dml!)5jphGH[l!>Dml!)ejp.-\\[phGHmpO","7rY1/4MHO,_M`lN(H%c","7os;62ot]","79=L$\'-=#eor&F#2b-YWVH\"?(j@k->@";"7(Pt#\'7*s*dQo##q";"7JEs6m9RP?&(iFH","7H#;umM-]ARb7#2(+K]12p.g#E^sbNb2imH";"7\"/S@&rmp%dM>:d;p%Fq--?P\"5s!#2;","7M-]D4";"7r&P([MVWj\"7c1\"K1pY.@1=^i+d;r=";"7)Xo8*Jh,.S";"7!Y:\'N+NDAI98ghY","7brV2Q7*\"=";"7M>Y";"7s6K91rl:9","7sf","7Q!<76/SU@f5C;TT]\\4#0","7Q$Jn`-:^";"7sU@rA-fDI";"7!.r^bHGh","7\"G@U*/IfTO5n^q!+N1O_\"\"\"";"7-22Af7C[.R";"7i>NeLM5","7Q\\3u\'","7B3F,eB3&uY";"7Qe<[sJ<tE";"7Bm>H%2f","75PKKcMIO=(M>:H\"7*Y-R-7n[\"H:A;SrO\\$\"","7(*^;_7*\"Z","7o0tiV5(=7Xbs.uYbs7%e7*\"_dQAQ<@";"77iMTD-2L";"7Qe#X@JX-F6H%fh$rN";"7(*Mj\'^#m>lMIj)";"7o0tiV5(=7Xbs#d.b7Sdm-XF","7\"!OnJJh\"l","7MS>_RM5";"7md","7!XnSEMF%","7!fQEW/l\\-?J?","7s#gM3-=U/_HGW2Z^*","7Q0MTDHG`";"7br`&9rONsH-=KmVH@";"7Qm\"dqr&\'","7/U";"7\"53$_!Y:\'e+aPmq/VN";"7\"gpQ\'Hi>(CMrR!(","7\"G@7E+6%,Y\"1";"7rl?6";"7s!?%.-fDT","7Qm[Se-2\"0l(Z=76s/lJ,J_/fWMr3";"7p@";"7]Wi:";"7o0tiV5(=7Xbs1387Oj?R(V","7(3>E.M`U&pHG]It-+","7/b6!UQotu&H(2","7-8/D>M>(Q[HGt";"7M>jUdrU";"77%b4B7c1`7MJY","7\"tmi7sU\\r#QKYkr-fl","7lQ","7QA\"SFH1oO2M/^65s9LgT5PKKcMIO=\"HD-gSrN";"75D;Dcs!I11Q+Q<EH@","7\"tmM@7iKE<7]VQ#!f@!AHl";"7/l,ktsPk(IHG$F";"7/YAlhrlDO0!8IZh","7Bk:[`1=,p";"7rlj*(","7M>=#$";"7-1(Ud9RY].H#X7jM-]n";"7(.E*./N","7rbSqprU";"7o0tiV5(=7Xb7d;*H:K+%s!?IhrN";"7Q$9+,0>ZfA-f16","7sU@\"lHG\\DAr&FfU";"77C[?W(is","7Q$IqA^#mmgJh\"S\\H%*jL-f?OlM-]Qb";"7^[$d1HDX","7o0tiV5(=7Xb7/!t-8uCS0>ZfA-f1a0!fmHjrU","7/>D8C";"7\"GB+J+N41K5CH,","70[^TI\"53Z.\"\"76]Q_";"7H(Vb;";"7phGYpph\'h1phGY1l(TfOph\'^[l!>Rjl!>RTl!)5jphGH[l!>DmlQ";"79hYpOJ?","7Qo#J,7QsK4Hl";"7Qm\"(fb7ROPHDHTh\"%8<:Bk=eDH1oCkMr5*NrU";"7\"aC3G\"NL4,","7sN@:-)nd-E";"7/B/][HD6\"Xst\\","7Q\\3uYHDJI\'s/!","7Q+QqL7ia","75D%qsJ_/F37*\"Z";"7\"tmM@7iKEnM`Z8qMJf9","7/>D^E";"79f(`\'\"(u)";"7J.hJl\"a*qK";"79X,8Up:8`sMJ:1]HD=\\\"HDEgdrYpY";"7Jh,gi";"7!Mn;C\"5*F&0[C2D9:X","7Q!.S7\"9p\'a0?]";"7-A","7rYpc","7Qa.@@(E[DL";"7phGsTph\'h[phGY1l!>Dmph\'Mjl(Tfjl!>Dml!)5jphGH[p.-GOpO","7o0d0EQW:hE7dONVBk=lrMuS6.Bm>RabrVmeBm>R<HD64?rU";"7Q60KH","79R`\"%rljE\\Hl","7!89;ns!<4W";"7-X3P$0>Bl8H%c","7);";"7H5OZ","7b-^3o-f7(S","71@FEmHj`.(HGUNdH%%li18Y9>iNTDE^\'E$!-4dTH-fD,";"79_JZhrA8)#s!Ip","7-1$","75]r]F!A";"7brEbdM/^[5M/^,0H:eL[-fCWHMJ7@bH1oH\\-f?:$","7+L","7MVe_pHZXV%HGO-","79R`5u7Z-%kb-YYV7CZq=MrRK<s!IkS7n\\dl^[$L1M5","7QUqpe+N(D*!\\","7QAQPG7cX";"79Rb+GM/rTqM`>","79qX\\e+6X6`9=t";"7Q+%S\'HD6sK7*T@2r`.%@-8ud*55d17J.h6$rN","7925;E+6Xb6";"79L#\'frN";"75D%\"HM5","7!YDWq+6\"KP!+","7sNBJlMr3","7HD!PlrV60A-+","7MVO]7","7\"G@7E+N(D&(V","7Hj`X;";"7sNBJlMr#H#-8V26";"70VNbtHl";"7\"UR6-7c!!";"77C\'1$-=gQk";"7-22nl73/+PH\"e";"7-8/6;HD60nsNO!","7b-]hSrY4]QMF>FmrAfK^MF=6\"-f1A!-8j";"77CG+5M$cgBM-lfQsN$6.J_`i<-q3nm^ad:r->.;81QEoXrON37^[$:mr\')g(s9KM3-f8dqM>:HFH(13";"7\"6Is,bsJr&Jhd","7HG\\Bh7ieD","75PKKcMIY";"75TrSss9n4","7-fDCV","7(cH1,rq5q!7nW,hbrE0irl?7up1=h:bJf>Tr&FXkHDs","79pM!^HDEU_-fe","7s#gM*\"//-";"79.T7q1F","7M`Zs";"77C,_/sNBJlM-]/B","7s#giErYD1$-XXo","7/lmR\'";"7l(TrKph\'^[phGH[l(TrKph\'^[phGY1l!>Dmph\'^[phGY1l!>DmpO","7MS>_RMJ8W";"77cR^","79h&\\3-fl";"7QKY[E-=Urcs6FTh^\\;7P-+","7J.hJl","7b-]EuMVUX(-fjU2";"7MJ8*W","7phGYpl!)A[phGH[p.-GTl!)5jp.-Gjl!>Dml!)5jphGH[p.-GOlQ";"7o0tiV5(=7Xb7S;_-7E!,s!?IhrN";"7-=0d]-A","7MD","7/4&^n!X//P(<aQ^\"1","7sNBJlMr#G#-+";"7Q$IqA^#$X3MVo:)7cVR","75]-U:+N4/cQ60@","7Q+%S\'HD6P_rYpA_";"7b-^3os!:gts9KKbMFalVbJ?60","7sU@p","7Qo6>+JXU$X","7!86VTQW#ILsaf6GH%fc47*TagrO]fQM5","7MS-ZJH][lF7ia","7(cH1,rq5q^HT@StMr5%=HD-:g7c9fWb(","7rYpPuH%f.P-X,]","7(Z[.K";"7HDEf.HG`";"75PKKcMIqkJrO]C>Jh]]5-87","7(Cb_.bsJ4.-2%.4sUh";"7!:m=t";"7o0tiV5(=7XbH@(,H:K:Os/lTkbs:#Ys9M[&Hl";"79L1*`bs7%e7*\"_dQ\\%u&","7QKY[<bs<Q.rl?7ubsDiS","7]WcS^]*","7!Xnd:-8g]cs!18V";"79_JZhr`#%\'-:X<;-=Pmb!Xg:D-f16","7@R","7(nNu%rIn56-f#liJ?","7(Cb_crU";"7sgV.]-fCW7MFEHRH1o\\BH:e=c-2%FUp1:kX-fqb)sNB9pH%c";"7/b6l3HDs";"7(Z=u=-:7HOJ.hrg","7M>:9";"77nZIh","7\"a3u?rOa";"7/4&^n!X/7#/>jI";"7sU@)[rOa";"7QA3@*-fm6&-8g+i";"75(jpOrFQKOHjT";"7Mr2";"7/IfZLQa:#6!MS?7/-U","7s/@,)(Cb_c";"7o0tiV5(=7Xb(","7sUB>VH@";"7\"tO.IM/rtAMJG\\trN";"7\"t@OY7*];[brh017c>gPb-lo2MS[","7s#gJP-O92G-M;s";"7o0tierO]C>JhQ*#b/agI1fKiglU%H)HjRD7Mul_ClU:d6s#g)_MubT\"7B5:C))c7rb-cZdb0pNjHjRDd@3u:@-.S/EH1+\"7^sodBH%*j1H1+\"7HD-fQBk@";"7o0tiV5(=7XbHAUf-7E!DM>jL)bs<BqrN";"7l(TrKl!)5jphGH[phGYpl!)A[p.-\\[phGHmph\'h1l!>D[phGHmpO","75Q=5N5nCjD]Wn&NQ60>)\"1";"7H(Vb;/lAc8J?","7/lmH&(cH7A";"7!:m$%HDr;Ps/BB#rOa";"7M>;#VJh\"e";"7!f@ehJh\"a";"79EbR";"7!f*^_MFDGqQAQP,H%f.U-=>%GpO","7J?";"7o0tiV5(=7Xbs1387O#HhrY1!\"9_J9";"7r&&p8-ff?S^*","7(nNu&Qe#,IH%TYG-2L";"77iM59MJGW";"7QAQP&HG\\6>-f2gOr&&4>-fl","7(Z=BCM-]NS","7H(-&20>BRIrN";"7H\"?),QmS";"77Z-C`s/BB#rF\">SJhd";"7(Cb_.bHeF","7-fDCV7*\"+t";"7MFal\"9)5uL";"79_J-hM-]AR";"7J_0QR","7HTO9lM5";"7s/BJkMS>\\>","7o0tiV5(=7XbH@(,H:K:Os/lTkbs)Scs9n4tQ6&O","7QNB:E\"5m4Z";"79_4CIHj-Il!f*^OHl";"7\"a3u?rN","7^sYD$-f4[";"7!8#VY","7QK&hJr&\'";"7]WPU","77CG+5M$cgBr&&pr7]VXmMIf:\"HD-9u-::@BM0t4H->8.U@k=OcdHd\\cpZ>kT1]eBd--lMoM>:@\"1V";"7\"GB:@+N41h\"1","75PA*LMF`Z$7C[.R9LJpI","7Jh\"m\\H@","7!.dp$H101G^soO/bH+jt7ia","7HD!PlrV<b.","77*5k","7+QgeJ";"7phGY1phGY1phGY1phGY1phGY1phGY1phG&","7MS>\\i","7!$";"79_Il.Mubs*M>:^(-fB\'o7nU/SM&HsEH:eDurOA0";"7l!>Dml!)5qphGH[l!>RTl!)5jp.-Gjl!>Dml!)5jphGH[l!>DmlQ","7B+Km]iD","77iA1A7*\"=";"7rYpA_Qotu&Mr#Y3^]";"7rBQ=CJhd";"7\"tm@","75iOOfQa.:nQUB*A","7Qo#qFM/Ms:\":","7\"G@7E+63J%9;";"7^[^1V";"75D;Dcs!I119_4C?-2bZF7*87\"J?";"75\"+.6";"75ZaF19llIL";"7l(TrKl!)A[l!>D[phGHmph\'h1l!>D[phGHmph\'h1l!>D[phGHmpO";"7(<RD^!X!3T(EH8I/IfTh","7MSV^ssa$";"7(Pt.:bs1.,b7Ll`rlDN5bs)B*-f;#V7c[","7s!I)m\"a*qK";"75D;N?rYD@i+ang%!8(@?rYDNs";"7Qotu&Mr3";"7o0tiVQW:hE7dON^JhW]iHT@StMr5%Xrm1\"sbJTj;H:N7","7QAQ<@b-\\bob-lZ\"-XF";"75(jpOr`#Turl(VA^;1$","7/@EtcrU","798KpG\"91k`07$","7QW>9N";"7Bm>)no9ufO","7H\"?\"A^*";"7b0E5HpGp#r7*^R9-?PbiH:e?p21";"7rBQ;27EL=]Hl","79_JZhr`#%\'-:^","7\"tm@?!f*^_7*sc";"7^sodB","7lu#dP-:<2=Bm>ngBm>n&Bk=ED";"7Q+Q<EH:KO-";"7b-l[UJh\"Bks/BJkMSVX^7*];[br-Jr","7\"!qderA8q]sU@Qg7c=Cbs!DC";"7MS)#";"7JP+";"7J.hJl!8(_.","7H(Vb;Q+U";"7/bD*NrlDO0H%*#S-?hY`-:7L)-+";"7o(^[&(Bo+`","75(jpOr`.I&-=SLG^;1$";"7QK&hJr&&$F-.$_i7V","7!f@Z8M/^i0s/lTkbJ\'j>^sY+4bra9!H%D\'[b-^`\"MJ8*cbr>P\"s!:&;-fB\'o7nU!UJ_07bMS[","7rbS7P","7MFVplst\\","7M>f:(","79EMNJ7c:[&sU\\M2HCu^6sa4GS!Xg:D-fl","79PmGtH@","7J_/gV","77*5uQs!Ip";"75(TAY7cpoI\"%q";"7!\\";"7\":","7r@Z_]^*";"7!MnEn]\\>OO(E\'I","7rOQ2`b-\\bo7c-N]bM^9Grl?aGbrR2S@k-$!b/A[GbJjEm71[pasUO<>J?";"7\"GO?n9:X","7sNB=","7QKY[X(nNu%rOa";"7\"G@U*!MLU-\"\"1?","7/bD*NrlDO0braLr(Pt#\'7*sc";"77Cg","7H\"(%.","7^72-oHZQD,","7\"G@D%!@u";"7\"gpQ\'H10QK-::j!J?";"7rYpP4HDELGrO]q";"7o0tiV5(=7Xbs#d.bH@(YJ<tnB","7(Z=BCMr\"";"7^[$d1H@","7Q\\CgOM5","7R+","7Q$IqA^#$X3MVo:)7cVdlQo90=";"7sUO9$HGec;\"//-";"79X,8Up:8WZ7cEBWs!X4)s/+>mbr-[\"M-*RRHl";"7sN@1t7Cn";"75(=OK-=gQk";"75iOOf!Y#J.QUn";"7-f179","7Q\\CgOMH*Pc-\\","7o0tiV9_Jp&st+Opp_[mrb0R>";"7!Y<5$/>6[`\"1","7J_0LprN","7s!#)[^*";"7Q$<qeb7ROPHDHTcs9gbhJhg";"79Pmc;M-l]2^sYd[-fB\'b^soYoM-_9)rl?N0","7!^6>f","7o0tiV5(=7XbHChW(nNu%rAqYe-224.","7/bjhOH5OJlb-^3os!:gts9KKb-f7(S";"7!f*^_MFDGq9EbR","75D;Dcs!I11Qm\"(fbsJ(FHO";"7o0tiV5(=7Xbs1387Oj*?7*M","7QA3::HG*sBH@","7Q+QqnHTl\"PHnJ7ZJh\"S\\H%c";"755d1D-.dJB";"7(*MCaHTY.grU","7QAQ<@b-\\bob-YWVH\"?(j@k->:b-]5BbJf]bM>:H\"M-_9-7nU!Us/Q2$-A";"7J.hJlQkM<","7Qm\"(fbs.QaMVU@Z)b/";"7Q,/1KH:KjPHG$7","7J<tO?MI?/m","7Qo90=bHe@U","7rO*\"8MFX";"7st?9c!89[","7(nNu&!86VfM5";"7!:m$%HDr;#MJ7(;","7!:m\'tH5l#j";"7st?MFJXS[";"7Hj-:UHDs";"7o0tiV5(=7Xbs61\'7*\":VQo#qFM5","7QL","77V";"7sNB9V","7HD!Pl-\\","7rY1/4Ms4\'AHl";"7(PU(\'-1(,";"7rlj*p7*[+n-f(ri";"7(Cb_Y/Y]O`-fZ","7b0X";"7(<RN@92;2","7!f@Y.s96:,s/Bu*Mr\"","75(jpOrF*g_J_0Ec^;1$";"7Q6<";"7HD!PlrmB@=b0R>ns9P63rAfJQMSae]b0=L.))cGa";"71XQ","7sUB>VH%c","7\"GB(7!A";"7Qm\"(fb7-jTJ_f";"7!8#emQAQqArN";"7J<tOfMr2","7s9L8s";"7(Z=BCM-Yf)7V","7!Mb;=\"1";"7Jh,girU","7/lAI","7\"DVA-ok;","7(Pt#\'7*s*8-q318rq((p-^cJIsa4GS\"NdS%HDs","7o(Xu]!^=++","7(Z=BCMH%>k","7s#gM3-=U/_HGt","7MJf(krlDO0","77*5u4rO`";"7sU@r8rlD@lHDs","77Q[?g","7-2%%2";"7l6@\\9";"7d,=hgB#;`%2cVOO2ni","7Qe)2NHDs";"7^HhE/H]A\\XH(8";"7sa4s*","7^[cDlHDNmS","77ne4";"79<qgr-+";"7rbj","7925;E+N(DU(<G","7!Y:\'N+aSK&";"7rN";"75(jpOrIKaE-pK/;(Cc]1","75iOOf(<RuQ(L>","7H5B>b^*","7Qm\"(fb7-jTJ_.q=)MN";"7Q\\%u&brVi)-X3+m^HRpibJfo$H:6","7Q_","7(]pde9RP?&","7Qo#gf-f$","7!Xn@6H@","7QW#ILsafD\\\"Nd/NHGlKfJh2G";"75(=OK-=gQk!:m=t9.T7q";"7!=7FAH@";"7QKY[E-=#e]H6pQ4H1oO2M/^)QMF>I","7-puc","7-=gN)7*\"Z";"7!Y92?+aKm6!+";"7QK&ck-8gQ>H\"e","7/bD*NrlDO0b-l[UJh\"B2braK<bJGTc7*d","7\"5,;a9.,Sq92X`";"75D;(n-+";"798P<","7QUB*A(E,U7+N(Dc\"5@j`","77QsK4H]3l:-$";"7-XT4\"QW<)J^*","7^soL1";"7sUB4TJ7","7b-oRmH5^.W2um.,rY1/Q-fDrk";"7s9M(";"7l(Trqp.-\\[p.-\\[p.-\\[p.-\\[p.-\\[l(Tr";"7s9L8M";"79_4COHD-h","7Q\\%u&9L1*`","792sNe-fDCV7*\"+t";"7rY1Q]HDEt","7s#gJLH6b";"7rY1/\"J_f","79L1*`bs7%e7*\"_dQ\\%u&b0=UT";"7\"U_LKHDr[","7/>DTT0m?-N";"7Mr)fBMVa","7phGYpph\'h1l!>D[phGHmph\'Mjl(TrqphGHmph\'h1l!>D[phGYppO";"79p0e\'+N(D*!\\","7rY1Q]HDEgVHl";"7QA%SqM[7`%rN";"7/&.l8MHBb&HDJ2a-::j!J?";"7QAQqNH%f.U-fp:YrO\\plH@","7!fQEWst?9Y-+";"7M>j2","7\"U_LP-XF","7^[^X","7sU@\";H%f.U-=;","7safg3J<tma-::Dp";"79_4COHDJIArYD:\"rU","7o0tiV5(=7XbHC:.HfW$f7*\"W";"7QAQ.\'MF`R5rU";"7o*","7+QglB","79PmGtH:e?2brVJrH\"(%cH)GP^M>jLVb7_?mH:K@\'J_kmQbr`%-7*kT&QQ=.HsL?fiH\"(%c";"7-2%CL^*";"7Q+QqnHTl\"PHZ,5a-@>087*\"Z";"70>CRK-f4;2s6NYIp1M","7H5Bbl";"7\"%(j";"77]E>uste","79=gG<!+","7!O@0I(nJI#\"\"7D";"7\"U_1Z-7LHSH1ooWs9n4t^HhE/H)GPsHDV@pH%jMYMkH^@rYp.kbrt\"(HDHj[-X&*[-87","7o0tiV5(=7XbHm@`7*\"Kl^#$IPM-We\\J7","75(TAY7cpo\'-8Sr[rY1Q]7*,OtbokIX-XXuPH:e?pb-^I((PUB%7n<";"7\"gpQ\'Hl";"7925;E+aN3?\"dMQb925;E+6%)A]#2.4925;E+N1nk\"dMQb925;E+6Xb6","7^soDVrInWPM-*u";"7!8(7Kst,u>rO]fQM5","7(*MC%";"7HjVJ>r`)2AH6k";"7H\"?PjsU\\K1";"7MJ7d;HD6i:H([","7o0tiV5(=7Xbs)B*-?h-O-p&NoHDHT&s9n4","7p.-GOph\'^[phGH[phGYpl!)A[p.-\\[phGHmph\'h1phGY1phGHmpO";"7/^*Eh-^Zi`r&&4>-fl";"7o0tierO]C>JhQ*#MS>_RMJ8\\SBm>Rab-$`Brq5O%H(p*sb-YWpdAtm?bs#N&1]WUEHTO43pj]@0","75\"O6a","7+\"\"b)2cVYgB3FJG2dT","79f9>.\"\")mJQ_";"7\"t@OYQKY[E-=#KY-8S-";"7sgV7tH%c","7\"G@U*(E\'Gq+6Tu,Q6I";"7J..q&Jqr2";"7(]pdebHeF";"7phGYpph\'h1phGY1phGYpph\'h1phGY1phGYpph\'h1phGY1phGYpph\'Mjl(Tr";"7o0tierO]C>JhQ*#-=gNRH#^E2^Uq;";"79qX:!5ZaY";"7sU@<BM5";"7rYph";"7ltIj&b-/r<","7o0tiV5(=7XbHm@*MJ74pbs9SNJ<3";"7bHZ&$Mul\"iJ_uAT","7-2%%V","7H3jJ_";"7!MneY5C5b","7(nNu%rIn5C-=gJ","79)5uL","79)\'@Kb7S;_-:o";"7980-Z+ar3GQ_","70>*paJ?";"79=L$&b0)CJBkEQ@Hl";"77C[?W","7\"(rE8]*","79pM!CHDNB\"rY8@#-X3_,Hl";"7\"f","7QW#I?J.hD&s!DC";"7phGsT12T=[ph\'Mjl(T_jl!>D[p.-\\m12T=[ph\'h[ph%","7\"NRqAMul%/H:K*hsafWBbrtn!H5OAJbra92-7n[H^#mn2s!1D","7/bj\\6JE3IVrU","79Rb+GM5","7QAC3KHGec;bsDiS","75PN","7!YDWq+N(D&(V";"7!Y1\',/SUL*]\\97n0D";"7s#giJ-::jr";"7/4&0";"7(]pde7*\"Cb!f@Y.H:Ad";"7br`%/-8uCjHl";"79pM/u","7o0tiV5(=7Xb7ul8sa4GSb7SHPMJY","7rl\'NfMSVo/rU";"7HD!Plr>i5EJfZs#7*u","7/4&^n!X/+c/VOn,";"79hYpOJ_PSb^*","7QAQqAr?Z/","79dJ-Z7c)qU";"7o0tiV5(=7XbHChW9h&\\3-fB,Os!DMOH@";"70;RIfQg_!Z/-@)j!Om[e\"1","79X,8Up:8WZ7cEBWs!X4BJEs,Bbr-[\"M-*RRHl";"7QKY[E-=Ud8-f8+YJ_uA3M5","7Q+QqC7CGB4MVt","77nCd\\";"7925;E+au6AQg_hK92X`","77F","7-=#eo7*M","70>BRIrAq`*MSVo!73n+R";"77i]K.9LIYt7*\"=","7rO]OSM;m9.";"7!f3pk-X3o","7!Y:\'N+ar&Z\"5Ba","7!XgUP-.lN]H@";"75\"Oi+","7/>D8C9:9+","79EMaf!=7Y";"7sU@rq7*S","7s!I)mQkK3","7p.-GOl!)5jphGY1l!>GTl!)5jphGH[l!>Dml!)5jphGH[p.-GOlQ","7l(TrKph\'^[phGH[l!>Dml!)5jphGH[l!>Dml!)5jphGH[l(TrKpO";"7QAQPG7c=CV-qq1fHd>h","7MJW";"7phGYpph\'h1phGY1p.-GTl!)5jp.-Gjl!>Dml!)ejl(TrqphGYpl!)A[phGs","7\"G@U*/>6[`\"1";"7!Y(=G!A";"7!8(@N-XOIK^?\'>:H@";"7(_kp^!A","7(CbraH%c";"79RbfP-YKeY";"7J.hJl/Bub3","7M`nNPHGt","7^soDVrFQnK","7QAQPG7c=ZFs!DC","7sNB)bMHm)Psa:IP";"7@_";"7o0tiV5(=7XbrE,5st7`;H#[#b^#m#Hs9Nt,b/`cpHGYP#-2n.";"7MkD4W","7rY1+]^gCL","7rYpA_(iFH";"7M-]D49E#","7rljA1/&ffeHl","79_4C?-2B\"DMSVo9bHQrYJ.hXlsp";"7HGYtm(Cb_.";"7o0tiV5(=7Xbs7%e7*\"_dQAQ<@";"7/Bul;M;Q9OM5";"7QmBgIMVef>rYl","7]\\.f:+6sMZ!OXS\\Qu2=35CTn";"7(.EFa5Ce","7s#gJP-&Tef-XF","7J_(","7QW#ILsaf6qp1=Wrs!X427*2r>rY1/Q-fDrk";"7HjVJ1!f+=tH%c","77QsK4H(2";"7(c8rKMJ7d5Q0Mt@","7(c8Ae","7M-*$S!f@^qHDX","7(<RD^!X!IYQa>uL+6\'u&!@N";"7s*k";"7/lAa`!:m$%HDr;#MJ7(QMmPa<-=SLcQmS","7rY1/4Ms4\'AHi#:A","7-pNUUrU";"7-=Uu`r&UA37c!Sc";"75(TAY7cpoI9;";"7pE1k5p@","7MoS","7rB-";"7l!>Dml!)5jphGH[l!>Dml!)5jphGH[l!>Dml!)5jphGH[p.-GOpO","77QsK4HiJ:%J_0<","7/&.l8M/^>Qs9n>&H1J","7R\\";"7QW#I?J.hDd5PKKcMIOXc-8gubbokI\"HD-gSrA89#H\"?(";"7!f*^.MJf=hJ.h6$rN","7M-*51J?","7\"6IkXH%*#S-?_n\\JhW](7nU!WJh\"O\\M-*)","7^HhE/H]Q?\'MH*,K-+","7H\"(<j","79RY]f7*\"Cb7n\\dtbr-)p7CZH\"-.V","7J<tqi";"7Mr)fkJL7","7MJf?0(c8=";"7HGZqqM5";"7(Z=BCM5","7\"1";"7Qo6q6\"UE.Z";"7Qotu&MrT\\W!Ou";"7M>=q[rU","7Qe#07rN","7rbgd;","7-=gClsU@4W";"7rl5g$J7";"7!8#VY9)5uL";"7/l\\-YMVeC2HG\\k4";"7QKY[<!f@^3MJfX","7(3>5j\"!OnJJh\"l";"7Qo#&N";"7s#gM3-=U1A^*","75Q=5N5nCjNQUn","7l6^;WHcF";"7d/";"7/&.l8Mr\"";"7B3FJEH1cY5";"7st?9c/U","7\"3DP/+N41Y\"Tu";"7Hl";"79h&\\3-8#ZV-X&cfHD_u2^[^\'9MFab9M-l]29)\'@Kb-*[BHGOr+","7(c8rKMJ7d5(nNu%rOa","7(.E*.Qt4q50D","7(nNu&55dp";"7925;E+N4/I";"79h&f`";"7M-]D4Hl","79qXAL+N41Y\"Tu";"7!:m$\'-.dJ0Mul)\"bra92bJ\'YhJE2,bMF>`sb-eZkrmpc9b-^I(Hj`.BM/^,-brEK]^#mnSM-]j1";"7!f@Yc-=V0M-2%FU","79LIY_s/+4cbr>c>M>:@\"","7rOQpJ","7\"tmM@7iekCM7>T2rbLT","7/Y]O`-f%N","7s6K0h";"7M-]_]H@","7Q6PC","7]\\<D<!O@)%+aS&`9=g6";"7H(-#mM-]AR";"79f(cA5C55I\"9ph,\"DRFD","7s!#)[^gO\"f-=Lfj","7QN@DM";"7!:m$%HDr;0rbSNtJF3t(M-V807*2M[MkH^CJ.h6$rONsd-X&*u-fjUo7c!o";"79Pmc;M-l]2^sYd[-fB\'b^soYoM-_97HDEgdrYl";"7lUmt";"7o0tiV5(=7Xb7ulfJ<tD)5D;Dcs!I11(Cbra","7(iFH","77%b4B7c2","7!Xgj\'M/^)>7*[+c";"7sNBJlMr#]*J_00";"7l(TrKph\'^[phGH[l(TrKph\'^[phGH[l!>Dml!)5jphGH[l(TrKpO","7^soAb!f@!AHl","75nCQs","79R`\"U-8gC/7*s*dHj-.1Hl","7H(-&2";"7QW#ILsaf6qp1=cn7cEBWs!X4BJn[[JHDEgdrYpY";"7MJ7Q[(iF7K7*\"^";"79R`\"%rbgSubs:KDs9gB","79X,fZ\"5g";"7-8/G";"7\"5,;a9.,1T(.t_K!\\","7\"G@U*]gTk2(r","7()!\\I","7-fl","7\"G@U*()!W";"71pr";"7QAQPG7c=C;MubWRrOC!HMJ8W","75@";"7QW>bKrU","7\"udLeM-]AR","7H5O+g";"7MJH.4";"7sp";"7HD!PlrmB@=bHeNCB3I:mHjfJ";"7MFal\"QkokL^[J","7Qe6%LJh]T7M-]AR";"7rlj*0H%f.THi9FYr&\'","7(<RD^!X//W/4&=Z+N4/I!MnED","75iOY";"77neB";"7okL67H6k","7Qe:T:s9nJPrN","79R`\"GMFEEQM/rW,-224.","7!YDWq!A","7-XX7THl","7stl","7^7d","7\"\"#u(/St#h!MnEF+NDLY!\\";"7!Xg_P7*,OB5(TAY7cpo\'-84W09_IXg9Eg\\j2d:ONbD","7(Z=76";"7QAC3KHZQD,";"7!=7ONM7Rg`M-*)";"721";"79_4CIH@";"7-XTk","7\"53$_(.E*.9qX\\e!A","7MFV$QsU$KqQmS","7/l$\\arN";"77Z-Z","7925;E+6%)A]*";"7MVl:B9)5uL";"7/b#!#MS>\\QrU";"79f(`=!^s","70F5MS-1(jHbJ\'TVsd74$7*2%[s!^";"7rlDq";"7sNBJlMr#]*J_0o.-8S-";"7(Pt#\'7*s*8-q318rq\"","7\"!OnJJh\"B2brt\"1H:Al\"phG&";"7!O@[\'/SUmI(<R8";"7M5","79R&D,H(f!5H%D6.^*";"7Jh\'4>","7MJ7Q[","7brt\"5brEsB7*];;^#u";"77nW6`","7\"5,;a9.AnDQaJdr\":";"7Q!<76/SUL*!&N_^";"7(Pt#\'7*sc","77*3#4","7Qo6q6RV$","77C,gu","79R`\"Js/B@iQW4ts7ia","7sgV7tQ$<)^-fDT";"7o0tiV5(=7XbHChW\"6Ib<bs:KDs9gB";"79_4C?-2bZF7*87\"JF3]ms!?IhH)GP\"-XXuPH:e?pbJGTc7*d";"7l!)A;l!)5#l!)5#lQ";"7QkokL^[MueMVt","7phGYpph\'h1phGY1p.-GOl!)5jphGY1p.-GOph\'h1phGH[l(TrKpO","7(c8rKMJ7d5dAU+CHjhnSMulJ-MJ\'.[H%3o\"^sodBb-lZibHbgJ5(=H&MF9*kMJO%Xph%","79_I=UH%f.V!XnSEMF%","7/&f*fs9M[?st\\","7o;G9_bsI(OJ_0<","70>*paJ8\'heHGO-","7^soDVrInY?-fZ";"7/l\\\'O7iASn-f(K","7MJf?0";"7\"gpQ\'H]3GF7icqU9_Il.M[))?r/","79.T76-:^","77nZqhb+Ih";"7(nNu%rOa";"79_Jp&sto";"7","7M`nN8";"77%4","77cV>u","7B+r3XHL`c1^ah7lHj-Ils/0ep-=>!)MmPeIsgVDUr?TEYM`>","7/lAa`!:m;\'Mk3";"7Qa<(G\"\"\"","7^C","7!Y1\',/SUDU/>jI","7phGYpl!)A[phGH[phGYpl!)A[phGH[phGYpl!)5jphGH[p.-GOpO","7M>4Q4Hl";"7!:m$5/J7o.-+","7sNO&!","79Ebd,HDD;SM`\\>+MFV]Rs9LWAsaf6lbr`&o-=>VmM`ZAQpGDVM^[$d1HDX","7/N";"7MS>_irU","7)7";"7(c8rKMJ7d5bra&@rY1+QbJjRBs9M[&Hl";"7/Y]UesUlIu\"a3o";"7os;g.2f","7QW#ILsaf6q";"7sU@-";"7-=gD)M5","7\"!O&Z-X_";"7-22nl73/rc";"7\"!Cnes/+M2","7!f@^qH%c";"7ph%","7QN@DM+N4/q\"QgPs","7-.BV)rIn5M7nt";"7M>=q[5D;4E^C","7s#gJXJP+";"7rlj*p7*[o";"7J)a<bs9n4","751JTDQd","7Qt<5";"7J..q&J?";"7s6NYI","75D;?`-::f!^g\\It7*@g?-pKLB","75\"+J@Jhd","7-=gNorOZF]";"7Qe:T:s9nJPrAfJQM>:M";"70;RIfQg_h\']\\97n0D","7/b6!U(naJHJ?";"7\"DVL@\"1","70>B5F!f@!AHl","7!Xg_PHDEU&s9n4","7Mr)fkJ7";"7o0tiV5(=7Xbs)B*-?_>hM`*2";"7Qt4M7\"f";"7/lA\'c","7QKY[E-=j";"7]W&mT";"77*O.PsN@1T";"7-f7(S","70m?8G!X/1Y(.tW","7(nNu%rFs4fr>klns9gB","7/>6[`\"1","7Q\\3dY";"7Hj`X>7r","7sNBs)-f;1qsU$Kq!84_qJ_uBqHDT";"7sU@rf7*,OFM-]Q$HDs";"753\\MEsN@m.Jr%puMJ8g>H%c";"753\\,X-X33$","7dAT","7()!\\P\"1";"7!8(@?rYDNsbJfolrBQ5QrA8WiMF>`ip:8`MJhbeNbrVB+M-l]2rYpO>M>(Q[HGt","7!^DWD!A","7(]pdebH@r.M>;?3","7s/+6;-p&D/","7Qa.7n!@u","7-8f";"7!Xgj\'M/rcOJF*\'tbs:qCs/@J2rU","7M-]N\"","7-ffA>rN";"7HD!Plrl?7uQmS","7o0tiV5(=7XbsJ4.-2%.4sUh","7rO]OSMmW[N^]","7Q0M<<H#[#bp1=^sJ_uA3M-]NSbr)YdM>=c","7MSV^9-=;","75PA*,HD-7?^so@1H%c";"77Zs";"77iJ","7\"j`_CQg_eG5ZN]L5ZD","7!Y1\',/Stgf9=ob#]W9","7Hj`.l";"7H\"?h>";"7sU+H","7MF9*kMJY";"7rYD1kMH\\.UM5","7QW<\"N7*Ta";"7!YDWq+NDL3Qa[";"7(V","7o0tiV5(=7XbHChWQ0MT-H%*jY7*,OBQW4ts7ia","7Q\\%u&";"7H6[#R","7brtJSrlDa7Mk;]CHDD;9-?h8qrY]","75(jpOrIW2?HGW)YJOV","79R`\"n7*87\"-7Eo6-224.","7MFal\"rU";"7st7%%H6;9","75D;N?rY5F_H:A$Vs9KN","7Q!.S7\"9pY\'9)m#U\"\"7D";"7-X37_QA3uCQmS";"7phGYpph\'h1phGY1p.-GOl!)5jphGH[l!>Dml!)ejl(TrqphGYpl!)5ql(Tf";"7J<tOA-.B>";"7/Y]UesUlIusNB)bMJ8\\SBW%9p7*\":VltIj&21";"7Q$<qeb7d;tHD=WP-fo","7l!>Dmph\'^[phGY1l!>Dmph\'^[phGY1l!>Dmph\'^[phGY1l(TrKlQ";"7(*MCaHTY.gMu-T","77Z-C?7*[G";"7/B/][HDaW","79.T7q";"7M-]D455_Nc","7s9nJT^[J";"75D;?`-::f!^WrSh-bTcKs!=HZM`ZfQH%c","77r";"7b/I","7phGYpph\'h1phGY1l!>Dml!)5jphGH[l!>RTl!)5jl!>Rjp.-GOlQ","7-=g+kM>:s";"7!:m$%HDr;P-f1Bd\"gpE";"7\"G@7E+aMm\'!\\";"7rl5g2HDs";"7/-*:";"7(]pdebs1.,bHZ&$rU","7QA\"m`HDaNUrU";"7\"uR#G1F";"75\"+6E7LpT3ste";"70m?8G!X/dh\":";"7st?93QAm+","75\"+%)s!?6OM`]Ql","7o0tiV5(=7XbHm@*MJ74pbs)B*-?h-_HT-","7^[*u","7brtJSrlDa7Mk;]ZHDEgdrYpY","7p.-GOph\'^[phGH[l!>Dmph\'^[phGY1l!>Dmph\'^[phGH[p.-GOpO";"7^72-oMJf0","7HD!PlrSmX_ste";"7br`&9rAf9/Jh,O\\";"7!86VfM5","71r","7ltJD[HO";"7(hHV8/>D8C","7H5O6kJhd";"7rY1/4M5";"7\"G@7E+N(j#\"TQu^","7Q6*SV-2L","7M`nQI-X_";"75(HU3!8(\\37c>?","7!f*^.MJf=hJ.h6$rFQX.7*=15";"7sU@MSHDaNUM[.<P-\\","7-q3@3sU\\Y","7\"gpQ\'H()2CM>;LjH%c","7925;E+N1nk\"1";"797";"79=nGD92]","75D;Dcs!I115D;N?r&FXk7*sc","77C[.VH%c","75D;N?rY5F_H:eGT7*[+cbraLrsNOJmHl";"7o0tierO]C>JhQ*#H(Vb;7*\"%VbJf^4s/+4cbJ?6Nb(";"7!MnEF]\\<Ah]Wi.7!+";"77]-<)+KqhjHE2to7V";"7o0tiV5(=7Xbs6SK^[$:RrN","7sgV7t(iF7K7*\"^","7MVeCd-+","792\"@@+6XbN\"j4","7s/@,)\"UR6DrU";"79=&=D","7/b1f,HDaK>7)A\\&-8gD2H]XVL@k-u","79=L$&b(","7!8I0";"7H@","75io.M0D","70j","7s/@,)/&.l8M5","7H6[OU","7Qo90=bHeF","7sUlIYrN";"70m?8G!X/Q\\\"5*NG!A","7/Y]UesUlIW";"7Jh,<4","7H3jJ_!f3[cs!o","7!OCC";"7st:s:s!DC";"7/Y]UesUlI67*,qb(nNu&9_J9","7p1M";"7()!\\L]\\<V";"7MFal\"bran+Jr%Z0HD70r-.BV)rOej2rmp\'d-f7AlHl";"7l!>Dml!)5jp.-\\[l(TrOph\'^[p.-\\[l!>Dml!)5jphGH[l!>DmlQ","7!@BF","75Q=5N5nCj?(i>[ZQa4N";"7o0tiV5(=7Xbs)B*-?_kfM>:s","7QAQqArAq\'NM>=c","7sgV7tQAQPG7cX";"7\"G@U*Qt4%R/-QHu!O$TnQ_","7H%DKc";"7l(TrKl!)5jphGY1l(TrOph\'^[phGY1l!>Dmph\'^[phGY1l!>DmpO","7(.ELC5ZF>";"7^H>?iH@","7-q3^";"7o9k%Up6WahjLY,np\'Y%s";"7HD-.1rOa","7l!>Dml!)ejp.-\\[phGHmph\'h1l!>D[phGHmph\'h1l!>D[phGHmpO","7lttVYd,@X5Hl","7QotV","7MVB[.-8g+i9_Il.HD%","7p.-GOph\'^[phGH[l!>GTl!)5jl!>Rjl(TfTl!)5jphGH[p.-GOpO","7/lmH&!f*`FJ<tE";"7^[$L1M5";"77Z-CW-.R";"7sU@rYJ.hrg","7^[cDlHDNmSpje?s";"7\"!OnJJhi`fJEsApQe:T^7iASbHTO9lM5";"7sNB:fs/BXR","792sNe-fDCV7*\"+t9_JJ";"7l!>Dml!)ejp.-\\[phGHmph\'h[p.-\\[l!>Dml!)5jphGH[l!>DmlQ","7!f*tgrbLZ";"75*[O\'Q9k%/5\"bY%(<R8","7/IfTY5ZF>";"79=<";"7-22LU7r","7H\"?h>/BFMj","79_I=8rY1/]";"7o0tiV5(=7XbHm@*MJ74pbHO*`MVoo29h&\\3-8j";"7MF\"","7!8IZh";"7Q!<76/SU(80D";"7QK&8XrU";"7!O@)I+N(Dc\"1","7st7%:MI?/mrU";"7\"\"#u(/md:2b0R>nB3I:mHjfJ","7MVB[.-8g+i","7!f*^.M-]NSb-^I(";"7o0tiVQW:hE7dON,rbrJuHLJt","7HG\\6)^*";"7(.E*.5l","75(TAY7cpo\'-8Sr[rY1Q]7*,OtbokIX-XXuPH:e?pb-^I((PUB%7nL$t7*\'(9";"7/If\'KQa)Q,+N.Fd\"%./M!\\","7o0tiV5(=7Xbs:#Ys9M[&bsI(_st7\"qHGY3\\";"7o0tiV5(=7XbHm@`7*\"Kl^#$PUMrR9","7\"a3o39X,8";"7s!I)m/b1_ArN";"75Gt3:H@","792sNeo$23I+aL.&\"T@^";"7l!>Dml!)5qp.-Gjl!>RTl!)5jphGH[l!>Dml!)5jphGH[l!>DmlQ";"7s/@,)/b1_Ar`7Wh";"79R`\"CH%fK3J?";"7Q\\%u&\"udLeM-]AR","7o0tiV5(=7Xb7LD[-=>VVs!DC\\BU0`.stH]7b(";"7-=#eos/Qk$bra[i7iAp";"7o0tiV5(=7XbHQ(cs#gJ.bsDiS","7\"5,;a9.,1T(.j","7Q6Zda\"%q","7H\"?ek7*Ta","7!MSf,Q60>)\"1","7QW:c9^*","75PKKcMIqkQ-f11m7V";"7phGYpph\'h1phGY1phGYpph\'Mjl(TrqphGYpph\'h1phGY1phGYppO";"7-8/6;HDa\\hJ7";"7sNB(WHDs","7HDEfN-fjUo^*";"77nZIt","7MJH8";"77CG+5M$cgB-8/6;HDa\\^7*2gSHD4R!-8t>;HT@StMr(4<MVZ#","7-f17S-X_","75PA*F98Kp%5l";"7HjV7jM5","7o0tiV5(=7Xbs.C`rYm9,-f1A!-8j","7\"aC3GQm\"(f";"7s/!";"7/b1f,HDDg6","7@oq\'i!84Q%\"tm+";"7o0tiV5(=7Xb7r;87c>gPbsI13";"7sU@\"ls!16PrN";"7HG\\B#-X*2C-fIk","7Mrth9","7Q$JXNQA3r_HG\\G","77]`,u","79pM!^HDEUhsaZ";"7-X3P$!8#VYrU","7!f*^_MFDGq!Xg+a-=P$tM-]NSphG&";"79.T7q7c>gPrU","7/@-`*5%t";"7Q\\%dNJhi`I7*[Dp","7M>j<","7Hj-:UHD-h";"7]Wng7!^6S","79XOnS-8uCjM/MnUrO*^MHD-h";"7-XX7T";"7\"%(6o+N1#[\"QgC","7(c8rKMJ7d5dAU@Gs9KK\"bJGO[73S#lHD=\\dH%D6[M-l]2s6K0h","7Q!<76/SUmI\"%9m=!\\","7s!1&3rO]TOMVa","71V";"7p1:>aH:AV2H:A;)7c)qt";"7Qo6%eH10O?Hl";"7phGYpph\'h1phGY1l!>ROph\'MjphGH[l!>Dmph\'^[phGY1l!>DmpO","7JR,%;","7QKY[E-=t3\'-p&NoHDJ0Est\\";"7/lATh7L1k\'-:7ApMr-V\"","7s6?";"77C;4SrN","7sa.1\\";"7QW#ILsafD\\(Pt.:bs.C`rY4]QQW#ILsaf6qbJD2\\bH@(,H:K:Os/lTkbs)Scs9n4tQ6&OTHTO9lM5";"7!XgA`s9Non-2L";"79RY]f7*\"CbM>:1usU\\(3";"7!:m;\'HDD[q-:7j2-:Xu#-8uZ","7(_kZ,","7s/@,)QA3uC","71F";"7s!DtS-:=+.-f$","7Hj-:UHD-_KM5","7b-oRmH5^.W2um.,safg3J<t$";"7B+E7";"7rO]@4HD66&st\\","77C,OI-8gub","7J_/F3";"7\"53$_(.E*.9qX\\e+N1nk\"1";"7!XgHU1r";"7s!I)m/lmH&9_J9","7JEsAg";"7QKY[E-=Urcs6FTh^gZtI73b;D7nZqcH%TV:","7s/@,)!86VfM5","7/bD*NrlDO07*\"C(ph%","7/lAa`";"7/4&^n!X!qI\"\"1?";"7!8(@?rYDNs","7/YQ!T7c>%fQW#I&(3>5j","7rl5g>-2B>nJ_un;r&`6Z^*";"7MVCVs","7rO*\"";"7QKYu";"7rO]*/";"7sU@MSHDaNUrU","7\"6IkXH%*#S-?Pb1^[-8b-f11m7V","7\"NdS%HDs","77Z-Cf","7Q9kb:(<RuQ(r";"79P[V)Jhd";"7QN\"oe9:2","7Qm\"(fb7ROPHDs","79_J-g7c9)%st7sWH%c";"7Qotu&MrT\\U-8g+i","79Pm8WJhd","7o0tiV!f@Z?M>8_[HD-.1r?Z/";"7phGHmph\'h[l!>D[phGHmph\'h1l!>D[phGHmph\'h1l!>D[l(TrKlQ";"7\"uR#G!:m;\'HDaW","7/VQiD+N4/,5io30","7rBQ=CJhQnFJP4s","7QW>bK!:m=P","79)\'@K9h&\\3-8j";"7(Cb_.bHe@U";"7o0tiV5(=7XbHqR\\stA\\,-?h-O-8Ug;^H,","7rO]OSrU";"7MFV!5JfJ","7Q+Q<EH:KO/\":","79pM9";"7!f*^_MFDGqQAQP,H%f.TH1o/[b(";"7s9nJT-fl";"7Q!<76/SUDU/>jI";"7Q$#f";"7Q9kn0","7!+","7!&_\\n+augqQ_","7MJf?0(PU5";"72f";"7Jh\"i$QmS";"7^[$d2";"7b-]hSrY4]QH5BSTsaf6q","7!f+8UHl","7Q$9%Cs9KKbs//NQ7nU!\'s!I2$-fl","79f(`\'!qNm\'9?";"7(<RD^!X/C\\\"5BSa\"(R_D0D","7HTO>4HDJ6f-ffC$MJ8W";"79h&\\3-8j","7/&ff8H@";"79R`\"rs!:&;QW4ts7ia","7sU@rfH6;/orYl";"7!qPOPr&&4>-fl","7QAQP&r&&mR","7-2L","7(Pt.:bM23=bJG`tH:AV]brE&sMJG\\l^sYd[-f1a0^H>?lH:eAVJh2QW7B9aSs6N3*s!?D\\-pK@bbol(u","7QAQPG7c=Cb-fqbQ-fjU2dAT","7Hj-Ils/!","7Q!<Da/S/Cg/IfTh","7/>1VX!A";"7/Y]UesUl?";"7\"tm\"^5%t";"7l(TrKl!)5jphGY1l(TrOph\'^[phGY1l!>Dmph\'^[phGY1l(TrKlQ","7(cHr,-8;";"7st?%t","7MJ7d;HD%";"7-X37_/b1_ArI0q","7QK&8Xbs6SK^[$:RrN";"7QA\"SYMJ?/Q-+","7HD!PlrV#nPM>jC)";"7(Pt#\'7*s*8-q318rq((5HG]It-:o";"7(Pt.:bs.C`rY4]QQm2dNsUuRG\"5r";"79PmeO7@6;.bsJ4OJh2X2-+","7oof7:5Q;;F","7!Y(en9pc%T\"(:";"7sgV7tbJjRBs9M[&Hl";"7b-\\bob-lo2H%3hr";"7(.E*./4&-Z\"(ua39q3fs","7/Y]UesUlIDH%DA","7b/6","75\"Oi^M->";"7H\"?),","7/4&^n!X/s[/-@3j\"(:";"7o0tierO]C>JhQ*#7iA1WsPu>2bJ8hUJ_IIMph.3GMul%JMJH\\2-22AdltI*F-1mhXb-c\'l-f6b^rYpA_b0)ZnMul,X7*3jpBk=AEbM^!s^Uq;jrU","70>BRIrFA,3HCSZAH%c";"7rlDUdr`#%\'-:^";"75O","7HGYtm\"a3u?rN";"7Q$9+,M>:@57*\"%Vbr-[\"HDD;9-?_G[H3j.\\Mr\"","7sgV7tQ$<)^-fGLOMS[","7(]pdebHe@U","7Qo#9CHl","7sgV.]-fG1\'-8uC`-::Dp","7]\\<D<!OXbS]WZ$","7sUl%P-\\";"7QK&8X";"7!:m$%HDr;&-f(K","7/4&^n!X!.\'Qa._*()!W";"7p.-GOph\'^[phGH[phGYpl!)A[l(Tfjp.-\\mph\'^[phGH[l(TrKlQ";"7Qe:T:s9nJPrAf\"/M/^)QMF>I","77CG+5M$cgBMFal\"Mka:nsafWBpT5.91QD44MFal\"Mk,";"79h&\\3-fp+c7cEBW","79;","7/lmH&b7SHUsU$KU","7o0tiV5(=7XbHQrYJF*^FMVWO;H@","7!Y:\'N+N(/h\"Tm76";"7M>=q[H%c";"7s!#1As/*qQM5","7s/Q<>7]a(c";"7MF>O)M`Z8!Bm>)DMuVcNp_[m,21";"7/B/]mMF)\\5H@";"7JEs6m(iF7K7*\"^";"7/lmH&b7S7BJhd";"7M-]\'Ps/B^";"7MVA;dJh\"N%M`\\4","77Z-C8-fjU2";"70>BRIrFBX\'Jh\"S\\s!?%q","7(<RD^!X!P#/VCkh\"(R_D0D";"7\"5BBL","7QAQPG7c=e5";"7MJ8*WQK&=/H@","7^[^o\'7*8s";"7(Pt#\'7*s*NHDa+#J_?";"7-XT4\"","7!Y<5$9BhDJ!A","7J<%";"7Q9kb:!&N_^","70;RIfQg_!Z/-@)j\"GB:a!\\","7J<:cX@k>:SHl";"7\"aC,DH%c";"7rY1;CM5";"7Hj`/gH@","70;RIfQg_!Z/-@)j9pM9","7MVl:B9EbdQ-ff?S7c9f";"7\"G@7E+N(DU(<G","7MS-o+st?%j7V";"70>CRe";"7(Pt#\'7*s*8-q318rq9]jMrR98MF`\'\"HG\\4^-fD`?M5","7QKYk=-?hW*7*M","7-:4Va7*3.;^C";"77*5uQ";"7brVi)-+";"7rBE";"7rO]-KM`k(NJd4";"70m?8G!+","7rb/W";"7phGYpph\'h1phGY1l!>Dml!)5jphGH[l!>Dml!)ejl(TrqphGYpl!)5ql(Tf","70>ZjDHZOf6M5";"7(<RD^!X/1f]\\E;N5io30","7/V*.j\"(ua*\"\"16\"Qas";"7(r","7r&P([MVWj\"7c1\"K1pY.@1=^is18WL";"7QA3@*-fm6f-f#>";"75\"+k-s9M[&/&.l8Mr\"","7(Pt,]73n0","7Q0MHo7Q[#]-XObCJ_0oE";"798geK!\\";"7rlj*p7*[+XM`)","7MF!!RrN","7Q60M%/V*.c+6%,h","7\"G@7E+6\"MN","7!&_\\n+abu\'\"(rT#\"\"<1-!YB","7\"j`_CQg_h\'Qa4K](V";"7QA\"u`HDJPFH\"jXEs/B^","7/O!\'`";"7-=gltJhg","7M-*$S";"7M>f:QrU";"7o0tiV5(=7Xb7E\\THDHT\'MFaeJ-pk/BrN","77Z-%1";"7\"53$_9qX\\e+6X<C!O/","75TrSFs9n4";"7o0tiV5(=7XbHChW/B/][HDD[`s!DMOH@";"798Kp%(.Ll%]gT)d+N(Dc\"1";"7!fQEWMSVos-$";"7Qm\"(fbsJ(FHO","7r&F_U-f$";"7rljL]5D\'L\'";"7HD!PlrmB@=b-l[UJh\"B2bJ\'YhJLufgb0pN#Hjq";"79pM!^HDEU3@$%/";"7r@Z_5H@";"7l!>Dmph\'^[phGY1l!>ROph\'MjphGH[l!>Dml!)5jphGH[l(TrKpO","7bJfoBMrR!(Jh\"Bb";"7!f@^qHCu^Y-$","7brtJSrlDa7Mk;]CHDD;9-?_e\"JhW];MF`n","7phGYpph\'h1phGY1p.-GOph\'^[phGH[l!>Dmph\'^[phGH[p.-GOpO";"79L7*?7iKT%^\'>,","7QA3@*-f$","7/-@iFQaJOY\"(u],\"1";"7sUlIY-+","7p.-GOph\'^[phGH[l!>Dml!)5jphGH[l!>Dml!)5jp.-\\[p.-GTlQ";"77*Oq8s/l*","7Q!<76/SU+O0(","7\"6IkXH%*#S-?_=Brl(87sU@MSHDaNUrU","7Qo6q69_JHUs!^","7sU@MSHDaNUM[I>_","7rl\'*3rYl","7sNBJlMr#!U-\\","7p.-GOph\'^[phGH[l!>Dml!)ejl(Tfjl!>Dml!)5jphGH[p.-GOpO";"7r&FG";"79_4COHDJbnJ_u%us/l*","7Q$<qebspX_","7J;";"7JEs6m9RP?&";"7l!>Dml!)5jphGH[l(TrKl!)5jphGH[l!>Dml!)5jphGH[l!>DmlQ";"7s:","7QAQP,H%f.TH1o\\ibHbgJ5(=H&M>:75HDs";"7QN@DM+6,.*5Z_Y*]\\4#0","7l$U\'tr`1qOBm>ngBm>n&Bk=ED","7st?%tQd";"7!f3pkb-oRmH5^.Wb-\\bob-lZ\"-XY9s^sodBb-lZibHbgJ5(=H&MF9*kMJO%Xph%","79.T@AMulkQs/ADdsNOO5rBQ=CJhiF)M-]CBbrVi)-+";"755_DAs/btas9g2Er&j";"77QsK4HiJDLr/";"7Qt4%R/-Q+","75D\'L\'QAQPG7cX";"7phGYpph\'h1phGY1l!>ROph\'MjphGH[l!>Dml!)5ql(Tfjl!>Dmph\'^[phG&";"7p.-\\m12T=[ph\'Mjl(T_jl!>D[p.-\\m12T=[ph\'h1l(3","7(c8B67cEbm";"7(c8rKMJ7d55DG?a-XF";"7s/@,)/&.l8MHm)P";"7QN@DM+a/.a9.,Sq92X`","7HDE8";"7-$";"7/4&^n";"7QA*3Xr&F@csp";"7HjVJ1Q+%+#","77iM]-73b[","7\"/S@&rm2WTs/Q(jbHOOTM-cW/sa42_rYBHV-XXuP7*\"Cb7*P","7ltIj&b-9","7HD-.i";"7J<:E<-2%]","7925;E+N(D&(V","79P[V)JhiF)-8gD2H1J","7br)YR7XX#LbJfoiJhbAb-fqbRH:eL>s/AD+brRsiMVUX^7nU/[H6l-l7i]<*","7QKYk=-O90F-\\";"79R`\"\\s/@J2b-WYur&P9";"7/b6VPs!1D";"7QAQPG7c=Z\\7nZqcH%3o\"MrRK<s9gk`-+","7Qm\"(fbsJ4&rBQ5QrAqT?sUuR5R>5","7QW>bn","79EMNJ7c:[#J.h6$rOKf_!:m$%HDr;O-8UUtrN";"79=)";"7!8(7A","7(E[FM!\\","79.TrqHG\\B*rA8o[s!1D","753\\MEsN@m.JXV\\K^*";"7!Mn;C\"5*F&Qt4q50D";"7rlj*bHntV6rYD[","7oQ";"7o0tiV5(=7XbsJ1F-2%:j^#$nG9?","7sgV7t9LJpI7*\"+t";"7(hH$O!MnEn]\\>O?Qub";"79_4COHDJ9F7F","7(nNu%rOKUT^[c_l";"7/lATh7LpT0-::@)","7QKY[E-=#edMubWp-f?:$";"79RY$?b+I_,MI?/mMulJ0JPs25-8gQ2^(-1<MD";"7Bm>%I";"7\"53k";"7sa]","7(Cbr<Jfkta@k-u","7rY1Sb^[MN?7V","7\"6IkXH%*#S-?Pbi-X&*d7nU!U-8S-","7(c8rKMJ7d5bs(<KH:eD4r&UA37c!ScbJjRBs9M[&Hl";"7/bjhO!:m=O","7phGYpph\'h1phGY1p.-GOph\'h1phGH[p.-GOl!)5jphGH[p.-GOlQ","79LIYt7*\":<-8g+i","7HjV&l-=;","7!=7W","7!&r*H/S(","7Jh,O\\";"7\"NdSA-.S/\\H@";"77]-<)+A:I.pje?s","7^;%";"75D;rNr`6X`HG`","77*2(cHC/Y8","7-puffs/])Ds/V","7sK2","7(nNu&!f*^.MJ8\\I7*2-";"7phGYpph\'h1phGY1l!>Dml!)ejp.-\\[phGHmph\'h[p.-\\[l!>DmlQ","7!f*t\\-$";"7o0tierO]C>JhQ*#iAWtciN*[41Z]H:@3uQ--f+.MH10rhbM^!6-fDjsb-]l[b0pNjHjRDdB3F#FbM^!CMJ7u[MuSe;)Et)6Bk=Z<i\\kFM-1m.^H)G_8)l6Y;MuVOo","75(TAY7cp+4-8Sr[s9nJT^[J";"7MSV^Qs!o";"718Z1","7QAQqNH%f.U-=>ViHDLuRH%c","7Hj`/gHZ%2","7r&P([MVWj\"7c1\"K1p]sJ)OXr<)^`mL","7Qt>m%";"7(<RD^!X/1f]\\E;f\"\"<1-!YB","7!f*^_MFDGqQAQP,H%f.U-fB\'1s!1nhHl","7\"NE#GH@","7MV]O9";"7QAQPG7c=Cb-fqbQ-fjU2p1:[D^#mn2s!1D","7\"a3o39=<";"7\"53$_!&N_^+6Xs&92c";"7o0tiV5(=7Xbs)B*-?hZqs/Q=";"75D;?OM>jSkHnJ7ZJh,gV-fl","7sNt";"75D%J5-fIk";"7lUmE.);";"70VUig7B9ht-2Z\"s5PKKcMIO=R-fqb/-qq1fHl","7H#\"Y";"7^sYd[-f2#L-bTcKJ7","7!f@!AHl";"7B3FJG2i4mY1BWAhl#e?4Bk=ED";"7(c8rKMJ7d5/lAW*rN";"7\"Nd1q","7Q$<qebsI1?-\\","7(hHV8Qt4q50D","7J.hJlQkokL^[*;-","7sgV7t";"7H#M";"77i]K.QAQqArN","7JL4","7925;E+aN3?\"1";"7(Pt,Z7*T:2H@";"7HG\\B#-X*2C-fIk#M`*2";"7os;M>X6V","7HDEfhs#gQ";"7\"(rl\'+6Tu,Q6I","7H5O,1J_/F3","7!YDWq+N(DU(<G";"7QkMESs97";"7M-cfVJhd";"7rU";"7rY1)","7o0tiV5(=7XbH@(qrYDYs(*MC%","7^]","7sao";"7-pu3u","7Qm\"(fpCQG>^[-q3M&HsEH@","7MV`","7/V%>u\"%q";"7o0tiLrOCV0o#>^\"bM$RJdAj`_","7!Xg7p-qq^";"75(=OK-=gQk/^*acs9N!=rO\\$\"9_J-hM-]AR";"75(TAY7cp+4-8Sr[-8/DibrEX/H:eGUs/+KiHD=\\)-8uCjHl";"7R$","7Q0Mt@9.T7q";"7^sodBrU","7QAQqArInYOrYp&;7*s*KHT^6&M5","7r&F=","7\"j`_CQg_\'K04TO3!X/7#Qas";"792\"@@";"7Hj-61";"7!Y92?+6q0A";"7!MnZ`0D","7(Z=A?)l>X+","7dU","7MVZ*/H%c","7o0d0EQW:hE7dON.rl?N0b0)Zsrlj*(Mul_CH#[#biK^2","7(Pt#\'7*s*dQ6&OTs/@6ubJ?2tMS;n57*q?*Jh\"l";"7l*";"7rbgBV";"7bD","7M`ZF5rBBlBM5";"7Qa>dZ(V";"7\"gpQ\'H()ieJh2SW";"7Q!.S7\"9p\'a0D","7!MnE892;He]\\\"";"7o0tiV5(=7XbHQrYJF*$,JF*=<QAN","7J<:E0M-]j1","7H5e.3H@";"7MVl:B/b1f,HD%","7QAQ.\'MF`R5QkokL^[J","7\"tm\"^","7/^*acsUuR.H%DnU-:+tuJ_0r9";"7o0tiV5(=7Xb7S4mbsJ4F-fZ","7MVApQ-=bk","75ZaA70(";"7!MnEC/SU(80D";"79)\'@K!XW$_JP47)";"7Q!)17()!Q60m?-N","7/bD:D/&ff8H@";"70\'_m3\"f","7M>(QpJ_uBqHDT";"77C,_/^7d","7!:m$%HDr;0!f*^_H@";"7QA\"ua\"gpE";"7QK&h)7nZ,f(Pt,Z7*T:2H@";"77iA1?7c>tk";"7-=gltJh\\.NM-lD4";"7!Y1\',/SU6;5nAZ","79RY$?";"7Q!.S7\"91kO/>jI";"7J..q&J_?";"7()`fL+aKrY+a/.P";"7M-*$SQW>bKrU","7\"udCq";"7QKY[E-=U1A@$%R;!f\\Zq7*P";"77C\'2","7!:m$\'-.dJSHD-Pb-fl";"7-pk4iQo6%EJ7";"7H(X";"7sN^33HZQD,sa:IP";"7JEs6m","7H(\'","7Q$tuNMS[";"75D;Dcs!?%q";"7bra&@rY1+QbJjRBs9M[&Hl";"7MV]O0";"79R`\"7s/B@iQ0MTD7c!/BQW4ts7ia","79RbfP-A","7o0tiV5(=7Xbs1387O#HFM>:s";"7\"/S@&rm2WTs/Q(jbHOOTM-cW/sa42_rYl";"7QkeiEr&P1d-X3h";"79.TrqHG\\B*rN";"7b-]hSrY4]7bra92^#m6S-J(L:samA37*q?*Jh\"l","75D;BG-=0d/bHCN3rO)";"7/Y]UesUlIXs/ihN73b42","7phGYpph\'h1phGY1l!>Dml!)5jphGH[l!>Dml!)ejp.-\\[phGHmpO";"7Qe:TMrbgQ2/Bub\\rbnBi","7QKY[E-=#&r","7Q0MT-H%TcarYl";"7(PUB%7n<","7QAQqAr\'q";"7QN\"oc9=`";"77]`Dg";"79_4CEHZm-","7dN","7Hj-.1Hl";"7M-PLYJ_00","77%b4B7c)9%rOl@u";"77C,_/s/C>ms/l9KM5","7Hj`.l!M&[","75PKKc/J2fL";"7sNB)mH%D@";"7Q$#.\'rN","7/J3";"70>\\Z_HDs","7\"%(6o+aS&`9=g6";"79qT5h\"3DU","7(nNu&Q\\3uYHDJsC","79EMNJ7cX","7J7","79R`\":s/Qk$bs:KDs9gB";"7rlj*0H%f.THdc!";"7!=7ONM5";"77QsK4Hl","75C5la]\\Irn9p`";"70VNkf","7rl5g>-2S";"7Qe6%LJhd","7(]pdes/@6u","7QW#ILsaf6qp1M";"7Qe6%LM`Zt&-qqAg","7b(","7QA%SqrU","755d1D-.d7T^?\"VpH\"?O","7\"53$_9qX\\=9pc%f5io30";"7rY1SbMJY";"7+KXe?";"7QW:c9J?","7QAQPG7c=C1s/Cd3dAT";"7os;akbJ+r@o*","7!A","7\"t@qJs!<4W","7-X3P$5%\\K:","7o0tiV5(=7Xb7Rj.HDR%2M/^,-bH@(IM>jC)","7!ML*=98eu","7HTOBT!Xg?FMJY","7Q$9+";"7brVB+","7HTOBT";"7QkiT%J_g_R9_J-hM-]AR";"7(Cbr<J8\'o`\"N_(e";"7Q!<Da/S(";"7Bm>)DMue*";"7M>f:)M5","79?";"7(nNu%rFs4frl\\","7/bD:D","7H3j<gH@";"7\"gpQ\'H]]U.","7\"Nd/h-=0d>";"7MF9*kMJ81YMFabf-8uZ","77*5uQs!I1%r&FF#";"7(PU4KHDs","7HTO4W";"77cR5";"7s/BJkMSVX","79_4C?-2Bsa-ffN\"-+","7\"5,;a9.,(_/4gRF/>D^E";"7MS>_iH@","75iOOE0JiO.!^1^a!A";"70>ZfA-f16","7/VQiD+N(D&(V","7MVl:BQ$IqA^\\HdTM`lN(H%c","7Qo#qFM5","7/@V=NMJqPGrYp&;7*sc";"77C[&u(*MC%J_?","7l!>Dmph\'^[phGY1l!>ROph\'MjphGH[l!>Dml!)5jphGH[l!>DmlQ";"7(PU5h!Xn@6H@";"7-\\";"7MrEarHD%","7rYpP4HDELLM5","7MVZ*/7*\"Z","7Mj","7rY1;\\s/Qu;Bm>)\'igR23b0=nN21","75Q;Hc5io.//>@";"7MS-ZJH]\";)Hl";"75PA*WHGt";"7!XnSrrN";"7^soL1QmS","7rBmlH";"7/Bub3\"!O&Z-X*&OHG$7";"7HjVFOH62&u-XF";"7Qo#J,QAQqArN","7M>4Q4","7!Y<5$9f(`\'\"(u)","7Q$IqA^#m[m7*d","7\"Nd/NH:K*IM>:M","75]-jX+N(Dc\"5@j`","7Qo#J,/b6!U","7!YDYL\"5q=\'\"5BuE";"7(PU(XHGoqfJhQ%,rY2qCs!<[u";"7/>DWa+N1O3()/RqQ60@","7/b1f,HD%","755d1D-.dJl","7/l\\\'O7iASb\"NL4,","7(<RD^!X//PQa4K](i>b.\"5q\"";"7p.-GOph\'^[phGH[l!>Dml!)5jphGH[l!>Dml!)5jphGH[p.-GOpO","7rO*5s","7M-]D4Qe:T^7iAV","7b-^tp->4@Gbr-[1-8uCjHl";"7!:m$%HDr;0!f*^_H:efBs9Nt,","7s9NTh";"7Q6&OTH\"?s&s/+4c","7!^6>f+aPmq/VN";"7\"/_O`rYDS;stH$ss/!","7J_/t";"7\"UR6DrU";"79pM!SMubkfMJ:1]bs6Ljs!?68rN";"7\"Nd/NH:K*IM>:^(Qo90=";"7phGYpl!)A[phGY1phGYpl!)A[phGH[phGYpl!)A[phGH[l!>Dml!)ejl(Tf","77QsK4HiJ7-7V","7sKd4l";"79Ebd,HD%";"7rYpP4HDELZ-fjUo";"77*\"nm";"7r&&2";"7\"tmX!MJ7(S-f16","7QN@DM+NX","70>lj?rU","7r/","7o(@Jm5ZJ\"i";"7sNB:O7*d","7]Q","7o0tiV5(=7XbsI(_st+O\'HDEMVbs(q,Hl";"77iMer^C","70VNb#MVeZWH@";"7QW4ts7ia","7!OC)Z\"53b","7!XgfF7c>%TH%T`?-fD(uH@";"70>BRIrInY?-fZ";"7925;E+N)$*9fs","7]\\ICG!A","77]-uWrU";"7!fQ!.HDs","7rO]r4-.]!jrOeU]-+";"7(PUB&739&#-8S-";"7M>=q[";"7/b#!#MSVlQ71#LN-M;s","7o0tiV5(=7XbHZ&$BAI-m7*3.;^D?^krbSN#HDs","7/YAahsafD";"7(<RD^!X/1f]\\E;f]\\4#0","75iu","7Qe#)ZM;m2\'H@","7^7Ql,st?r","75(jpOrFBXA(Cc]1","7HDEfer&&2";"7(*MjfMVeZWH@","7/lmR\'bs7.L-=Snm","7Q\\%u&(PU(i-=SOg";"7\"tm\"^bJTj;sd77Vs#gXPH1!\\","7(3>5j","7(Cbr<Jf^MF-:7OSrY1l\\^W_df7c-4PrN","7-=gD5rYpA_","7!&Pl=5ZaO`(E\'$:+anS8+6%3*]\\Irn9;","7MrRE5","7(iF7es/l3m\"53k","7HG\\B#-X*2C-fIkTH6b","7b0<UHMS>_2M0s";"7/lAa`!:m;\'M$u";"7MVl:BQe:T^7iAV";"7Qm\"(fb7ROPHDHTh9;","7-XT4\"9L#\'frN";"755dp.(PU4KHD-h";"79R`\"Hs/l..H10UfrYBs?s!DMOH@";"79qX\\e!A","7-=gNRH#@I.","75TrdKJ_K8","7/-^W,/J#kj/>D8C9:9+","7s#gJXJPHU\\HG$7";"7Bm>RJ7]aK2H%*j1H(pcHBm><";"7QAQP&s!16PrN";"7sa:IPQkokL^[J","7-S`?JrN";"7-pKDpHl";"7/4&^n+N41Y\"Tu","7!8(H,!f*^_H@","7(Cb+E";"7925;E+aS6\'9p`","7o0tiV5(=7X","7rYDr>","7MSVooQo90=";"7M-]D4!f@!AHl";"70>ZfA-fl";"7o0tiV5(=7Xb7VU*^(7`V@+gJ0bHO:.7r";"7Q$tuNMS4f&MS>_2sto","79X,8","7sU@)[rIc>f-$","7bJfoBMrR!(Mu>","7!f@ehJh\"NG-8g+i";"7-=gNRH#M";"75l";"7!f\\\\uHD%","77%b4B7c1GrH%f<_-=;";"7rBa","7o0tiV5(=7Xbs7%e7@D?F-f7AlH10/o9?","7QN@DM+6W";"7phGYpph\'h1phGY1l(TrKl!)A[p.-\\[phGHmph\'h[phGY1l(TrKlQ";"7!qP(<bs9S`H\"j@";"7^[^oCM5";"70>CVe7Cn";"755d1D-.dJ2","7/If\'h0[C2D9:X","7/&.l8M/^XoM/^65s9KN";"7(c8rKMJ7d5bs(<KH:eD4r&UA37c!ScbJD2\\bH@(IM>jC)bsH%TbJD-]sd7$ts/QE","7!.r^bHGPYZJhS","7lC","7dAU/eM/^J/s9Nt,","7rBQ=CJhQnFJP4H`H6b";"7phGYpph\'h1phGY1l(TrKph\'^[phGH[l!>Dml!)5jphGH[l!>DmlQ";"7MJf?0!8IZh";"79_4C?-2B\"DMSVo9","7HG\\[k","7/lA8\\-A","7JhN";"7HjVJ>rN","7Qo6%eHl";"7!.RtT7Ru^O7ia","7sgV7tMuls0M/^XiH%js`","7o0tifb(";"7pB";"7o0tierO]C>JhQ*#J_gpp-2%ClBm>R[QQX,;Muln/-X,Q$J.hJlp1@Q,brE\"\"st+q>MJ7dd2dnu\'H(Vb;7*\"%VbJf^4s/+4cb0)Zs2u17<s!X;iH)5K:b-\\bo7c-N]Bk@","7QW#ILsaf6qp1:2DrYj5prY1/Q-fDrk";"70\'_m3\"#f9O!Mgo\'";"77*qu`-X_","7!&_\\n+6Xb@5i/","7M>f:(-+","7Jh\"i$";"7/b6!U";"7sNBJlMr#ejHO";"7rl5g>-2B>nJ_un;r&`#6rYHgS";"7s/@,)/b1_ArN";"79dJ-EJ.h6$rOKf_\"!Cnes/+M2";"7s/BR","7s/@,)/b1_ArFB0F7ia","7rlj*p7*[+G-87";"7pO","755_+a";"7o0tiV5(=7Xbs1IIH(V6BbsDiS";"7M>(QpJ_u.47d;`K^]","79Ebd,HDaW","7\"aC3G","7phGYml!)A[l!>Rjp.-\\ml!)5jphGH[l(TrKl!)A[phGH[phGYplQ","7QkWsErO]To\"53k";"70>*paJ_?";"7!qP_\'","7Qm\"(fbsJ(FHfg*0\"L&SSH)jQobJD!RHDEg\"21";"7st?930>\\Z`-.V","7Q$IqA7c9fWQA\"m`HDaNUrU","7!^Da^\"5q5R!O@[I\"1","7(Z[K67*\"CbM-l]27i]K.phG&","7rlj*(rU","7-.BV)r`.(";"792\"@@+anSO5C\"\\%0D";"7!f@Yc-=;";"7st7ZkHDs";"77Z6,KrOl@u";"7(nNu&/@-`IQmS","7ph\'h)ph\'h)ph\'h)lQ";"7\"5,;a9.,B_/VOn,";"7rB]\\/H@";"7sU@Q#s/!","7QAQP,H%f.U-=>%GpO","7(_k8e+a/.P!A","77c2";"79pM!$\"gpQ\'H(2";"7p.-GOph\'^[phGH[l!>Dml!)ejl(TrqphGYpl!)A[p.-\\[p.-GTpO","77%1";"7Qotu&H5l#jQotV","7!8(7Kste";"7b/N/,b(";"7!MnEn]\\[";"77C,_/rYpP4HDEE","7-f#2r-89lis!?Ih";"7M>f:Q7QH>";"7(hH5I+an/g\"1","79.3*","7H\"?\"AJ_?";"7\"/_L.bM23=rAfn97ZJg3H:eDurOA0","79pM!Y/>D^E","7-+";"7(hH5I","70>B5F!8IZh","7Q\\%u&brEK]@kJEpsUB>VH%3o\"7iA1BsUB>VHDHj5-?P25H:eOk@$%R;bJD2\\br-[5rq\"";"7H(8","7MFV$Qs9Nt,","77*QM<-2L";"798KpG\"GOja+N1j_92p^Y\"%./M!\\";"7925;E+aS6\'9)m9q/VL","7-:4VD-8UUtrOa","79_4COHDs","7o0tiV5(=7Xb7uljHDX","7MSVM";"7p.-GOph\'^[phGH[phGYpl!)A[l(TfjphGYpl!)5jphGH[p.-GOpO";"7sN@1jHTl\"PHCdH\'7*\"%V","7RA","7MSVZ7(iF7@HDEqb^[^)","7l!>Dml!)5jphGH[l!>Dml!)5jphGH[l!>RTl!)5qp.-Gjl!>DmlQ","7sa:IP9RY].H#M","75j=1)Hl";"7/b1f,HDD[jH%Dr","7l(TrKph\'^[phGH[l(TrKph\'^[phGH[l!>Dml!)5jphGH[l!>DmlQ";"7rO]*/(iFH";"7braKirBu@";"79Ebd,HDD;SM`\\>+H5O,1J_/F3H%*jb";"7(Cbr<Jf0h&7*=2","7MVt";"7!86VfM/rWOMS>_2sto";"7Qm\"(fb7VU*-fY";"7l!>Dm1BFV[ph\'^[p.rkjp.-\\[l(TfT1BF>jph\'^[p.J","70>BRIrFs4f-:7OSrY1l\\^*","7/B/][HD6P&-f(`.@R";"7HO";"75(TAY7cpo/p@","7\"!Cnes/+M2bH+?*rm2EaJhWi7RJG","75(jpOr`#XfJ=5TfR$";"70;RIfQg_TYQas";"7s#gM3-=j","7!MnE&(L]s\\5ZEN</r;","7Mr)fBMVeC2HG\\k4","7-:4VFs!?Ih","7QNX$`9=Wn_/J4EL+NDLY!\\";"7(iF7fs9D","7Q0Mt@","79_I5c-f1Bl","79RY;."}for w,n in ipairs({{1,2173};{1,1033},{1034;2173}})do while n[1]<n[2]do m[n[1]],m[n[2]],n[1],n[2]=m[n[2]],m[n[1]],n[1]+1,n[2]-1 end end local function w(w)return m[w+8229]end do local w=math.floor local n=string.char local U=m local l=type local F=table.concat local W=table.insert local A={["@"]=39;X=40;s=31;["`"]=62;["5"]=23;M=37;["/"]=27;V=8,Z=47;f=69,m=3;["%"]=49,["("]=24,K=55;[":"]=42;R=17,[","]=58,Y=65;["="]=41,["\\"]=84,["9"]=25;t=80,["<"]=43;U=81,b=10;["["]=4;["]"]=20,["."]=70,k=1;e=56,W=83,["4"]=6;l=11,n=46;[")"]=16;["\'"]=59;o=29;["^"]=38;P=73,B=12,d=18;["!"]=26;g=82;["$"]=2,D=51;["1"]=15;a=53;i=19;["#"]=79,["2"]=13,C=48,S=9,F=63,G=50;T=77,c=74;[";"]=5;["7"]=33;[">"]=7,["*"]=75,O=66;["6"]=52,L=45,_=72;N=54;q=67;I=61;H=32,["-"]=35,["\""]=22;J=34;["0"]=28,["+"]=30;j=78;E=44;["?"]=60,["8"]=68,p=14,r=36,Q=21;A=57,u=0;["3"]=76;["&"]=64,h=71}local t=string.sub local R={k=26;J=40,["8"]=21,y=34;["+"]=14,["/"]=45;Z=9,m=27,P=8;C=30,["9"]=54;L=46;G=48;["6"]=36,q=4,V=1;["7"]=25,v=16,x=53,z=7;Y=24;r=12;h=3,p=32,D=63,i=28;O=19,s=49;A=38,S=47,H=41,e=18,X=22,["1"]=15,I=20;c=42,T=56;w=43,W=60;d=37;n=6,B=61;R=29,U=2,["3"]=31,o=17,b=50,a=44,g=59;K=51;t=11,["4"]=13;["2"]=33,M=52;N=10;["5"]=58,Q=0,f=5;E=23,F=35;j=57,u=39;l=62;["0"]=55}local p=string.len for m=1,#U,1 do local v=U[m]if l(v)=="string"then local l=t(v,1,1)if l=="3"then v=t(v,2)local l=p(v)local A={}local S=1 local y=0 local O=0 while S<=l do local m=t(v,S,S)local U=R[m]if U then y=y+U*(64^((3-O)))O=O+1 if O==4 then O=0 local m=w(y/65536)local U=w((y%65536)/256)local l=y%256 W(A,n(m,U,l))y=0 end elseif m=="="then W(A,n(w(y/65536)))if S>=l or t(v,S+1,S+1)~="="then W(A,n(w((y%65536)/256)))end break end S=S+1 end U[m]=F(A)elseif l=="7"then v=t(v,2)local l=p(v)local R={}local S=1 while S<=l do local m=(l-S)+1 local U=m>=5 and 5 or m local F=0 local p=U>1 for m=0,4,1 do local w if m<U then local n=t(v,S+m,S+m)w=A[n]if not w then p=false break end else w=84 end F=F*85+w end if p then local m=w(F/16777216)%256 local l=w(F/65536)%256 local A=w(F/256)%256 local t=F%256 if U==5 then W(R,n(m,l,A,t))elseif U==4 then W(R,n(m,l,A))elseif U==3 then W(R,n(m,l))elseif U==2 then W(R,n(m))end end S=S+U end U[m]=F(R)end end end end return(function(...)local m=606849621 local n=245662005 local U,l=pcall(function()return game[w(-7527)]end)local F,W=pcall(function()return game[w(-7886)]end)if not(((U and l==m)or(F and W==n)))then local m=w(-8025)..(tostring(l)..w(-6148))if not pcall(warn,m)then print(m)end pcall(function()notify(w(-7645),w(-7342),5)end)return end _G[w(-7444)]=((_G[w(-7444)]or 0))+1 local A=_G[w(-7444)]local t=w(-6759)..tostring(math[w(-7306)](tick()*1000))local function R(m)return m..t end _jQv7={[w(-7912)]=w(-6629);[w(-6488)]={w(-7130);w(-7674);w(-8112);w(-8062);w(-6862)},[w(-8055)]=w(-7083),[w(-6436)]=6,[w(-8131)]=3,[w(-8045)]=.32;[w(-6310)]=25;[w(-7162)]=4;[w(-6964)]={[w(-8201)]={w(-6575),Color3[w(-7521)](90,220,130)},[w(-6433)]={w(-6477),Color3[w(-7521)](255,190,70)};[w(-6359)]={w(-7400);Color3[w(-7521)](255,85,85)}},[w(-8122)]={},[w(-7767)]={};[w(-7415)]={},[w(-7406)]={},[w(-7882)]=0,[w(-7295)]=0;[w(-6370)]=0,[w(-7060)]=false;[w(-6720)]=false;[w(-6170)]=false}_jQv7[w(-8096)]=function()for m,n in ipairs(_jQv7[w(-8122)])do pcall(function()n:Remove()end)end _jQv7[w(-8122)]={}_G[w(-8008)]=nil _jQv7[w(-6170)]=true end _jQv7[w(-8078)]=function(m)m=math[w(-7853)](m,0,1)return 1-((1-m))^3 end _jQv7[w(-6602)]=function(m,n)local U=((m+n))%1.4 local l=0 for m,n in ipairs({0;.18})do local F=U-n if F>=0 and F<.16 then l=math[w(-6932)](l,math[w(-7989)]((F/.16)*math[w(-6461)]))end end return l end _jQv7[w(-6146)]=function(m,n)local U=Drawing[w(-6146)](m)for m,n in pairs(n)do U[m]=n end _jQv7[w(-8122)][#_jQv7[w(-8122)]+1]=U return U end _jQv7[w(-7625)]=function()local m,n={},#_jQv7[w(-6488)]+1 for U,l in ipairs(_jQv7[w(-6488)])do task[w(-8109)](function()local U,F=pcall(function()return game:HttpGet(_jQv7[w(-7912)]..l)end)if U and(type(F)==w(-8193)and F:sub(2,4)==w(-6437))then m[l]=F end n=n-1 end)end task[w(-8109)](function()pcall(function()local m=(game:GetService(w(-6427)))[w(-7686)][w(-7991)]local n=(game:GetService(w(-8125))):JSONDecode(game:HttpGet(w(-7847)..tostring(m)))if type(n)==w(-7093)then _jQv7[w(-7055)]=n end end)n=n-1 end)local U=tick()while n>0 and tick()-U<_jQv7[w(-6436)]do task[w(-6585)](.05)end return m end _jQv7[w(-6642)]=function()local m=_jQv7[w(-7055)]local n=type(m)==w(-7093)and m[w(-7985)]or nil local U=type(m)==w(-7093)and m[w(-7053)]or nil if not n then local m=(game:GetService(w(-6427)))[w(-7686)]n=m and m[w(-6356)]or w(-8150)end if type(U)==w(-8193)and(#U>0 and U~=n)then return U..(w(-6496)..(n..w(-6148)))end return n end _jQv7[w(-6841)]=function()if _G[w(-8008)]then for m,w in ipairs(_G[w(-8008)])do pcall(function()w:Remove()end)end end local m=_jQv7[w(-7625)]()if not m[w(-7130)]then return end _G[w(-8008)]=_jQv7[w(-8122)]local n=workspace[w(-6994)][w(-6812)]local U=n[w(-7034)]/1080 local l=_jQv7[w(-6146)]local F={}local W=Drawing[w(-7166)][w(-6967)]or 0 local A=Drawing[w(-7166)][w(-7374)]or W if m[w(-8062)]then F[w(-6464)]=l(w(-8031),{[w(-7086)]=m[w(-8062)];[w(-6641)]=Vector2[w(-6146)](0,0),[w(-8048)]=n;[w(-6233)]=0;[w(-6160)]=1;[w(-7381)]=true})else F[w(-6464)]=l(w(-6969),{[w(-6641)]=Vector2[w(-6146)](0,0);[w(-8048)]=n,[w(-7167)]=Color3[w(-7521)](4,6,10);[w(-7818)]=true;[w(-6233)]=0,[w(-6160)]=1,[w(-7381)]=true})end local t=1000*U if m[w(-7674)]then F[w(-7038)]=l(w(-8031),{[w(-7086)]=m[w(-7674)];[w(-6641)]=Vector2[w(-6146)](-t*.5,-t*.4);[w(-8048)]=Vector2[w(-6146)](t,t);[w(-6233)]=0;[w(-6160)]=2;[w(-7381)]=true})end if m[w(-8112)]then F[w(-7971)]=l(w(-8031),{[w(-7086)]=m[w(-8112)];[w(-6641)]=Vector2[w(-6146)](n[w(-7186)]-t*.5,-t*.4),[w(-8048)]=Vector2[w(-6146)](t,t),[w(-6233)]=0,[w(-6160)]=2,[w(-7381)]=true})end F[w(-6566)]=l(w(-8031),{[w(-7086)]=m[w(-7130)],[w(-6641)]=Vector2[w(-6146)](0,0);[w(-8048)]=Vector2[w(-6146)](1,1),[w(-6233)]=0,[w(-6160)]=5,[w(-7381)]=true})F[w(-6633)]=l(w(-7293),{[w(-7293)]=w(-6099);[w(-7639)]=W;[w(-8048)]=20,[w(-6467)]=true;[w(-6953)]=false,[w(-7167)]=Color3[w(-7521)](225,229,238),[w(-6233)]=0,[w(-6160)]=6,[w(-7381)]=true})local R,p=440*U,3 local v,S=((n[w(-7186)]-R))/2,n[w(-7034)]/2+95*U F[w(-8225)]=l(w(-6969),{[w(-6641)]=Vector2[w(-6146)](v,S);[w(-8048)]=Vector2[w(-6146)](R,p),[w(-7167)]=Color3[w(-7521)](34,38,48);[w(-7818)]=true;[w(-6233)]=0,[w(-6160)]=6,[w(-7381)]=true})if m[w(-6862)]then F[w(-7467)]=l(w(-8031),{[w(-7086)]=m[w(-6862)];[w(-6641)]=Vector2[w(-6146)](v,S);[w(-8048)]=Vector2[w(-6146)](1,p);[w(-6233)]=0;[w(-6160)]=7,[w(-7381)]=true})else F[w(-7467)]=l(w(-6969),{[w(-6641)]=Vector2[w(-6146)](v,S);[w(-8048)]=Vector2[w(-6146)](1,p);[w(-7167)]=Color3[w(-7521)](30,110,255),[w(-7818)]=true;[w(-6233)]=0,[w(-6160)]=7;[w(-7381)]=true})end F[w(-7802)]=l(w(-7293),{[w(-7293)]=w(-6490);[w(-7639)]=A,[w(-8048)]=14;[w(-6467)]=false,[w(-6953)]=false;[w(-7167)]=Color3[w(-7521)](120,128,142),[w(-6641)]=Vector2[w(-6146)]((v+R)+10,S-5);[w(-6233)]=0,[w(-6160)]=7,[w(-7381)]=true})F[w(-6209)]={}for m=1,_jQv7[w(-7162)],1 do F[w(-6209)][m]={[w(-8011)]=l(w(-7293),{[w(-7293)]=w(-6099),[w(-7639)]=A,[w(-8048)]=14,[w(-6467)]=false,[w(-6953)]=false,[w(-7167)]=Color3[w(-7521)](90,220,130);[w(-6233)]=0;[w(-6160)]=7,[w(-7381)]=true}),[w(-7018)]=l(w(-7293),{[w(-7293)]=w(-6099);[w(-7639)]=A;[w(-8048)]=14,[w(-6467)]=false,[w(-6953)]=false,[w(-7167)]=Color3[w(-7521)](200,205,215);[w(-6233)]=0,[w(-6160)]=7,[w(-7381)]=true})}end local y=l(w(-7293),{[w(-7293)]=w(-6477),[w(-7639)]=A,[w(-8048)]=14;[w(-6467)]=false,[w(-6953)]=false;[w(-6233)]=0;[w(-6160)]=1,[w(-7381)]=true})task[w(-6585)]()task[w(-6585)]()_jQv7[w(-7129)]=y[w(-6822)][w(-7186)]>0 and y[w(-6822)][w(-7186)]or 64 y[w(-7293)]=string[w(-7620)](w(-8133),40)task[w(-6585)]()task[w(-6585)]()_jQv7[w(-6223)]=y[w(-6822)][w(-7186)]>0 and y[w(-6822)][w(-7186)]/40 or _jQv7[w(-7129)]/8 y[w(-7381)]=false F[w(-7294)]=l(w(-7293),{[w(-7293)]=w(-7520).._jQv7[w(-8055)];[w(-7639)]=A;[w(-8048)]=14;[w(-6467)]=false,[w(-6953)]=false,[w(-7167)]=Color3[w(-7521)](110,118,132),[w(-6641)]=Vector2[w(-6146)](28*U,n[w(-7034)]-40*U),[w(-6233)]=0,[w(-6160)]=7;[w(-7381)]=true})F[w(-6980)]=l(w(-7293),{[w(-7293)]=w(-6099);[w(-7639)]=A;[w(-8048)]=14,[w(-6467)]=false,[w(-6953)]=false,[w(-7167)]=Color3[w(-7521)](110,118,132);[w(-6641)]=Vector2[w(-6146)](n[w(-7186)]-300,n[w(-7034)]-40*U),[w(-6233)]=0;[w(-6160)]=7,[w(-7381)]=true})_jQv7[w(-6776)],_jQv7[w(-7673)],_jQv7[w(-7621)]=F,n,U _jQv7[w(-6951)],_jQv7[w(-7669)],_jQv7[w(-7648)],_jQv7[w(-7617)]=v,S,R,p _jQv7[w(-7406)][w(-7015)]=_jQv7[w(-6642)]()_jQv7[w(-7406)][w(-8098)]=w(-7531)pcall(function()_jQv7[w(-7406)][w(-8098)]=identifyexecutor()end)_jQv7[w(-7406)][w(-6193)]=w(-7208)_jQv7[w(-6720)]=true end _jQv7[w(-6620)]=function(m,n,U)local l=w(-7302)..m if U==w(-6359)or U==w(-6433)then if not pcall(warn,l)then print(l)end else print(l)end if _jQv7[w(-6170)]then return end _jQv7[w(-7767)][#_jQv7[w(-7767)]+1]={[w(-6063)]=m;[w(-7802)]=n,[w(-7462)]=U or w(-8201)}end _jQv7[w(-7119)]=function()if _jQv7[w(-6098)]then _jQv7[w(-6620)](w(-8171),100)else _jQv7[w(-6620)](w(-8115),100,w(-6359))end _jQv7[w(-7060)]=true end _jQv7[w(-7943)]=function()if not _jQv7[w(-6720)]then local m=tick()while not _jQv7[w(-8126)]and tick()-m<5 do task[w(-6585)](.05)end _jQv7[w(-6170)]=true _jQv7[w(-7119)]()return end _jQv7[w(-6260)]=tick()local m,n=pcall(_jQv7[w(-6640)])if not m then print(w(-7929)..tostring(n))end _jQv7[w(-8096)]()end _jQv7[w(-6640)]=function()local m,n,U=_jQv7[w(-6776)],_jQv7[w(-7673)],_jQv7[w(-7621)]local l,F=_jQv7[w(-8078)],_jQv7[w(-6602)]local W,A=tick(),nil local t,R=560*U,.346875 local p=w(-6397).._jQv7[w(-7406)][w(-7015)]while true do local v=tick()local S=math[w(-6444)](v-W,.1)W=v local y=v-_jQv7[w(-6260)]if not _jQv7[w(-7060)]and((_jQv7[w(-8126)]or y>6))then _jQv7[w(-7119)]()end if#_jQv7[w(-7767)]>0 and(y>.7 and v-_jQv7[w(-6370)]>=_jQv7[w(-8045)])then local m=table[w(-7007)](_jQv7[w(-7767)],1)m[w(-8004)]=v table[w(-6473)](_jQv7[w(-7415)],1,m)_jQv7[w(-7415)][_jQv7[w(-7162)]+1]=nil _jQv7[w(-6370)]=v _jQv7[w(-7882)]=math[w(-6932)](_jQv7[w(-7882)],m[w(-7802)])end _jQv7[w(-7295)]=_jQv7[w(-7295)]+((_jQv7[w(-7882)]-_jQv7[w(-7295)]))*math[w(-6444)](1,S*5)if _jQv7[w(-7882)]-_jQv7[w(-7295)]<.3 then _jQv7[w(-7295)]=_jQv7[w(-7882)]end if _jQv7[w(-7060)]and(not A and(#_jQv7[w(-7767)]==0 and(_jQv7[w(-7295)]>=99.9 and y>=_jQv7[w(-8131)])))then A=v+.5 end local O=A and(1-l(((v-A))/.45))or 1 local s=l(y/.5)*O local i=A and(l(((v-A))/.45)*30)*U or 0 m[w(-6464)][w(-6233)]=s if m[w(-7038)]then m[w(-7038)][w(-6233)]=s*((.12+.55*F(y,0)))end if m[w(-7971)]then m[w(-7971)][w(-6233)]=s*((.12+.55*F(y,.7)))end local e=t*((1.06-.06*l(y/1.1)))local f=e*R local B,g=n[w(-7186)]/2,(n[w(-7034)]/2-70*U)-i m[w(-6566)][w(-8048)]=Vector2[w(-6146)](e,f)m[w(-6566)][w(-6641)]=Vector2[w(-6146)](B-e/2,g-f/2)m[w(-6566)][w(-6233)]=l(((y-.05))/.8)*O local D=l(((y-.5))/.6)*O local r=math[w(-7853)](math[w(-7306)](((y-.5))*38),0,#p)m[w(-6633)][w(-7293)]=p:sub(1,r)m[w(-6633)][w(-6641)]=Vector2[w(-6146)](B,(g+f/2)+6*U)m[w(-6633)][w(-6233)]=D local Q=l(((y-.6))/.5)*O local L=_jQv7[w(-7669)]-i m[w(-8225)][w(-6641)]=Vector2[w(-6146)](_jQv7[w(-6951)],L)m[w(-8225)][w(-6233)]=Q*.9 m[w(-7467)][w(-6641)]=Vector2[w(-6146)](_jQv7[w(-6951)],L)m[w(-7467)][w(-8048)]=Vector2[w(-6146)](math[w(-6932)](1,(_jQv7[w(-7648)]*_jQv7[w(-7295)])/100),_jQv7[w(-7617)])m[w(-7467)][w(-6233)]=Q m[w(-7802)][w(-7293)]=math[w(-7306)](_jQv7[w(-7295)]+.5)..w(-7593)m[w(-7802)][w(-6641)]=Vector2[w(-6146)]((_jQv7[w(-6951)]+_jQv7[w(-7648)])+10*U,L-5)m[w(-7802)][w(-6233)]=Q local k=L+18*U for n=1,_jQv7[w(-7162)],1 do local F,W=m[w(-6209)][n],_jQv7[w(-7415)][n]if W then local m=_jQv7[w(-6964)][W[w(-7462)]]or _jQv7[w(-6964)][w(-8201)]local A=l(((v-W[w(-8004)]))/.25)local t=(({1,.55;.32,.18}))[n]or.15 local R=(k+(((n-1))*18)*U)+((n==1 and((1-A))*6 or 0))F[w(-8011)][w(-7293)]=m[1]F[w(-8011)][w(-7167)]=m[2]F[w(-8011)][w(-6641)]=Vector2[w(-6146)](_jQv7[w(-6951)],R)F[w(-8011)][w(-6233)]=(Q*t)*((n==1 and A or 1))F[w(-7018)][w(-7293)]=W[w(-6063)]F[w(-7018)][w(-6641)]=Vector2[w(-6146)]((_jQv7[w(-6951)]+_jQv7[w(-7129)])+10,R)F[w(-7018)][w(-6233)]=(Q*t)*((n==1 and A or 1))else F[w(-8011)][w(-6233)],F[w(-7018)][w(-6233)]=0,0 end end m[w(-7294)][w(-6233)]=Q local I=_jQv7[w(-7406)][w(-8098)]..(w(-7251)..(_jQv7[w(-7406)][w(-6193)]..((_jQv7[w(-7406)][w(-8009)]and(w(-7251)..(_jQv7[w(-7406)][w(-8009)]..w(-6864)))or w(-6099)))))if I~=_jQv7[w(-8183)]then _jQv7[w(-8183)]=I m[w(-6980)][w(-7293)]=I end local C=_jQv7[w(-6223)]or((_jQv7[w(-7129)]or 64))/8 m[w(-6980)][w(-6641)]=Vector2[w(-6146)]((n[w(-7186)]-36*U)-#I*C,n[w(-7034)]-40*U)m[w(-6980)][w(-6233)]=Q if A and v-A>=.45 then break end if y>_jQv7[w(-6310)]then break end task[w(-6585)](.016666666666667)end end _jQv7[w(-6841)]()_jQv7[w(-6620)](w(-8210),10)local p=388 local v=471 local S=w(-7139)local y={w(-6109),w(-6567)}local O=Vector3[w(-6146)](2048,2048,2048)local s=.1 local i=.01 local e=15 local f=.04 local B=-2 local g=470 local D=376 local r=228 local Q={w(-7543);w(-6296)}local L={[w(-7543)]=999999;[w(-6296)]=999999}local k=.5 local I=600 local C=1 local x=180 local V=100 local z=101 local G=102 local c={[w(-8215)]=w(-8224),[w(-7059)]=20,[w(-6132)]=2;[w(-6783)]=.01;[w(-7902)]=.3;[w(-8113)]=6;[w(-6897)]=5,[w(-6796)]=3}local E={[w(-8215)]=w(-7087),[w(-6482)]=40,[w(-6783)]=.25;[w(-7514)]=1,[w(-7250)]=2,[w(-6188)]=.5;[w(-7821)]=1;[w(-7936)]={w(-8152),w(-7655);w(-7350),w(-6450);w(-8051),w(-6859)}}local q={[w(-6301)]=w(-8001),[w(-6176)]=97;[w(-8079)]=300;[w(-6856)]=80,[w(-6179)]=6;[w(-6920)]=4;[w(-6902)]={[w(-7644)]=87;[w(-6062)]=83,[w(-7294)]=81,[w(-6980)]=68;[w(-8049)]=16;[w(-6921)]=17};[w(-7914)]=w(-6505),[w(-8047)]=98,[w(-7982)]=1.05,[w(-7755)]=2;[w(-6860)]=4096;[w(-6124)]=3,[w(-7417)]={w(-7321);w(-6076)};[w(-6371)]=1.5;[w(-6797)]=40;[w(-6888)]=w(-6653),[w(-7429)]=.5;[w(-6937)]=5,[w(-7561)]=w(-6362),[w(-7587)]=99,[w(-6777)]={83;40};[w(-8170)]=2;[w(-7813)]=w(-6523);[w(-7787)]=236,[w(-8128)]=.5;[w(-6830)]=.9,[w(-6609)]=5;[w(-8151)]=8,[w(-6744)]=.03}local N={[w(-8215)]=w(-7650),[w(-6482)]=40;[w(-6783)]=.25,[w(-7514)]=1;[w(-7250)]=2,[w(-6188)]=.5}local M={[w(-6300)]={-1;1};[w(-7651)]=60,[w(-7496)]=.2;[w(-7901)]=100;[w(-6881)]=.3,[w(-7774)]=1,[w(-6268)]=15;[w(-7380)]=400,[w(-7799)]=1,[w(-7798)]=3,[w(-6555)]=1,[w(-7679)]=false;[w(-7170)]=2;[w(-7459)]=.5,[w(-7025)]=10,[w(-7926)]=10;[w(-8030)]=200;[w(-7657)]=3,[w(-6163)]=8,[w(-6603)]=6;[w(-7830)]=1;[w(-7425)]=10;[w(-7695)]=300,[w(-7449)]=false;[w(-7172)]=1000000000;[w(-7268)]=1500,[w(-8108)]=800;[w(-7559)]=104;[w(-7575)]=82;[w(-8044)]={};[w(-6191)]=Color3[w(-7521)](255,60,60);[w(-7624)]=w(-6799);[w(-6748)]=w(-6958),[w(-6340)]=.25,[w(-8181)]=5;[w(-6533)]=w(-7578),[w(-7205)]=.25;[w(-6057)]=1,[w(-7389)]={[w(-7167)]=160;[w(-8018)]=172,[w(-8182)]=184;[w(-6955)]=188;[w(-6606)]=192,[w(-7408)]=196};[w(-7823)]={w(-7930);w(-6215),w(-7329);w(-7978),w(-6754),w(-6813);w(-6462)};[w(-7436)]={{[w(-7167)]={.8;.3,1};[w(-8018)]={.5;.1;.9},[w(-8182)]=.3,[w(-6955)]=4;[w(-6606)]=6;[w(-7408)]=.6},{[w(-7167)]={1;.55;.85},[w(-8018)]={1,.3,.65},[w(-8182)]=.3;[w(-6955)]=4,[w(-6606)]=6;[w(-7408)]=.6},{[w(-7167)]={1;.6,.3};[w(-8018)]={.9,.3;.15};[w(-8182)]=.3,[w(-6955)]=6;[w(-6606)]=5;[w(-7408)]=.5},{[w(-7167)]={.9;.15;.1},[w(-8018)]={.5,0;0},[w(-8182)]=.35;[w(-6955)]=3,[w(-6606)]=7,[w(-7408)]=.6};{[w(-7167)]={.25,.35;.85};[w(-8018)]={.05;.1;.4};[w(-8182)]=.35;[w(-6955)]=1;[w(-6606)]=7,[w(-7408)]=.6};{[w(-7167)]={.4,1,.45};[w(-8018)]={.1,.55;.25},[w(-8182)]=.3,[w(-6955)]=3,[w(-6606)]=6;[w(-7408)]=.6},{[w(-7167)]={.3;.85;1},[w(-8018)]={.05;.4,.7};[w(-8182)]=.3,[w(-6955)]=3;[w(-6606)]=6;[w(-7408)]=.6}};[w(-6677)]=w(-7542);[w(-7865)]=w(-6789);[w(-7850)]=w(-6314);[w(-7061)]=16;[w(-7948)]=2,[w(-6460)]=w(-6404);[w(-7715)]=.25,[w(-6320)]=25,[w(-6971)]=15;[w(-7631)]=104,[w(-6141)]=0,[w(-8120)]=16,[w(-6751)]=24;[w(-6216)]=40;[w(-7233)]=w(-7735),[w(-7390)]={[w(-7138)]=w(-7574),[w(-7899)]=w(-7923)};[w(-7148)]={[w(-7574)]=w(-7138);[w(-7923)]=w(-7899)},[w(-7343)]={[w(-7138)]=w(-7044),[w(-7899)]=w(-7659),[w(-7574)]=w(-6867),[w(-7923)]=w(-7796)},[w(-7815)]=60,[w(-6325)]=50;[w(-7232)]={},[w(-6758)]={},[w(-7455)]={};[w(-7410)]={};[w(-6070)]={};[w(-8172)]={},[w(-7785)]=2;[w(-7090)]=3;[w(-7088)]=.6;[w(-7889)]=1,[w(-7242)]=.05;[w(-7603)]=4;[w(-8189)]=.5,[w(-7820)]=80,[w(-6466)]=false;[w(-8228)]=.016666666666667,[w(-6067)]=false;[w(-6737)]=false,[w(-7181)]=5;[w(-7878)]=0,[w(-6746)]={},[w(-6624)]=0;[w(-8056)]=1.5,[w(-7463)]=.15,[w(-6084)]={};[w(-6091)]=w(-7193),[w(-7563)]=1;[w(-6339)]=2,[w(-8188)]=1}local Z={[w(-8215)]=w(-8196);[w(-7136)]=70;[w(-6415)]=false;[w(-6781)]=0;[w(-7349)]=false;[w(-7223)]=false;[w(-7907)]=nil,[w(-7626)]=.1;[w(-7085)]={[w(-7257)]=w(-8063),[w(-7270)]={w(-6681)}};[w(-6593)]=w(-6732),[w(-6157)]={{[w(-7257)]=w(-7091),[w(-6063)]=w(-7167),[w(-7270)]={w(-7438),w(-6917);w(-7039);w(-7332)},[w(-6779)]={w(-7562);w(-6979);w(-6674);w(-6988);w(-6457);w(-7206),w(-6595);w(-6574),w(-6493),w(-7376);w(-8175),w(-6110)}},{[w(-7257)]=w(-7896),[w(-6063)]=w(-6909),[w(-7270)]={w(-6909);w(-6299)};[w(-6779)]={w(-7562),w(-6851);w(-6853),w(-7773),w(-6818);w(-7191),w(-6702),w(-6883);w(-7280);w(-7027),w(-6143),w(-7761);w(-6793),w(-7518)}};{[w(-7257)]=w(-6858);[w(-6063)]=w(-7111);[w(-7270)]={w(-7111)};[w(-6779)]={w(-7562),w(-7099);w(-7722),w(-7534),w(-7516),w(-6438)}},{[w(-7257)]=w(-6308),[w(-6063)]=w(-7678);[w(-7270)]={w(-7678)},[w(-6779)]={w(-7562);w(-7783),w(-6357),w(-8084),w(-7443),w(-7666);w(-7753),w(-6312),w(-7598);w(-7114);w(-6329),w(-6605)}};{[w(-7257)]=w(-6472);[w(-6063)]=w(-6657);[w(-7270)]={w(-6657)},[w(-6779)]={w(-7562),w(-6139);w(-6232),w(-7986),w(-7927);w(-6668),w(-7540)}};{[w(-7257)]=w(-6984);[w(-6063)]=w(-7835);[w(-7270)]={w(-6660)};[w(-6779)]={w(-7562);w(-7152);w(-6073),w(-6838),w(-6411),w(-6976);w(-6740)}};{[w(-7257)]=w(-8211),[w(-6063)]=w(-7844),[w(-7270)]={w(-8066)},[w(-6779)]={w(-7562),w(-6121),w(-7701),w(-7955);w(-8209);w(-6866),w(-6483)}}}}local J=71 local K=w(-7472)local Y=Vector3[w(-6146)](.001,.001,.001)local P=2 local d=.25 local X={{w(-7058);[w(-6580)]=w(-6101)},{w(-6134),w(-7475)},{w(-7825);[w(-6536)]=w(-7532)},{w(-6916);w(-6556)};{w(-6916);w(-6546),[w(-6536)]=w(-6243)};{w(-7512);w(-7159)},{w(-8221),w(-6413)};{w(-8221),w(-7693)},{w(-8221),w(-6685)},{w(-8221),w(-6101)};{w(-8221);w(-6573)};{w(-7728),w(-6219)};{w(-6599);[w(-6536)]=w(-7532)},{w(-6094);[w(-6536)]=w(-7532)},{w(-7362),[w(-6536)]=w(-7532)},{w(-7112)};{w(-7354)}}local b={[w(-7692)]=true;[w(-8145)]=true,[w(-6106)]=true}local j={{w(-7512),w(-8161)}}local a={{w(-7712),w(-6899)},{w(-7712);w(-6788)}}local o=1 local T=w(-7775)local H=6 local u={[w(-6479)]=1e+15;[w(-7250)]=15,[w(-6213)]=1024;[w(-6560)]=120,[w(-6706)]=5}local h={w(-7122);w(-6628)}local mi={[w(-7122)]=0,[w(-6628)]=1000000000}local wi={[w(-7122)]=6;[w(-6628)]=.1}local ni=5 local Ui=-10000 local li=.0001 local Fi=1000000000 local Wi=3 local Ai=4 local ti=w(-7310)local Ri=20 local pi=190 local vi=.05 local Si=.5 local yi=.6 local Oi=.4 local si=.02 local ii={w(-6790);w(-7969),w(-7793),w(-6449),w(-7394)}local ei={[w(-6790)]=60,[w(-7969)]=.1}local fi=512 local Bi=6 local gi=.25 local Di=103 local ri=2 local Qi=1.25 local Li=.06 local ki=.06 local Ii=4 local Ci=.015 local xi=.03 local Vi=.08 local zi=3 local Gi=6 local ci=.25 local Ei={Color3[w(-7521)](255,0,0);Color3[w(-7521)](0,120,255);Color3[w(-7521)](189,0,255),Color3[w(-7521)](255,154,0);Color3[w(-7521)](1,255,31)}local qi={[w(-6194)]={[w(-7257)]=w(-6992);[w(-6063)]=w(-8087),[w(-6205)]=w(-8023),[w(-7188)]=Color3[w(-7521)](0,140,255),[w(-6806)]={w(-6060)}};[w(-6150)]={[w(-7257)]=w(-6541),[w(-6063)]=w(-6636);[w(-6205)]=w(-7697),[w(-7188)]=Color3[w(-7521)](255,210,0);[w(-6806)]={w(-6060)}},[w(-8214)]={[w(-7257)]=w(-7981);[w(-6063)]=w(-7987);[w(-6205)]=w(-7283),[w(-7188)]=Color3[w(-7521)](148,96,69);[w(-6806)]={w(-7992),w(-6693),w(-6060)};[w(-7334)]=w(-6480),[w(-6557)]={w(-6450),w(-6480);w(-6693)},[w(-6245)]=12,[w(-7399)]=12};[w(-6995)]={[w(-7257)]=w(-6727),[w(-6063)]=w(-6771);[w(-6205)]=w(-7326);[w(-7188)]=Color3[w(-7521)](0,220,90),[w(-6806)]={w(-7253);w(-8160)};[w(-8000)]=w(-7003);[w(-7963)]=w(-6859)};[w(-6598)]={[w(-7257)]=w(-7750);[w(-6063)]=w(-7479),[w(-6205)]=w(-7021);[w(-7188)]=Color3[w(-7521)](255,60,60),[w(-6806)]={};[w(-8000)]=w(-7077),[w(-6264)]={w(-8081),w(-6675)},[w(-7633)]=Color3[w(-7521)](255,0,0),[w(-6316)]=Color3[w(-7521)](47,0,0),[w(-8049)]=Vector3[w(-6146)](0,3,0),[w(-6921)]=Vector3[w(-6146)](0,-3.2,0),[w(-7909)]=13}}local Ni=3 local Mi=10 local Zi=.15 local Ji=3 local Ki=8 local Yi=16 local Pi=10 M[w(-7956)]=25 M[w(-6145)]=24 M[w(-6832)]={[w(-7992)]=true,[w(-7879)]=true}M[w(-7777)]={[w(-8160)]=true;[w(-6911)]=true;[w(-6378)]=true;[w(-7800)]=true,[w(-7784)]=true;[w(-6280)]=true}local di=30 local Xi=500 local bi=1080 local ji={w(-7925);w(-7045),w(-7782),w(-8153);w(-6059);w(-6263),w(-8032),w(-6077);w(-7204);w(-6475),w(-8099);w(-8107);w(-6671),w(-6895);w(-6992),w(-6541),w(-7981);w(-6727),w(-7750);w(-7744),w(-6272),w(-7140);w(-7808);w(-7445);w(-6700),w(-6588),w(-7959),w(-6565);w(-7504),w(-6236);w(-7368);w(-7951);w(-6711),w(-6066),w(-7180);w(-7994),w(-7041),w(-6940),w(-8123);w(-8063);w(-6068);w(-7999);w(-7469);w(-7954);w(-6600),w(-7558);w(-6269),w(-6998);w(-7176);w(-7751);w(-6332);w(-8042),w(-7361);w(-7832),w(-7290);w(-7965);w(-6386),w(-7422);w(-7052);w(-6738);w(-6884);w(-6918);w(-8162);w(-6500);w(-6282);w(-7958),w(-6307)}M[w(-6459)]={w(-6853);w(-6834);w(-6702);w(-7500);w(-6885)}M[w(-6865)]={w(-8220),w(-6446),w(-7899),w(-7138),w(-7310);w(-7464),w(-7113),w(-7387)}M[w(-6313)]={}M[w(-7842)]={w(-6804)}for m,n in ipairs(M[w(-6459)])do M[w(-6313)][m]=(n:gsub(w(-6852),w(-7646)))end for m,n in ipairs(M[w(-6865)])do M[w(-7842)][#M[w(-7842)]+1]=(n:gsub(w(-6852),w(-7646)))end M[w(-8217)]={w(-7099);w(-6238);w(-7837);w(-7707),w(-7305)}M[w(-8095)]={false,{[w(-7188)]={.16;.47,.5},[w(-7202)]=.85,[w(-6698)]=.35},{[w(-7188)]={.05;.55,.58};[w(-7202)]=.65,[w(-6698)]=.5};{[w(-7188)]={.02;.05,.08};[w(-7202)]=.08,[w(-6698)]=.85},{[w(-7188)]={.42;.02;.03},[w(-7202)]=.22;[w(-6698)]=.45}}M[w(-6277)]={[w(-8215)]=w(-7619);[w(-6944)]=284,[w(-8021)]={[w(-7009)]=160;[w(-6322)]=172;[w(-7894)]=176,[w(-7895)]=180},[w(-7389)]={[w(-7167)]={0,.35;.12};[w(-8018)]={0;.08;.02},[w(-8182)]=.45;[w(-6955)]=0;[w(-6606)]=2.5;[w(-7408)]=.05},[w(-6492)]={[w(-7009)]={.4;1;.5},[w(-6322)]=-0.12,[w(-7894)]=.55;[w(-7895)]=-0.5},[w(-7803)]={[w(-7167)]={0,.85,.3};[w(-6929)]=.25;[w(-6233)]=.35};[w(-7356)]={[w(-8160)]=true,[w(-6911)]=true,[w(-6378)]=true,[w(-7800)]=true,[w(-7784)]=true,[w(-6280)]=true};[w(-7589)]=1500,[w(-7250)]=15}M[w(-6798)]={[w(-8215)]=w(-6805);[w(-7703)]=336,[w(-8091)]=352;[w(-7966)]=364,[w(-6919)]=348;[w(-7529)]=196,[w(-7934)]=208;[w(-6416)]={.978;.978,.989};[w(-6756)]={.0625,.0558;.105};[w(-7109)]=.35;[w(-6782)]={w(-7760),w(-6592),w(-6848),w(-7196),w(-7329),w(-7557),w(-6343);w(-7729)},[w(-6761)]={false;6;9,12,18;19.5,22,0};[w(-6178)]={{[w(-8156)]=0;[w(-6539)]=-0.28;[w(-8199)]={.55,.65;1};[w(-7188)]={.08,.1,.22},[w(-6590)]={.02,.03,.08},[w(-8020)]=.36,[w(-6321)]=1.2};{[w(-8156)]=5;[w(-6539)]=-0.22,[w(-8199)]={.6,.65,.95},[w(-7188)]={.15,.15,.3};[w(-6590)]={.05;.05;.12};[w(-8020)]=.34;[w(-6321)]=1.5},{[w(-8156)]=6.5;[w(-6539)]=-0.06,[w(-8199)]={1,.82;.72},[w(-7188)]={1;.62,.45};[w(-6590)]={.6;.3,.2},[w(-8020)]=.32,[w(-6321)]=2.2};{[w(-8156)]=9;[w(-6539)]=.02;[w(-8199)]={1,.97,.92},[w(-7188)]={.85,.85;.9};[w(-6590)]={.85,.85,.9},[w(-8020)]=.27,[w(-6321)]=1},{[w(-8156)]=12,[w(-6539)]=.06;[w(-8199)]={1;1;1},[w(-7188)]={.78,.86;1},[w(-6590)]={.9,.95,1},[w(-8020)]=.24,[w(-6321)]=.5},{[w(-8156)]=16,[w(-6539)]=.03;[w(-8199)]={1,.96;.9},[w(-7188)]={.9,.85;.8};[w(-6590)]={.85,.75,.65},[w(-8020)]=.27;[w(-6321)]=1},{[w(-8156)]=18,[w(-6539)]=-0.03;[w(-8199)]={1,.75,.6},[w(-7188)]={1;.55,.35},[w(-6590)]={.7;.3,.15},[w(-8020)]=.32;[w(-6321)]=2.4};{[w(-8156)]=19.5,[w(-6539)]=-0.14,[w(-8199)]={.85,.65;.8},[w(-7188)]={.5;.3;.45},[w(-6590)]={.25,.1;.2};[w(-8020)]=.34;[w(-6321)]=2};{[w(-8156)]=21,[w(-6539)]=-0.26,[w(-8199)]={.58,.66;1};[w(-7188)]={.1,.12,.25},[w(-6590)]={.03,.04,.1};[w(-8020)]=.36,[w(-6321)]=1.3},{[w(-8156)]=24,[w(-6539)]=-0.28,[w(-8199)]={.55,.65;1},[w(-7188)]={.08,.1;.22},[w(-6590)]={.02,.03,.08};[w(-8020)]=.36;[w(-6321)]=1.2}}}M[w(-8144)]={[w(-7167)]=456;[w(-6929)]=480;[w(-6233)]=484,[w(-7239)]=488;[w(-8227)]=492}pcall(function()local m=(game:GetService(w(-8125))):JSONDecode(game:HttpGet(w(-8010)))M[w(-8015)]=type(m)==w(-7093)and type(m[w(-7281)])==w(-7093)M[w(-7386)]=m and m[w(-7554)]M[w(-6186)]=m and m[w(-7281)]local n=m and(m[w(-7281)]and m[w(-7281)][w(-7710)])if type(n)~=w(-7093)then return end local U={[w(-7167)]=w(-7391),[w(-6929)]=w(-7831);[w(-6233)]=w(-7211);[w(-7239)]=w(-7024),[w(-8227)]=w(-7863)}M[w(-6647)]={}for m,U in pairs(U)do local l=tonumber(n[U])if l and(l>0 and l<16384)then M[w(-6647)][m]=l end end end)if M[w(-8015)]then _jQv7[w(-6620)](w(-7217)..tostring(M[w(-7386)]or w(-7398)),25)else _jQv7[w(-6620)](w(-6086),25,w(-6433))end M[w(-6537)]={{w(-7006);1255040462},{w(-6230),5766898159}}M[w(-6456)]={}for m,n in ipairs(M[w(-6537)])do M[w(-6456)][m]=n[1]end M[w(-7461)]={w(-7498),w(-7006)}M[w(-7379)]={[w(-8215)]=w(-7382);[w(-7613)]=280;[w(-6783)]=.03,[w(-6961)]=1;[w(-7571)]=3,[w(-7298)]=.2;[w(-7700)]=.6,[w(-7174)]=4;[w(-7185)]=3,[w(-6778)]=10,[w(-7431)]=.4,[w(-7175)]=3;[w(-6689)]=.5,[w(-6944)]={255;40;40}}M[w(-7723)]={[w(-8215)]=w(-8082),[w(-7136)]=114,[w(-6482)]=85;[w(-6222)]=85;[w(-7677)]=2.2,[w(-6495)]=.035;[w(-7506)]=4;[w(-8022)]=.6;[w(-8223)]=false;[w(-8158)]=false;[w(-7893)]={[w(-6408)]=Vector3[w(-6146)](0,0,0)};[w(-6246)]={},[w(-6511)]={},[w(-7827)]={}}M[w(-6199)]={[w(-8215)]=w(-8141),[w(-7136)]=113,[w(-8207)]=69,[w(-6439)]=25;[w(-8038)]=9.9;[w(-6807)]=13.9,[w(-6337)]=.05,[w(-7203)]=.6;[w(-7433)]=1.6,[w(-7599)]=.6;[w(-7149)]=5;[w(-6733)]=false}local ai={[w(-7445)]={[w(-6063)]=w(-7128),[w(-6247)]={w(-7969)};[w(-7906)]={[w(-7969)]=0}};[w(-6700)]={[w(-6063)]=w(-6625),[w(-6247)]={w(-7304)};[w(-7906)]={[w(-7304)]=-1}};[w(-6565)]={[w(-6063)]=w(-8117);[w(-6247)]={w(-6171)},[w(-7906)]={[w(-6171)]=0}};[w(-6236)]={[w(-6063)]=w(-8027),[w(-6247)]={w(-7566)},[w(-7906)]={[w(-7566)]=0}};[w(-7368)]={[w(-6063)]=w(-6770),[w(-6247)]={w(-6705)};[w(-7906)]={[w(-6705)]=0}},[w(-6066)]={[w(-6063)]=w(-7037);[w(-6247)]={w(-7106),w(-7480),w(-7383)},[w(-7906)]={[w(-7106)]=999999,[w(-7480)]=999999,[w(-7383)]=0},[w(-6901)]=20}}local oi={}local Ti=180 local Hi=30 local ui=1.5 local hi=2 local my=0 local wy=false local ny=0 local Uy=false local ly=false local Fy=0 local Wy=false local Ay={w(-7445),w(-6700);w(-6565);w(-6236);w(-7368);w(-7577)}local ty={}local Ry={}local py=false local vy=false local function Sy(m)if m==true then while vy or M[w(-7449)]or M[w(-7679)]do task[w(-6585)](.05)end vy=true local m,n=pcall(getgc,true)vy=false return m and n or{}end local n=M[w(-6650)]if not n then n={[w(-6247)]={};[w(-6170)]=false,[w(-6422)]={};[w(-6517)]=tick();[w(-6502)]=tick()}M[w(-6650)]=n task[w(-8109)](function()repeat task[w(-6585)](.1)until tick()-n[w(-6517)]>=1.5 or tick()-n[w(-6502)]>=6 while vy or M[w(-7449)]or M[w(-7679)]do task[w(-6585)](.05)end M[w(-6650)]=nil local m={}for n in pairs(n[w(-6247)])do m[#m+1]=n end vy=true local U,l=pcall(getgc,m)vy=false n[w(-6422)]=U and l or{}n[w(-6170)]=true end)end local U={}for m,l in ipairs(m)do if not n[w(-6247)][l]then n[w(-6517)]=tick()end n[w(-6247)][l]=true U[l]=true end while not n[w(-6170)]do task[w(-6585)](.03)end local l={}for m,n in ipairs(n[w(-6422)])do if U[tostring(n[w(-6905)])]then l[#l+1]=n end end return M[w(-7163)](l)end M[w(-6802)]={}M[w(-8167)]=function(m,n)local U=M[w(-6802)][m]if U then local m,n=pcall(function()return U:GetKey()end)if m and type(n)==w(-7154)then if n==0 then return false end local m,w=pcall(iskeypressed,n)return m and w==true end local l,F=pcall(function()return U:IsEnabled()end)if l and type(F)==w(-7519)then return F end end local l,F=pcall(iskeypressed,n)return l and F==true end M[w(-7377)]={}M[w(-6154)]=function(m)local n=M[w(-7377)][m]local U=tick()if n then if n[w(-7807)]then local m,U=pcall(function()return n[w(-7807)][w(-6103)]end)if m and U then return n[w(-7807)]end elseif U-n[w(-8004)]<5 then return nil end end local l=workspace:FindFirstChild(m)M[w(-7377)][m]={[w(-7807)]=l;[w(-8004)]=U}return l end M[w(-7163)]=function(m)for m,n in ipairs(m)do local U=tonumber(n[w(-7419)])if U and n[w(-7632)]==nil then local m,l=pcall(memory_read,w(-7590),U+16)local F,W=pcall(memory_read,w(-6623),U+12)n[w(-7632)]=m and l or 0 n[w(-6303)]=F and W or-1 end end return m end M[w(-6200)]=function(m,n)local U=#m if U<=200 then pcall(applygc,m,n)return end for l=1,U,200 do local F={}for n=l,math[w(-6444)](l+199,U),1 do F[#F+1]=m[n]end pcall(applygc,F,n)task[w(-6585)]()end end M[w(-7720)]=function(m)local n={}for m,U in ipairs(m or{})do local l=tonumber(U[w(-7419)])if l and(U[w(-7632)]and U[w(-7632)]>4096)then local m,F=pcall(memory_read,w(-7590),l+16)local W,A=pcall(memory_read,w(-6623),l+12)if m and(W and(F==U[w(-7632)]and A==U[w(-6303)]))then n[#n+1]=U end end end return n end M[w(-6941)]=function(m)local n={}for m,U in ipairs(m or{})do if U[w(-6303)]==3 then n[#n+1]=U end end return n end M[w(-6284)]=function(m,n)if not n or not m then return false end local U,l=pcall(function()return m[w(-6103)]end)if not U or not l then return false end local F=tonumber(m[w(-6887)])if not F or F<=4096 then return false end local W,A=pcall(memory_read,w(-7590),F+D)return W and A==n end local yy=0 local function Oy(m)local w=0 pcall(function()for m in ipairs(m)do w=w+1 end end)return w end local function sy(m)return UI[w(-7489)](R(m))end local function iy()local m=(game:GetService(w(-6427)))[w(-7686)][w(-6159)]return m and((m:FindFirstChild(w(-6538))or m:FindFirstChildOfClass(w(-6538))))end local function ey()local m=(game:GetService(w(-6427)))[w(-7686)][w(-6159)]return m and((m:FindFirstChild(w(-6447))or m:FindFirstChild(w(-7308))))end local function fy(m)if not m then return false end local n,U=pcall(function()return m:IsEnabled()end)if n and type(U)==w(-7519)then return U end n,U=pcall(function()return m[w(-6545)]end)return n and U==true end local function By()pcall(function()local m=ey()if not m then return end for n,U in ipairs((game:GetService(w(-7395))):GetDescendants())do local l,F=pcall(function()return U[w(-7378)]end)if l and((F==w(-7811)or F==w(-7092)))then local n,l pcall(function()n=U[w(-6939)]end)pcall(function()l=U[w(-6726)]end)if n==m or l==m then local F=(n==m)and l or n local W pcall(function()W=F and F[w(-7378)]end)if U[w(-6356)]==w(-7033)or W==w(-7704)or W==w(-7869)then pcall(function()U:Destroy()end)end end end end end)end local function gy()pcall(function()local m=iy()if not m then return end local n=tonumber(m[w(-6887)])if not n or n<=4096 then return end local U=0 pcall(function()U=memory_read(w(-7409),n+v)end)if U==1 then my=tick()By()pcall(function()memory_write(w(-7409),n+v,0)end)end end)end M[w(-7943)]=function(m,n)if not M[w(-6067)]then return pcall(n)end local U=M[w(-6512)]M[w(-6512)]=m local l=M[w(-7660)]local F=os[w(-6432)]()local W,A=pcall(n)local t=os[w(-6432)]()-F M[w(-6512)]=U local R=M[w(-6084)][m]if not R then R={[w(-6252)]=0;[w(-6932)]=0,[w(-7171)]=0;[w(-7545)]=0,[w(-7606)]=0;[w(-8072)]=0;[w(-7717)]={}}M[w(-6084)][m]=R end R[w(-7171)]=R[w(-7171)]+1 if M[w(-7660)]~=l then R[w(-7606)]=R[w(-7606)]+1 else R[w(-6252)]=R[w(-6252)]+t if t>R[w(-6932)]then R[w(-6932)]=t end if t>.008 then R[w(-7545)]=R[w(-7545)]+1 end M[w(-7192)][m]=((M[w(-7192)][m]or 0))+t end if not W then R[w(-8072)]=R[w(-8072)]+1 local m=(tostring(A)):sub(1,160)R[w(-7717)][m]=((R[w(-7717)][m]or 0))+1 end return W,A end M[w(-7192)]={}M[w(-7660)]=0 M[w(-6214)]=function(m,n,...)if not M[w(-6067)]then return n(...)end local U,l=M[w(-7660)],os[w(-6432)]()local F=table[w(-6886)](n(...))local W=os[w(-6432)]()-l if M[w(-7660)]==U then local n=M[w(-6084)][m]if not n then n={[w(-6252)]=0;[w(-6932)]=0,[w(-7171)]=0,[w(-7545)]=0;[w(-7606)]=0;[w(-8072)]=0,[w(-7717)]={}}M[w(-6084)][m]=n end n[w(-6252)],n[w(-7171)]=n[w(-6252)]+W,n[w(-7171)]+1 if W>n[w(-6932)]then n[w(-6932)]=W end if W>.008 then n[w(-7545)]=n[w(-7545)]+1 end M[w(-7192)][m]=((M[w(-7192)][m]or 0))+W end return table[w(-6570)](F,1,F[w(-7241)])end M[w(-6498)]=function()if M[w(-8116)]then return end M[w(-8116)]=true local m={[w(-6360)]=0,[w(-6470)]=0;[w(-8190)]=0,[w(-6846)]=0,[w(-7396)]=0;[w(-6795)]=0;[w(-6661)]=0,[w(-6577)]={},[w(-7331)]=0,[w(-7355)]={},[w(-6399)]={}}M[w(-8185)]=m local function n()return M[w(-6512)]or w(-8198)end local U,l,F,W=memory_read,memory_write,getgc,notify if U then memory_read=function(...)m[w(-6360)]=m[w(-6360)]+1 local l=n()m[w(-6399)][l]=((m[w(-6399)][l]or 0))+1 return U(...)end end if l then memory_write=function(...)m[w(-6470)]=m[w(-6470)]+1 local U=n()m[w(-6399)][U]=((m[w(-6399)][U]or 0))+1 return l(...)end end if F then getgc=function(...)local n=os[w(-6432)]()local U={F(...)}local l=os[w(-6432)]()-n m[w(-8190)],m[w(-6846)]=m[w(-8190)]+1,m[w(-6846)]+l if l>m[w(-7396)]then m[w(-7396)]=l end return table[w(-6570)]and table[w(-6570)](U)or unpack(U)end end if W then notify=function(n,U,...)m[w(-7331)]=m[w(-7331)]+1 local l=tostring(U)m[w(-7355)][l]=((m[w(-7355)][l]or 0))+1 return W(n,U,...)end end pcall(function()local U=Drawing[w(-6146)]Drawing[w(-6146)]=function(...)m[w(-6795)],m[w(-6661)]=m[w(-6795)]+1,m[w(-6661)]+1 local l=n()m[w(-6577)][l]=((m[w(-6577)][l]or 0))+1 return U(...)end end)end M[w(-7286)]=function(m)for m,n in ipairs(m)do print(n)end M[w(-7790)]=M[w(-7790)]or{}for m,n in ipairs(m)do M[w(-7790)][#M[w(-7790)]+1]=n end while#M[w(-7790)]>3000 do table[w(-7007)](M[w(-7790)],1)end pcall(makefolder,w(-6732))pcall(writefile,w(-6695),table[w(-7260)](M[w(-7790)],w(-6840)))end M[w(-6228)]={w(-6475);w(-8099);w(-8107),w(-6671);w(-6895);w(-7041),w(-6940);w(-8123),w(-7290);w(-7965);w(-6282)}M[w(-8083)]=10 M[w(-6662)]=2 M[w(-7699)]=function()local m=(game:GetService(w(-7392))):FindFirstChild(w(-7932))if not m then return nil end for n=1,2,1 do local U=string[w(-7890)](w(-7156),math[w(-7771)](0,2147483647),math[w(-7771)](0,2147483647))local l=os[w(-6432)]()local F,W=pcall(function()return m:FireServer(U,false)end)local A=os[w(-6432)]()-l if not F then return nil end if W==true then return true end if A>=.02 then return true end if A<.001 then return false end end return nil end M[w(-8219)]=function()local m=tick()local n=M[w(-7164)]and M[w(-8083)]or M[w(-6662)]if M[w(-6973)]and m-M[w(-6973)]<n then return M[w(-7164)]end if M[w(-7328)]then while M[w(-7328)]do task[w(-6585)](.03)end return M[w(-7164)]end M[w(-7328)]=true local U=M[w(-7699)]()if U==nil then U=M[w(-7164)]or false end M[w(-7164)],M[w(-6973)],M[w(-7328)]=U,tick(),false return U end M[w(-6972)]=function(m)if M[w(-8219)]()then return true end notify(w(-8037),m or w(-7342),4)return false end M[w(-6970)]=function(m,n)local U=tostring(m[w(-6545)])local l=type(n)if l==w(-7154)then return tonumber(U)~=nil end if l==w(-7519)then return U==w(-7366)or U==w(-7473)end return true end M[w(-7235)]=function()local m,n=pcall(function()local m=(game:GetService(w(-6427)))[w(-7686)]return m~=nil and(m[w(-6103)]~=nil and(m[w(-6159)]~=nil and workspace[w(-6103)]~=nil))end)return m and n==true end M[w(-6652)]=notify notify=function(...)if M[w(-6808)]and tick()<M[w(-6808)]then return end return M[w(-6652)](...)end M[w(-6956)]=function(m,n,U)task[w(-8109)](function()task[w(-6585)](1.5)if _G[w(-7444)]==A and M[w(-7235)]()then notify(m,n,U)end end)end M[w(-6374)]={[w(-6565)]={5.6,10}}M[w(-6164)],M[w(-7509)]={},0 M[w(-7227)]=function(m)if not m and tick()-M[w(-7509)]<10 then return M[w(-6164)]end M[w(-7509)]=tick()local n={}for m,U in ipairs(workspace:GetChildren())do if m%300==0 then task[w(-6585)]()end if U[w(-7378)]==w(-7072)and(U:FindFirstChild(w(-7402))and U:FindFirstChild(w(-7992)))then local m,l=pcall(function()return U:GetAttribute(w(-6398))end)if m and(type(l)==w(-7154)and l>0)then n[#n+1]=l end end end M[w(-6164)]=n return n end M[w(-6118)]=function()if M[w(-7858)]then return M[w(-7858)]end local m={}for n,U in ipairs(Sy({w(-7336)}))do local l,F=tonumber(tostring(U[w(-6545)])),tonumber(U[w(-7419)])if l==10 and F then m[#m+1]=F end end if#m>0 then M[w(-7858)]=m end return m end M[w(-7900)]=function(m,n,U)local l=M[w(-6374)][m]if not l then return n end local F=m==w(-6565)and M[w(-7227)](U)or{}local W=m==w(-6565)and M[w(-6118)]()or{}local A={}for m,n in ipairs(n)do local U,t=pcall(memory_read,w(-8130),tonumber(n[w(-7419)]))local R=false if U and type(t)==w(-7154)then for m,n in ipairs(l)do if math[w(-6430)](t-n)<.0001 then R=true break end end if not R then for m,n in ipairs(F)do if math[w(-6430)](t-n)<.0001 then R=true break end end end end if not R then local m=tonumber(n[w(-7419)])for n,l in ipairs(W)do if m and math[w(-6430)](m-l)<=512 then R=true if U and t==0 then pcall(memory_write,w(-8130),m,.5)end break end end end if not R then A[#A+1]=n end end return A end M[w(-7756)]=function(m)local n=m[w(-6887)]local U=M[w(-7410)][n]if U==true then return true end local l=tick()if type(U)==w(-7154)and l<U then return false end if m:GetAttribute(w(-6104))~=nil then M[w(-7410)][n]=true return true end M[w(-7410)][n]=l+.25 return false end M[w(-7269)]=function(m)local n=m[w(-6887)]local U=tick()local l=M[w(-6070)][n]if l and U<l[w(-8004)]then return l[w(-7257)]end local F=tonumber(m:GetAttribute(w(-6349)))M[w(-6070)][n]={[w(-7257)]=F,[w(-8004)]=(U+M[w(-7785)])+math[w(-7771)]()}return F end local function Dy(m)local n={}for m,U in ipairs(m)do pcall(function()for m,U in ipairs(U:GetChildren())do if M[w(-7756)](U)then n[#n+1]=U end end end)end return n end local function ry()local m=tonumber(UI[w(-7489)](R(w(-7201))))or 150 local n=nil pcall(function()local m=(game:GetService(w(-6427)))[w(-7686)][w(-6159)]n=(m:FindFirstChild(w(-6447)))[w(-6641)]end)return n,m end local function Qy(m,n,U)if not n then return true end local l,F=pcall(function()return(((m:FindFirstChild(w(-6447)))[w(-6641)]-n))[w(-7630)]end)return not l or F<=U end local function Ly(m,n)local U=m[w(-6887)]local l=n[U]if not l then l={[w(-7507)]=m}n[U]=l end local F=m:GetAttribute(w(-6997))if F~=0 then l[w(-6396)]=F m:SetAttribute(w(-6997),0)end local W=m:GetAttribute(w(-6104))if W~=0 then l[w(-6743)]=W m:SetAttribute(w(-6104),0)end if m:GetAttribute(w(-7768))~=3 then local n=m:GetAttribute(w(-7124))if n then pcall(function()m:SetAttribute(w(-6728),n)end)end m:SetAttribute(w(-7768),3)end end local function ky()py=true task[w(-8109)](function()local m=false pcall(function()for n=1,8,1 do local U=iy()if U then local n=tonumber(U[w(-6887)])if n and n>4096 then if pcall(function()memory_write(w(-8007),n+p,0)end)then m=true end end end task[w(-6585)]()end end)py=false notify(m and w(-6058)or w(-6192),w(-7157),3)end)end local function Iy()local m=game:GetService(w(-7395))local n=M[w(-6154)](S)if n then return n end if tick()-yy<((M[w(-8002)]or 10))then return nil end M[w(-8002)]=math[w(-6444)](((M[w(-8002)]or 10))*2,120)local U,l=pcall(function()return m:GetDescendants()end)for m,n in ipairs(U and l or{})do if n[w(-6356)]==S then M[w(-8002)]=10 yy=tick()return n end if m%3000==0 then task[w(-6585)]()end end yy=tick()end local function Cy(m)local n=M[w(-6154)](m[1])for w=2,#m,1 do if not n then return nil end n=n:FindFirstChild(m[w])end return n end local function xy(m,n,U,l)local F=0 for m,W in ipairs(m:GetDescendants())do if m%M[w(-7901)]==0 then task[w(-6585)]()end local A=W[w(-7378)]if A==w(-7974)then local m=W[w(-6103)]if m then local l=m[w(-6356)]if((not n[w(-6536)]or l==n[w(-6536)]))and not b[l]then U[#U+1]=m end end elseif l and((A==w(-8160)or A==w(-6911)))then F=F+1 if F%M[w(-6268)]==1 then pcall(function()local m=W[w(-6641)]l[#l+1]=m[w(-7186)]l[#l+1]=m[w(-8100)]end)end end end end local function Vy(m,n,U)for m,l in ipairs(m:GetDescendants())do if m%M[w(-7901)]==0 then task[w(-6585)]()end local F=false pcall(function()F=l[w(-7378)]==w(-7974)end)if F then local m pcall(function()m=l[w(-6103)]end)if m then local l pcall(function()l=m[w(-6356)]end)if((not n[w(-6536)]or l==n[w(-6536)]))and not b[l]then U[#U+1]=m end end end end end local function zy()local m={}for w,n in ipairs(X)do local U=Cy(n)if U then local w={}if pcall(xy,U,n,w)then for w,n in ipairs(w)do m[#m+1]=n end else pcall(Vy,U,n,m)end end end return m end local function Gy()local m={}pcall(function()for n,U in ipairs((game:GetService(w(-6412))):GetTagged(w(-6718)))do local l=U:FindFirstChild(w(-7846))if l then m[#m+1]=l end end end)if#m==0 then local n=M[w(-6154)](w(-6587))if n then for n,U in ipairs(n:GetDescendants())do if U[w(-6356)]==w(-7846)then m[#m+1]=U end end end end return m end local function cy(m)local n local U=pcall(function()n=m[w(-6641)]end)if U and n then local m=pcall(function()return n[w(-7186)]+0 end)if m then return n end end end local Ey=nil local function qy()if Ey then local m,n=pcall(function()return Ey[w(-6103)]end)if m and n then return Ey end Ey=nil end local m=M[w(-6154)](w(-8221))local n=m and m:FindFirstChild(w(-7851))if n then Ey=n end return n end local function Ny()local m=M[w(-6154)](w(-8221))if not m then return nil,w(-7153)end local n,U=pcall(function()return m:GetAttribute(w(-6717))end)if n and U==false then return nil,w(-7691)end local l=qy()local F=l and l:FindFirstChild(w(-6945))if not F then return nil,w(-7153)end local W={}local A for m,n in ipairs(F:GetDescendants())do if n:IsA(w(-6056))then local m,U=pcall(function()return n[w(-7293)]end)if m and(type(U)==w(-8193)and U:match(w(-6401)))then local m,l pcall(function()m=n[w(-6103)][w(-6103)]l=m[w(-6641)]end)if l then if not A then pcall(function()local n=m[w(-8127)][w(-6149)]if pcall(function()return n[w(-7186)]+0 end)then A=Vector3[w(-6146)](-n[w(-7186)],-n[w(-7034)],-n[w(-8100)])end end)end table[w(-6473)](W,{[w(-6221)]=U;[w(-6136)]=l})end end end end if#W<4 then return nil,w(-6518)end for m,n in ipairs(W)do if A then n[w(-6905)]=(n[w(-6136)][w(-7186)]*A[w(-7186)]+n[w(-6136)][w(-7034)]*A[w(-7034)])+n[w(-6136)][w(-8100)]*A[w(-8100)]else n[w(-6905)]=n[w(-6136)][w(-7186)]end end table[w(-7944)](W,function(m,n)return m[w(-6905)]<n[w(-6905)]end)local t=w(-6099)for m,n in ipairs(W)do t=t..n[w(-6221)]end return t end local function My()local m,n=Ny()if m then notify(m,w(-6281),5)pcall(function()setclipboard(m)end)else notify(n or w(-7398),w(-6281),3)end end local function Zy()if tick()-ny<.6 then return end if not UI[w(-7489)](R(w(-7204)))then return end ny=tick()My()end local Jy=nil local function Ky()if Jy then local m,n=pcall(function()return Jy[w(-6103)]end)if m and n then return Jy end Jy=nil end local m=qy()local n=m and m:FindFirstChild(w(-7199))local U=n and n:FindFirstChild(w(-7245))local l=U and U:FindFirstChild(w(-7556))if l then Jy=l end return l end local function Yy()local m=w(-6664)local n=M[w(-6154)](w(-8221))local U,l=pcall(function()return n and n:GetAttribute(w(-6717))end)if not((U and l==true))then notify(w(-7691),m,3)return end local F,W=pcall(function()return LocalPlayer[w(-7474)]and LocalPlayer[w(-7474)][w(-6356)]end)if F and W~=w(-7158)then notify(w(-6137),m,3)return end local A=Ky()if not A then notify(w(-6445),m,3)return end local t,R=Ny()if not t then notify(R or w(-6596),m,3)return end pcall(function()setclipboard(t)end)local p=qy()local v=p and p:FindFirstChild(w(-8178))if v and v:GetAttribute(w(-6426))==true then notify(w(-6526),m,3)return end if not pcall(function()A:FireServer(t)end)then notify(w(-7684),m,3)return end local S=tick()while tick()-S<2 do if v and v:GetAttribute(w(-6426))==true then notify(w(-6453)..t,m,4)return end task[w(-6585)](.1)end local y,O=pcall(function()return((A[w(-6103)][w(-6641)]-(ey())[w(-6641)]))[w(-7630)]end)if y and(type(O)==w(-7154)and O>12)then notify(w(-7238),m,4)else notify(w(-7161)..(t..w(-6760)),m,4)end end local function Py()if tick()-Fy<.6 then return end if not UI[w(-7489)](R(w(-6475)))then return end Fy=tick()+2 task[w(-8109)](Yy)end local function dy()local m=(game:GetService(w(-6427)))[w(-7686)]:FindFirstChild(w(-7938))return m and m:FindFirstChild(ti)end local function Xy(m)local w=dy()return w and w:FindFirstChild(m)end local function by()local m=dy()if not m then return nil end return m:GetAttribute(w(-7997))end local function jy()local m=dy()if not m then return false end return m:GetAttribute(w(-6785))==true end local ay={w(-6100);w(-7158);w(-7256);w(-6872)}M[w(-7062)]={[w(-6298)]={w(-6656);w(-6792)};[w(-7888)]={w(-7484);w(-6100);w(-7158),w(-7562)}}local function oy()local m=tonumber(UI[w(-7489)](R(w(-7291))))or 0 return ay[m+1]or w(-6100)end local Ty=0 local function Hy()local m=M[w(-6154)](w(-8214))if m then return m end if tick()-Ty<2 then return nil end for m,n in ipairs({game,workspace})do for m,n in ipairs(n:GetChildren())do local U=n:FindFirstChild(w(-8214))if U then return U end end end Ty=tick()return nil end local function uy(m)if not m or not m:IsA(w(-7072))then return nil end local n=m:FindFirstChildOfClass(w(-6538))if not n or n[w(-7867)]<=0 then return nil end local U=m:FindFirstChild(w(-6447))or m[w(-7177)]or m:FindFirstChild(w(-6311))or m:FindFirstChildWhichIsA(w(-7607))if not U then return nil end return{[w(-6739)]=n,[w(-6907)]=U}end local function hy(m,n)if not m then return end for m,U in ipairs(m:GetChildren())do local l=uy(U)if l then table[w(-6473)](n,l)end end end local mH={}local function wH(m)local n=M[w(-6154)](m)if n then return n end if tick()-((mH[m]or 0))<2 then return nil end for w,n in ipairs({game;workspace})do for w,n in ipairs(n:GetChildren())do local U=n:FindFirstChild(m)if U then return U end end end mH[m]=tick()return nil end local function nH()local m={}local n=oy()if n==w(-7256)then local n=Hy()hy(n and n:FindFirstChild(w(-6334)),m)local U=wH(w(-6134))hy(U and U:FindFirstChild(w(-7588)),m)local l=wH(w(-7512))hy(l and l:FindFirstChild(w(-7588)),m)return m end if n==w(-6872)then local n=wH(w(-6134))local U=uy(n and n:FindFirstChild(w(-6114)))if U then table[w(-6473)](m,U)end return m end local U=(game:GetService(w(-6427)))[w(-7686)]for l,F in ipairs((game:GetService(w(-6427))):GetPlayers())do if F~=U and(F[w(-7474)]and F[w(-7474)][w(-6356)]==n)then local n=uy(F[w(-6159)])if n then table[w(-6473)](m,n)end end end return m end local function UH(m)local n,U=pcall(function()return m[w(-6739)][w(-6103)]~=nil and(m[w(-6907)][w(-6103)]~=nil and m[w(-6739)][w(-7867)]>0)end)return n and U end local function lH()local m=false pcall(function()local n=dy()local U=n and n:GetAttribute(w(-8157))m=type(U)==w(-7154)and U%2==1 end)return m end local function FH(m)local n={}for m,U in ipairs(m)do local l=tonumber(tostring(U[w(-6545)]))local F=tonumber(U[w(-7419)])if l and F then n[#n+1]={[w(-6905)]=tostring(U[w(-6905)]);[w(-6545)]=l,[w(-7419)]=F}end end for m,U in ipairs(n)do if U[w(-6905)]==w(-7793)and U[w(-6545)]==20 then local m=false for n,l in ipairs(n)do if l[w(-6905)]==w(-6449)and(l[w(-6545)]==200 and math[w(-6430)](l[w(-7419)]-U[w(-7419)])<=fi)then m=true break end end if m then local m={}for l in pairs(ei)do local F,W for m,n in ipairs(n)do if n[w(-6905)]==l then local m=math[w(-6430)](n[w(-7419)]-U[w(-7419)])if m<=fi and((not W or m<W))then F,W=n,m end end end if F then local n,U=pcall(function()return memory_read(w(-8130),F[w(-7419)])end)if n and(type(U)==w(-7154)and math[w(-6430)](U-F[w(-6545)])<.0001)then m[#m+1]=F end end end if#m>0 then return m end end end end return nil end local function WH(m)for m,n in ipairs(m)do local U,l=pcall(memory_read,w(-8130),n[w(-7419)])if not U or type(l)~=w(-7154)then return false end local F=ei[n[w(-6905)]]if math[w(-6430)](l-n[w(-6545)])>.0001 and math[w(-6430)](l-F)>.0001 then return false end end for m,n in ipairs(m)do pcall(function()memory_write(w(-8130),n[w(-7419)],ei[n[w(-6905)]])end)end return true end local function AH()for m=1,Bi,1 do local n=FH(Sy(ii))if n then return n end task[w(-6585)](1)end return nil end local function tH(m,n,U)local l,F=#m,#m[1]local W=l*F local A,t,R={},{},{}for n=1,l,1 do for w=1,F,1 do local U=m[n][w]local l=((n-1))*F+w A[l]=U if U>=0 then if not t[U]then t[U]={}R[#R+1]=U end t[U][#t[U]+1]=l end end end table[w(-7944)](R)for m,w in ipairs(R)do if#t[w]~=2 then return nil end end local p={}for m=1,W,1 do local n,U=math[w(-7306)](((m-1))/F)+1,((m-1))%F+1 local W={}if n>1 then W[#W+1]=m-F end if n<l then W[#W+1]=m+F end if U>1 then W[#W+1]=m-1 end if U<F then W[#W+1]=m+1 end p[m]=W end local v,S,y={},{},{}local O,s={},{}for m,w in ipairs(R)do v[w],S[w]=t[w][1],t[w][2]y[w]=false end local i=#R local e,f=0,2000000 local B,g={},0 local function D()for m in pairs(O)do O[m]=nil end for m in pairs(s)do s[m]=nil end for m,w in ipairs(R)do if not y[w]then O[v[w]]=w s[S[w]]=w end end end local function r(m)g=g+1 local w,n=v[m],S[m]local U,l={w},1 B[w]=g while U[l]do local m=U[l]l=l+1 local w=p[m]for m=1,#w,1 do local l=w[m]if l==n then return true end if B[l]~=g and A[l]==-1 then B[l]=g U[#U+1]=l end end end return false end local function Q()for m=1,W,1 do if A[m]==-1 then local w=0 local n=p[m]for m=1,#n,1 do local U=n[m]if A[U]==-1 or O[U]or s[U]then w=w+1 end end if w<2 then return true end end end return false end local function L()g=g+1 local m=g for w=1,W,1 do if A[w]==-1 and B[w]~=m then local n,U={w},1 B[w]=m local l,F={},{}while n[U]do local w=n[U]U=U+1 local W=p[w]for w=1,#W,1 do local U=W[w]if A[U]==-1 then if B[U]~=m then B[U]=m n[#n+1]=U end else local m,w=O[U],s[U]if m then l[m]=true end if w then F[w]=true end end end end local W=false for m in pairs(l)do if F[m]then W=true break end end if not W then return true end end end return false end local function k()D()for m,w in ipairs(R)do if not y[w]and not r(w)then return false end end if n then if Q()then return false end if L()then return false end end return true end local function I(m)local w=0 local n=p[m]for m=1,#n,1 do if A[n[m]]==-1 then w=w+1 end end return w end local function C(m,n,U)local l,F={},{}local W=p[n]for m=1,#W,1 do local n=W[m]if n==U then table[w(-6473)](l,1,n)F[n]=-1 elseif A[n]==-1 then l[#l+1]=n F[n]=I(n)end end table[w(-7944)](l,function(m,w)return F[m]<F[w]end)return l end local function x(m)local w=C(m,v[m],S[m])if#w<=1 then return w,false end local n=C(m,S[m],v[m])if#n<#w then return n,true end return w,false end local function V()for m=1,W,1 do if A[m]==-1 then return false end end return true end local z z=function()e=e+1 if e>f then return false end if U and e%2000==0 then U()end if i==0 then return(not n)or V()end local m,w,l for n,U in ipairs(R)do if not y[U]then local n,F=x(U)if#n==0 then return false end if not m or#n<#w then m,w,l=U,n,F if#n==1 then break end end end end local F=m if l then v[F],S[F]=S[F],v[F]end local W=v[F]for m,w in ipairs(w)do if w==S[F]then y[F]=true i=i-1 if k()and z()then return true end y[F]=false i=i+1 else A[w]=F v[F]=w if k()and z()then return true end A[w]=-1 v[F]=W end end if l then v[F],S[F]=S[F],v[F]end return false end if not k()or not z()then return nil,e end local G,c={},{}for m=1,l,1 do G[m]={}for w=1,F,1 do G[m][w]=A[((m-1))*F+w]end end for m,n in ipairs(R)do local U,l=t[n][1],t[n][2]c[n]={{math[w(-7306)](((U-1))/F)+1;((U-1))%F+1},{math[w(-7306)](((l-1))/F)+1;((l-1))%F+1}}end return G,c,R,e end local function RH(m,w,n)local U,l=#m,#m[1]local F=m[w[1]][w[2]]local W,A={-1;1,0;0},{0;0;-1;1}local t,R,p={},{},0 for w=1,U,1 do for n=1,l,1 do if m[w][n]==F then p=p+1 end end end local function v(w,S)t[#t+1]={w;S}R[w*100+S]=true if w==n[1]and S==n[2]then if#t==p then return true end t[#t]=nil R[w*100+S]=nil return false end for n=1,4,1 do local t,p=w+W[n],S+A[n]if t>=1 and(t<=U and(p>=1 and(p<=l and(not R[t*100+p]and m[t][p]==F))))then if v(t,p)then return true end end end t[#t]=nil R[w*100+S]=nil return false end if not v(w[1],w[2])then t,R,p={},{},0 local function v(w,p)t[#t+1]={w,p}R[w*100+p]=true if w==n[1]and p==n[2]then return true end for n=1,4,1 do local t,S=w+W[n],p+A[n]if t>=1 and(t<=U and(S>=1 and(S<=l and(not R[t*100+S]and m[t][S]==F))))then if v(t,S)then return true end end end t[#t]=nil return false end v(w[1],w[2])end return t end local function pH()local m=(game:GetService(w(-6427)))[w(-7686)][w(-7694)]:FindFirstChild(w(-6904))local n=m and(m:FindFirstChild(w(-7856))and m[w(-7856)]:FindFirstChild(w(-7108)))if not n then return nil end local U,l,F={},0,0 for m,n in ipairs(n:GetChildren())do local W,A=string[w(-8053)](n[w(-6356)],w(-6375))W,A=tonumber(W),tonumber(A)if W and A then U[A*100+W]=n if W>l then l=W end if A>F then F=A end end end if l==0 or not U[101]then return nil end local W,A={},{}for m=1,F,1 do W[m]={}for n=1,l,1 do local l=U[m*100+n]local F=(l and tonumber(l[w(-7293)]))or-1 W[m][n]=F if F>=0 then A[F]=((A[F]or 0))+1 end end end local t=tostring(U[101][w(-6887)])..(w(-7526)..(l..(w(-6092)..F)))local R=M[w(-7008)]local p=false if R and R[w(-7257)]==t then for m=1,F,1 do for n=1,l,1 do if W[m][n]~=R[w(-6471)][m][n]then p=true end end end W=R[w(-6471)]else for m,n in pairs(A)do if n~=2 then return nil,w(-6455)end end local m={}for n=1,F,1 do m[n]=table[w(-7260)](W[n],w(-7301))end M[w(-7008)]={[w(-7257)]=t,[w(-6471)]=W;[w(-6905)]=table[w(-7260)](m,w(-7597))}R=M[w(-7008)]end local v=U[101][w(-7481)]local S=l>1 and((U[100+l][w(-7481)][w(-7186)]-v[w(-7186)]))/((l-1))or 0 local y=F>1 and((U[F*100+1][w(-7481)][w(-7034)]-v[w(-7034)]))/((F-1))or 0 local O=Qi local s,i=pcall(function()return workspace[w(-6994)][w(-6812)][w(-7186)]end)local e=((v[w(-7186)]+U[100+l][w(-7481)][w(-7186)]))/2+S*.25 if s and(type(i)==w(-7154)and e>0)then local m=((i/2))/e if m>.5 and m<4 then O=m end end local function f(m,n)local l=U[m*100+n][w(-7481)]return((l[w(-7186)]+S*.25))*O,((l[w(-7034)]+y*.25))*O end return{[w(-7560)]=U,[w(-6471)]=W,[w(-6833)]=l,[w(-7330)]=F;[w(-7266)]=f;[w(-6905)]=R[w(-6905)];[w(-6455)]=p}end local function vH()local m=(game:GetService(w(-6427)))[w(-7686)][w(-7694)]:FindFirstChild(w(-6904))local n=m and m:FindFirstChild(w(-7856))local U=n and n:FindFirstChild(w(-7108))return U~=nil and U:FindFirstChild(w(-7662))~=nil end local function SH(m)local n=M[w(-6273)]if n and n[w(-6905)]==m[w(-6905)]then return n[w(-7596)],n[w(-7309)],n[w(-6676)]end while M[w(-7721)]do task[w(-6585)](.05)end n=M[w(-6273)]if n and n[w(-6905)]==m[w(-6905)]then return n[w(-7596)],n[w(-7309)],n[w(-6676)]end M[w(-7721)]=true local U=function()task[w(-6585)]()end local l,F,W,A=pcall(tH,m[w(-6471)],true,U)if not((l and F))then l,F,W,A=pcall(tH,m[w(-6471)],false,U)end M[w(-7721)]=false if not l then F,W,A=nil,nil,nil end M[w(-6273)]={[w(-6905)]=m[w(-6905)],[w(-7596)]=F,[w(-7309)]=W;[w(-6676)]=A}return F,W,A end local function yH(m)local n,U=pcall(function()local n=m[w(-7792)]local U,l,F=n[w(-7911)],n[w(-6348)],n[w(-6935)]if type(U)~=w(-7154)or((U+l)+F)<=0 then return nil end if U>1 or l>1 or F>1 then return Color3[w(-7521)](U,l,F)end return Color3[w(-6146)](U,l,F)end)if n then return U end return nil end local function OH()local m=w(-7004)local n,U=pH()if not n then notify(U==w(-6455)and w(-6618)or w(-7002),m,3)return end notify(w(-8041)..(ri..w(-6288)),m,ri)local l,F,W=SH(n)task[w(-6585)](ri)n=pH()if not n then notify(w(-7002),m,3)return end if not l then notify(w(-6187),m,3)return end local function A(m,U)local l,F=n[w(-7266)](m,U)return math[w(-7306)](l+.5),math[w(-7306)](F+.5)end local t,R=A(1,1)mousemoveabs(t,R)task[w(-6585)](Li)local function p(m,n,U)local l,F=t,R for W=1,Ii,1 do local A=W/Ii mousemoveabs(math[w(-7306)]((l+((m-l))*A)+.5),math[w(-7306)]((F+((n-F))*A)+.5))task[w(-6585)](Ci*U)end t,R=m,n end local function v(m)task[w(-6585)](Li*m)mousemoverel(1,0)task[w(-6585)](Ci*2)mousemoverel(-1,0)task[w(-6585)](Li*m)end local function S(m,U)local l,F=pcall(function()return tonumber(n[w(-7560)][m*100+U][w(-7293)])end)return l and F or nil end local function y(m,w)local n=w[1]if S(n[1],n[2])~=m then return true end for n=2,#w-1,1 do if S(w[n][1],w[n][2])~=m then return false end end return true end local function O(m,n)local U,l=A(m[1][1],m[1][2])p(U,l,n)v(n)mouse1press()task[w(-6585)](ki*n)for F=2,#m,1 do U,l=A(m[F][1],m[F][2])p(U,l,n)task[w(-6585)](xi*n)end v(n)mouse1release()task[w(-6585)](Vi*n)end if n[w(-6455)]then for m,n in ipairs(W)do local U=F[n][1]local l,W=A(U[1],U[2])p(l,W,1)v(1)mouse1press()task[w(-6585)](ki)mouse1release()task[w(-6585)](Vi)end end local s,i=0,{}for m,w in ipairs(W)do if not vH()then break end local n=RH(l,F[w][1],F[w][2])if#n<=2 then i[#i+1]=n else O(n,1)if not y(w,n)then O(n,2.5)if not y(w,n)then s=s+1 end end end end if#i>0 then local m=tick()while vH()and tick()-m<.6 do task[w(-6585)](.1)end for m,w in ipairs(i)do if not vH()then break end O(w,1)end end local e=tick()while tick()-e<zi do if not vH()then notify(w(-7714),m,3)return end task[w(-6585)](.1)end notify(s>0 and(s..w(-7713))or w(-7736),m,4)end local sH={}local function iH()for m,w in ipairs(sH)do pcall(function()w:Remove()end)end sH={}end local function eH(m)local n,U={},1 for l=1,m[w(-7330)],1 do for F=1,m[w(-6833)],1 do local W=m[w(-6471)][l][F]if W>=0 and not n[W]then n[W]=Ei[U]or yH(m[w(-7560)][l*100+F])or Color3[w(-7160)](math[w(-7771)](),1,1)U=U+1 end end end local l,F,W=SH(m)if not l or not vH()then return false end for U,W in ipairs(W)do local A=RH(l,F[W][1],F[W][2])for U=1,#A-1,1 do local l,F=m[w(-7266)](A[U][1],A[U][2])local t,R=m[w(-7266)](A[U+1][1],A[U+1][2])local p=Drawing[w(-6146)](w(-6151))p[w(-7020)]=Vector2[w(-6146)](l,F)p[w(-7120)]=Vector2[w(-6146)](t,R)p[w(-7167)]=n[W]p[w(-6344)]=Gi p[w(-6233)]=1 p[w(-6160)]=10 p[w(-7381)]=true sH[#sH+1]=p end end return true end local function fH(m,n)local U=math[w(-7853)](((m-di))/((Xi-di)),0,1)local l=((Yi-((Yi-Pi))*U))*n return math[w(-6932)](Pi,math[w(-7306)](l+.5))end local function BH(m)local n=Drawing[w(-6146)](w(-6969))n[w(-7818)]=false n[w(-7167)]=m[w(-7188)]n[w(-7381)]=false pcall(function()n[w(-6344)]=1.5 end)local U=Drawing[w(-6146)](w(-7293))U[w(-7167)]=m[w(-7188)]U[w(-7381)]=false pcall(function()U[w(-6467)]=true end)pcall(function()U[w(-6953)]=true end)pcall(function()U[w(-7639)]=Drawing[w(-7166)][w(-7471)]or Drawing[w(-7166)][w(-6857)]end)return{[w(-6557)]=n,[w(-6063)]=U;[w(-7188)]=nil;[w(-7295)]=false}end local function gH(m)local function n()local n=Drawing[w(-6146)](w(-7293))n[w(-7167)]=m n[w(-7381)]=false pcall(function()n[w(-6467)]=true end)pcall(function()n[w(-6953)]=true end)pcall(function()n[w(-7680)]=qi[w(-6598)][w(-6316)]end)pcall(function()n[w(-7639)]=Drawing[w(-7166)][w(-7471)]or Drawing[w(-7166)][w(-6857)]end)return n end return{[w(-6063)]=n();[w(-7601)]=n();[w(-7188)]=m;[w(-7295)]=false}end local function DH(m)if m[w(-6557)]then pcall(function()m[w(-6557)]:Remove()end)end if m[w(-6063)]then pcall(function()m[w(-6063)]:Remove()end)end if m[w(-7601)]then pcall(function()m[w(-7601)]:Remove()end)end end local function rH(m,n)if m[w(-7295)]==n then return end m[w(-7295)]=n if m[w(-6557)]then pcall(function()m[w(-6557)][w(-7381)]=n end)end if m[w(-6063)]then pcall(function()m[w(-6063)][w(-7381)]=n end)end if m[w(-7601)]then pcall(function()m[w(-7601)][w(-7381)]=n end)end end M[w(-6753)]=284 local function QH(m)local n=tonumber(m[w(-6887)])if n and n>4096 then local m,U=pcall(memory_read,w(-7409),n+M[w(-6753)])local l,F=pcall(memory_read,w(-7409),(n+M[w(-6753)])+1)local W,A=pcall(memory_read,w(-7409),(n+M[w(-6753)])+2)if m and(l and(W and(type(U)==w(-7154)and(type(F)==w(-7154)and(type(A)==w(-7154)and((U+F)+A)>0)))))then return Color3[w(-7521)](U,F,A)end end local U,l=pcall(function()local n=m[w(-7167)]local U,l,F=n[w(-7911)],n[w(-6348)],n[w(-6935)]if type(U)~=w(-7154)or((U+l)+F)<=0 then return nil end if U>1 or l>1 or F>1 then return Color3[w(-7521)](U,l,F)end return Color3[w(-6146)](U,l,F)end)if U then return l end return nil end M[w(-6696)]=function(m)local n,U=pcall(function()return m[w(-7178)][w(-6641)]end)if not n or not U then return false end local l,F,W,A,t,R=math[w(-6120)],math[w(-6120)],math[w(-6120)],-math[w(-6120)],-math[w(-6120)],-math[w(-6120)]for m,n in ipairs(m[w(-8060)])do local U,p=pcall(function()return n[w(-7178)][w(-6641)]end)if U and p then local m=n[w(-6679)]if p[w(-7186)]-m[w(-7186)]<l then l=p[w(-7186)]-m[w(-7186)]end if p[w(-7034)]-m[w(-7034)]<F then F=p[w(-7034)]-m[w(-7034)]end if p[w(-8100)]-m[w(-8100)]<W then W=p[w(-8100)]-m[w(-8100)]end if p[w(-7186)]+m[w(-7186)]>A then A=p[w(-7186)]+m[w(-7186)]end if p[w(-7034)]+m[w(-7034)]>t then t=p[w(-7034)]+m[w(-7034)]end if p[w(-8100)]+m[w(-8100)]>R then R=p[w(-8100)]+m[w(-8100)]end end end if l==math[w(-6120)]then return false end m[w(-6275)]=Vector3[w(-6146)](l-U[w(-7186)],F-U[w(-7034)],W-U[w(-8100)])m[w(-8191)]=Vector3[w(-6146)](A-U[w(-7186)],t-U[w(-7034)],R-U[w(-8100)])return true end local function LH(m,n,U)U=U or m[w(-6356)]local l=qi[U]if not l or l[w(-8000)]~=n then return nil end if U==w(-8214)and m:GetAttribute(w(-6521))==true then return nil end local F for w,n in ipairs(l[w(-6806)])do F=m:FindFirstChild(n)if F then break end end if not F then return nil end local W=l[w(-7188)]if l[w(-7334)]then local n=m:FindFirstChild(l[w(-7334)])W=(n and QH(n))or l[w(-7188)]end local A=nil if l[w(-7963)]then local n=m:FindFirstChild(l[w(-7963)])pcall(function()A=n and n[w(-7898)]end)end local t={}local function R(m)if#t>=M[w(-6145)]then return end local n,U=pcall(function()return m[w(-7378)]end)if not n or not M[w(-7777)][U]then return end local l,F=pcall(function()return m[w(-6356)]end)if l and M[w(-6832)][F]then return end local W,A=pcall(function()return m[w(-8048)]end)if W and(A and(A[w(-7186)]<=M[w(-7956)]and(A[w(-7034)]<=M[w(-7956)]and A[w(-8100)]<=M[w(-7956)])))then t[#t+1]={[w(-7178)]=m;[w(-6679)]=Vector3[w(-6146)](A[w(-7186)]/2,A[w(-7034)]/2,A[w(-8100)]/2)}end end if l[w(-6557)]then for w,n in ipairs(l[w(-6557)])do R(m:FindFirstChild(n))end else R(m)end local p,v=false,nil if not l[w(-6557)]then p,v=pcall(function()return m:GetChildren()end)end if p then for m,n in ipairs(v)do local U,l=pcall(function()return n[w(-7378)]end)if U and l==w(-7072)then local m,w=pcall(function()return n:GetChildren()end)if m then for m,w in ipairs(w)do R(w)end end else R(n)end end end if#t==0 then local m=F[w(-8048)]t[1]={[w(-7178)]=F,[w(-6679)]=Vector3[w(-6146)](m[w(-7186)]/2,m[w(-7034)]/2,m[w(-8100)]/2)}end local S={[w(-7257)]=F[w(-6887)];[w(-7178)]=F;[w(-6900)]=m;[w(-8060)]=t,[w(-7985)]=U,[w(-7406)]=l;[w(-7188)]=W,[w(-6205)]=A and(l[w(-6063)]..(w(-6946)..tostring(A)))or l[w(-6063)],[w(-6507)]=0,[w(-7817)]=0;[w(-7996)]=false}M[w(-6696)](S)return S end local function kH(m)return m[w(-8127)]end M[w(-7524)]=function(m,n,U)if typeof(m)==w(-7530)then return m end local l if type(m)==w(-7093)then l,n,U=m[w(-7911)]or m[w(-6458)]or m[1],m[w(-6348)]or m[w(-6503)]or m[2],m[w(-6935)]or m[w(-7742)]or m[3]else l=m end l,n,U=tonumber(l),tonumber(n),tonumber(U)if not((l and(n and U)))then return nil end if l>1 or n>1 or U>1 then return Color3[w(-7521)](l,n,U)end return Color3[w(-6146)](l,n,U)end local function IH(m)local n=tonumber(UI[w(-7489)](R(w(-6135))))or 0 if n==1 then local m,n=pcall(function()return M[w(-7524)](UI[w(-7489)](R(w(-6191))))end)return(m and n)or M[w(-6191)]end return qi[w(-6598)][w(-7633)]end M[w(-6614)]=function()local m=(game:GetService(w(-7392))):FindFirstChild(w(-7143))if not m then return nil end local n=tonumber(m[w(-6887)])if not n then return nil end M[w(-7292)]=M[w(-7292)]or 168 local function U(m)local n,U=pcall(memory_read,w(-7590),m)return n and U or nil end local function l(m)local n,l=U(m+16),U(m+24)if not n or not l or n<2 or n>200000 or l<n then return nil end local F=l>15 and U(m)or m if not F or F<4096 then return nil end local W,A=pcall(memory_read,w(-7409),F)if not W or A~=91 then return nil end local t={}for m=0,n-1,4 do local U,l=pcall(memory_read,w(-6623),F+m)if not U or type(l)~=w(-7154)then return nil end if l<0 then l=l+4294967296 end for U=0,3,1 do if m+U<n then t[#t+1]=string[w(-6968)](math[w(-7306)](l/256^U)%256)end end end return table[w(-7260)](t)end if M[w(-7292)]then local m=l(n+M[w(-7292)])if m then return m end end for m=64,768,8 do local U=l(n+m)if U then M[w(-7292)]=m return U end end local F,W=pcall(function()return m[w(-7898)]end)if F and(type(W)==w(-8193)and(#W<255 and(W:sub(1,1)==w(-7698)and W:sub(-1)==w(-6402))))then return W end return nil end local function CH(m)local n=M[w(-6614)]()if not n then return end local U=(game:GetService(w(-8125))):JSONDecode(n)if type(U)~=w(-7093)then return end local l=game:GetService(w(-6427))local F=l[w(-7686)]local W=qi[w(-6598)]local A=tonumber(UI[w(-7489)](R(w(-6708))))or 0 for n,U in ipairs(U)do local t=type(U)==w(-7093)and tonumber(U[w(-6598)])local R=type(U)==w(-7093)and U[w(-6356)]if t and(t>0 and(t>=A and R))then pcall(function()local n=l:FindFirstChild(R)if not n or n==F then return end local U=n[w(-6159)]and n[w(-6159)]:FindFirstChild(w(-6447))if not U then return end local A=tostring(math[w(-7306)](t))local p=((((A:reverse()):gsub(w(-6224),w(-6196))):reverse()):gsub(w(-6962),w(-6099)))m[#m+1]={[w(-7953)]=w(-6747),[w(-7257)]=U[w(-6887)],[w(-7178)]=U,[w(-7985)]=w(-6598),[w(-7406)]=W,[w(-7188)]=IH(t);[w(-6205)]=w(-7315)..p;[w(-6507)]=0,[w(-7996)]=false}end)end end return true end local function xH(m,n,U,l,F)if F>=m[w(-6507)]then m[w(-6507)]=F+M[w(-7496)]if m[w(-7178)][w(-6103)]==nil then m[w(-7996)]=true end end if m[w(-7996)]then return false end local W=m[w(-7178)][w(-6641)]local A,t=WorldToScreen(W+m[w(-7406)][w(-8049)])local R,p=WorldToScreen(W+m[w(-7406)][w(-6921)])if not t and not p then return false end local v=U and math[w(-7306)](((U-W))[w(-7630)])or 0 local S=math[w(-6444)](fH(v,l),m[w(-7406)][w(-7909)]or 99)if n[w(-7188)]~=m[w(-7188)]then pcall(function()n[w(-6063)][w(-7167)]=m[w(-7188)]end)pcall(function()n[w(-7601)][w(-7167)]=m[w(-7188)]end)n[w(-7188)]=m[w(-7188)]end if n[w(-7311)]~=S then pcall(function()n[w(-6063)][w(-8048)]=S end)pcall(function()n[w(-7601)][w(-8048)]=S end)n[w(-7311)]=S end if n[w(-6205)]~=m[w(-6205)]then n[w(-6063)][w(-7293)]=m[w(-6205)]n[w(-6205)]=m[w(-6205)]end if n[w(-6396)]~=v then n[w(-7601)][w(-7293)]=w(-7698)..(v..w(-6402))n[w(-6396)]=v end local y,O=math[w(-7306)](A[w(-7186)]+.5),(math[w(-7306)](A[w(-7034)]+.5)-S)-2 if n[w(-6553)]~=y or n[w(-6097)]~=O then n[w(-6063)][w(-6641)]=Vector2[w(-6146)](y,O)n[w(-6553)],n[w(-6097)]=y,O end local s,i=math[w(-7306)](R[w(-7186)]+.5),math[w(-7306)](R[w(-7034)]+.5)+2 if n[w(-7073)]~=s or n[w(-7634)]~=i then n[w(-7601)][w(-6641)]=Vector2[w(-6146)](s,i)n[w(-7073)],n[w(-7634)]=s,i end return true end local function VH(m)local n,U=m[w(-6275)],m[w(-8191)]if not n then return nil end local l=m[w(-7178)][w(-6641)]local F,W,A=l[w(-7186)]+n[w(-7186)],l[w(-7034)]+n[w(-7034)],l[w(-8100)]+n[w(-8100)]local t,R,p=l[w(-7186)]+U[w(-7186)],l[w(-7034)]+U[w(-7034)],l[w(-8100)]+U[w(-8100)]local v,S,y,O=math[w(-6120)],math[w(-6120)],-math[w(-6120)],-math[w(-6120)]local s=false for m=0,7,1 do local n,U=WorldToScreen(Vector3[w(-6146)](m%2==0 and F or t,m%4<2 and W or R,m<4 and A or p))if U then s=true end if n[w(-7186)]<v then v=n[w(-7186)]end if n[w(-7034)]<S then S=n[w(-7034)]end if n[w(-7186)]>y then y=n[w(-7186)]end if n[w(-7034)]>O then O=n[w(-7034)]end end if not s then return nil end return v,S,y,O,Vector3[w(-6146)](((F+t))/2,((W+R))/2,((A+p))/2)end local function zH(m,n,U,l,F)if F>=m[w(-6507)]then m[w(-6507)]=F+M[w(-7496)]if m[w(-7178)][w(-6103)]==nil then m[w(-7996)]=true elseif m[w(-7985)]==w(-8214)and m[w(-6900)]:GetAttribute(w(-6521))==true then m[w(-7996)]=true end end if m[w(-7996)]then return false end if F>=m[w(-7817)]then m[w(-7817)]=F+1 M[w(-6696)](m)end local W,A,t,R,p,v=pcall(VH,m)if not W or not A then return false end local S=m[w(-7406)][w(-7399)]or Ki local y=math[w(-7306)](math[w(-6932)]((R-A)+Ji*2,S)+.5)local O=math[w(-7306)](math[w(-6932)]((p-t)+Ji*2,S)+.5)local s=math[w(-7306)]((((A+R))/2-y/2)+.5)local i=math[w(-7306)]((((t+p))/2-O/2)+.5)local e=U and math[w(-7306)](((U-v))[w(-7630)])or 0 local f=math[w(-6444)](fH(e,l),13)if m[w(-7406)][w(-6245)]then f=math[w(-6932)](f,m[w(-7406)][w(-6245)])end if n[w(-7188)]~=m[w(-7188)]then pcall(function()n[w(-6557)][w(-7167)]=m[w(-7188)]end)pcall(function()n[w(-6063)][w(-7167)]=m[w(-7188)]end)n[w(-7188)]=m[w(-7188)]end if n[w(-7618)]~=y or n[w(-8156)]~=O then n[w(-6557)][w(-8048)]=Vector2[w(-6146)](y,O)n[w(-7618)],n[w(-8156)]=y,O end if n[w(-6092)]~=s or n[w(-7096)]~=i then n[w(-6557)][w(-6641)]=Vector2[w(-6146)](s,i)n[w(-6092)],n[w(-7096)]=s,i end if n[w(-7311)]~=f then pcall(function()n[w(-6063)][w(-8048)]=f end)n[w(-7311)]=f end if n[w(-6396)]~=e or n[w(-6205)]~=m[w(-6205)]then n[w(-6063)][w(-7293)]=string[w(-7890)](w(-6591),m[w(-6205)],e)n[w(-6396)],n[w(-6205)]=e,m[w(-6205)]end local B,g=math[w(-7306)]((s+y/2)+.5),(i-f)-2 if n[w(-7182)]~=B or n[w(-6579)]~=g then n[w(-6063)][w(-6641)]=Vector2[w(-6146)](B,g)n[w(-7182)],n[w(-6579)]=B,g end return true end local function GH(m)local n,U=pcall(function()return m[w(-6641)]end)if n and(U and pcall(function()return U[w(-7186)]+0 end))then return U end return nil end local function cH(m)local n,U,l,F=pcall(function()local n=m[w(-7167)]return n[w(-7911)],n[w(-6348)],n[w(-6935)]end)if n and type(U)==w(-7154)then return U,l,F end return nil end local function EH(m,w,n)return m~=nil and(w>=100 and n>=100)end local function qH()local m=(game:GetService(w(-6427)))[w(-7686)][w(-6159)]local n=m and m:FindFirstChild(w(-6447))local U=n and GH(n)if not U then return nil end local l=M[w(-6154)](w(-8221))local F=l and l:FindFirstChild(w(-7794))if not F then return nil end local W,A=nil,math[w(-6120)]for m,n in ipairs(F:GetChildren())do local l=n:FindFirstChild(w(-7672))local F=l and l:FindFirstChild(w(-7935))local t=F and F:FindFirstChild(w(-7672))local R=t and t:FindFirstChild(w(-6476))local p=F and F:FindFirstChild(w(-8160))local v=p and GH(p)if R and v then local m=((v-U))[w(-7630)]if m<A then local n pcall(function()n=R[w(-7898)]end)W={[w(-7133)]=n;[w(-6424)]=F:FindFirstChild(w(-8226)),[w(-8184)]=F:FindFirstChild(w(-7456))}A=m end end end if W and A<=c[w(-7059)]then return W end return nil end local function NH(m)local function n()return _G[w(-7444)]==A and(UI[w(-7489)](R(w(-8099)))and true)or false end local U=0 local l=0 local F=false local W=0 local function t()U=U+1 pcall(function()m[w(-6424)]:FireServer()end)return tick()end notify(w(-8041)..(c[w(-6132)]..w(-6288)),c[w(-8215)],c[w(-6132)])task[w(-6585)](c[w(-6132)])if not n()then notify(w(-8057),c[w(-8215)],3)return end local p=t()while n()do local n,A,R=cH(m[w(-7133)])local v=EH(n,A,R)if v and(not F and tick()-W>=c[w(-7902)])then pcall(function()m[w(-8184)]:FireServer()end)W=tick()p=tick()l=l+1 if l>=c[w(-6796)]then notify(w(-6256),c[w(-8215)],4)return end notify(l..(w(-7980)..c[w(-6796)]),c[w(-8215)],1)end F=v if tick()-p>=c[w(-8113)]then if U>=c[w(-6897)]then notify(w(-6757),c[w(-8215)],4)return end l=0 p=t()end task[w(-6585)](c[w(-6783)])end notify(w(-8057),c[w(-8215)],3)end M[w(-6204)]={[w(-6528)]=w(-6732),[w(-6064)]=w(-8017),[w(-8215)]=w(-7064),[w(-6350)]={w(-7564);w(-6191),w(-6135),w(-6708);w(-7102),w(-6645),w(-7291);w(-6140);w(-7582),w(-8068),w(-6107);w(-6293),w(-7030);w(-8159),w(-7339);w(-7629),w(-7287);w(-7352),w(-7201),w(-6463);w(-6947),w(-6161),w(-7860),w(-6989);w(-7043),w(-7734),w(-7082),w(-6257);w(-6435),w(-7078)}}pcall(function()makefolder(M[w(-6204)][w(-6528)])makefolder(M[w(-6204)][w(-6064)])end)M[w(-6204)][w(-7466)]=function()local m={}for n,U in ipairs(M[w(-6204)][w(-6350)])do m[#m+1]=U end for n,U in ipairs(Z[w(-6157)])do m[#m+1]=U[w(-7257)]end for w,n in ipairs(ji)do m[#m+1]=n end return m end M[w(-6204)][w(-7758)]=function(m)m=(((tostring(m or w(-6099))):gsub(w(-7491),w(-6099))):gsub(w(-6622),w(-6099))):gsub(w(-7689),w(-6099))return m:sub(1,32)end M[w(-6204)][w(-6886)]=function(m)local n=type(m)if n==w(-7519)or n==w(-7154)or n==w(-8193)then return m end if typeof(m)==w(-7530)then return{[w(-6267)]={m[w(-7911)];m[w(-6348)];m[w(-6935)]}}end if n==w(-7093)then local n={}for m,U in pairs(m)do if type(U)~=w(-7154)and type(U)~=w(-7519)then return nil end n[m]=U end return n end return nil end M[w(-6204)][w(-6570)]=function(m)if type(m)==w(-7093)and type(m[w(-6267)])==w(-7093)then return Color3[w(-6146)](m[w(-6267)][1]or 0,m[w(-6267)][2]or 0,m[w(-6267)][3]or 0)end return m end M[w(-6204)][w(-6178)]={w(-6265);w(-7313),w(-6229);w(-6837),w(-7727);w(-7945);w(-6871);w(-7179),w(-7364),w(-7100),w(-6894);w(-8028),w(-7752)}M[w(-6204)][w(-7822)]=function(m)local n=M[w(-6802)]or{}local U={[w(-6265)]=n[w(-8129)],[w(-7313)]=n[w(-6613)];[w(-6229)]=n[w(-7204)];[w(-6837)]=n[w(-6475)],[w(-7727)]=n[w(-8065)],[w(-7752)]=n[w(-7940)],[w(-7945)]=M[w(-7819)],[w(-6871)]=M[w(-7836)];[w(-6894)]=M[w(-8110)],[w(-8028)]=M[w(-6184)];[w(-7179)]=q[w(-7439)];[w(-7364)]=q[w(-6291)];[w(-7100)]=q[w(-7551)]}return U[m]end M[w(-6204)][w(-6286)]=function(m)local n=M[w(-6204)][w(-7822)](m)local U={}if n then local m,l=pcall(function()return n:GetKey()end)if m and type(l)==w(-7154)then U[w(-6905)]=l end local F,W=pcall(function()return n:GetMode()end)if F and type(W)==w(-8193)then U[w(-6934)]=W end end if U[w(-6905)]==nil then local n,l=pcall(UI[w(-7489)],R(m))if n and type(l)==w(-7154)then U[w(-6905)]=l end end return U[w(-6905)]~=nil and U or nil end M[w(-6204)][w(-6551)]=function(m,n)if type(n)~=w(-7093)or type(n[w(-6905)])~=w(-7154)then return end local U=M[w(-6204)][w(-7822)](m)local l=false if U then l=pcall(function()U:SetKey(n[w(-6905)])end)if n[w(-6934)]then pcall(function()U:SetMode(n[w(-6934)])end)end end if not l then pcall(UI[w(-6769)],R(m),n[w(-6905)])end end M[w(-6204)][w(-7437)]=function()local m=M[w(-6204)]local n=m[w(-7758)](UI[w(-7489)](R(w(-8090))))if n==w(-6099)then notify(w(-6581),m[w(-8215)],3)return end local U={}for n,l in ipairs(m[w(-7466)]())do local F,W=pcall(UI[w(-7489)],R(l))local A=F and m[w(-6886)](W)if A~=nil then U[l]=A end end local l={}for n,U in ipairs(m[w(-6178)])do local F=m[w(-6286)](U)if F then l[U]=F end end U[w(-6977)]=l local F,W=pcall(function()return(game:GetService(w(-8125))):JSONEncode(U)end)local A=F and pcall(writefile,m[w(-6064)]..(w(-7980)..(n..w(-6960))),W)notify(A and(w(-7492)..n)or w(-7939),m[w(-8215)],3)end M[w(-6204)][w(-7957)]=function()local m=M[w(-6204)]local n=m[w(-7758)](UI[w(-7489)](R(w(-8090))))if n==w(-6099)then notify(w(-6581),m[w(-8215)],3)return end local U=m[w(-6064)]..(w(-7980)..(n..w(-6960)))if not isfile(U)then notify(w(-7891)..n,m[w(-8215)],3)return end local l,F=pcall(readfile,U)local W,A=pcall(function()return(game:GetService(w(-8125))):JSONDecode(F)end)if not((l and(W and type(A)==w(-7093))))then notify(w(-6174),m[w(-8215)],3)return end for n,U in ipairs(m[w(-7466)]())do if A[U]~=nil then pcall(UI[w(-6769)],R(U),m[w(-6570)](A[U]))end end if type(A[w(-6977)])==w(-7093)then for n,U in pairs(A[w(-6977)])do m[w(-6551)](n,U)end end notify(w(-6304)..n,m[w(-8215)],3)end M[w(-6204)][w(-8129)]=function()local m=M[w(-6204)]local n={[w(-7564)]=0,[w(-6135)]=0,[w(-6708)]=0;[w(-7102)]=0;[w(-6645)]=0;[w(-7291)]=0,[w(-6140)]=0,[w(-7582)]=0;[w(-8068)]=0;[w(-6107)]=0;[w(-6293)]=32,[w(-7030)]=0,[w(-8159)]=12;[w(-7339)]=1;[w(-7201)]=150;[w(-6463)]=10,[w(-6947)]=8;[w(-6161)]=10;[w(-7860)]=0;[w(-6989)]=0,[w(-7043)]=400;[w(-7734)]=3;[w(-7082)]=80,[w(-6257)]=true,[w(-6435)]=0,[w(-7078)]=true;[w(-7629)]=q[w(-7982)],[w(-7352)]=q[w(-8079)];[w(-7287)]=M[w(-7723)][w(-6482)]}M[w(-6808)]=tick()+3 for m,n in ipairs(ji)do pcall(UI[w(-6769)],R(n),false)end for m,n in ipairs(Z[w(-6157)])do pcall(UI[w(-6769)],R(n[w(-7257)]),0)end for m,n in pairs(n)do pcall(UI[w(-6769)],R(m),n)end M[w(-6652)](w(-7859),m[w(-8215)],3)end M[w(-8118)]={[w(-8149)]=w(-6924),[w(-6926)]=300;[w(-6365)]=nil}M[w(-8118)][w(-6626)]=function()local m=M[w(-8118)]if not m[w(-6410)]or m[w(-7294)]then return end m[w(-7294)]=true pcall(function()game:HttpGet(m[w(-8149)]..(w(-7047)..m[w(-6410)]))end)end M[w(-8118)][w(-6105)]=function()local m=M[w(-8118)]if m[w(-6365)]then return m[w(-6365)]..((m[w(-6365)]==1 and w(-8135)or w(-6835)))end return w(-7259)end M[w(-8205)]={[w(-8215)]=w(-7230);[w(-6926)]=5,[w(-7733)]=w(-6732);[w(-6944)]=Color3[w(-7521)](125,150,255);[w(-8202)]={[w(-6750)]=Color3[w(-7521)](255,200,60),[w(-6682)]=Color3[w(-7521)](90,220,140)},[w(-6442)]=15,[w(-7600)]=9;[w(-7602)]=30;[w(-6395)]=500,[w(-6182)]=Vector3[w(-6146)](0,-3,0);[w(-6366)]=4,[w(-7462)]=w(-6181),[w(-6985)]=w(-6525),[w(-8173)]={};[w(-6169)]={};[w(-7560)]={};[w(-6820)]={}}M[w(-8205)][w(-6561)]=function()if M[w(-8205)][w(-7462)]==w(-6181)then return w(-6099)end local m=(game:GetService(w(-6427)))[w(-7686)]return w(-6943)..(tostring(game[w(-7222)])..(w(-6616)..tostring(m[w(-7991)])))end M[w(-8205)][w(-6237)]=function()local m,n=M[w(-8205)],M[w(-8118)]if not n[w(-6410)]then return false end local U,l=pcall(function()return game:HttpGet(n[w(-8149)]..(w(-6963)..(n[w(-6410)]..m[w(-6561)]())))end)local F,W=pcall(function()return(game:GetService(w(-8125))):JSONDecode(l)end)if not((U and(F and(type(W)==w(-7093)and type(W[w(-8173)])==w(-7093)))))then return false end if tonumber(W[w(-8009)])then n[w(-6365)]=tonumber(W[w(-8009)])end local A={}for n,U in ipairs(W[w(-8173)])do local l=tonumber(U)if l then A[l]=m[w(-7733)]end end if type(W[w(-7920)])==w(-7093)then for m,w in pairs(W[w(-7920)])do local n=tonumber(m)if n and A[n]then A[n]=tostring(w)end end end if not A[(game:GetService(w(-6427)))[w(-7686)][w(-7991)]]then return false end m[w(-8173)]=A return true end M[w(-8205)][w(-7057)]=function()local m,n=M[w(-8205)],M[w(-8118)]m[w(-7462)]=w(-6181)m[w(-8173)]={}if n[w(-6410)]then pcall(function()game:HttpGet(n[w(-8149)]..(w(-6963)..n[w(-6410)]))end)end end M[w(-8205)][w(-7685)]=function(m)local n=M[w(-8205)]local U=n[w(-6169)][m]if U then pcall(function()U:Remove()end)end n[w(-6169)][m],n[w(-7560)][m],n[w(-6820)][m]=nil,nil,nil end M[w(-8205)][w(-8096)]=function()for m in pairs(M[w(-8205)][w(-6169)])do M[w(-8205)][w(-7685)](m)end end M[w(-8205)][w(-8011)]=function(m,n,U)local l=M[w(-8205)]local F=l[w(-6169)][m]if not F then F=Drawing[w(-6146)](w(-7293))F[w(-6467)]=true F[w(-6953)]=true F[w(-7381)]=false pcall(function()F[w(-7639)]=Drawing[w(-7166)][w(-7316)]or Drawing[w(-7166)][w(-6857)]end)l[w(-6169)][m]=F end if l[w(-7560)][m]~=n then F[w(-7293)]=w(-7698)..(n..w(-6402))F[w(-7167)]=l[w(-8202)][n]or l[w(-6944)]l[w(-7560)][m]=n end if l[w(-6820)][m]~=U then pcall(function()F[w(-7035)]=U end)pcall(function()F[w(-8048)]=U end)l[w(-6820)][m]=U end return F end task[w(-8109)](function()local m=M[w(-8205)]local n=0 local function U()return w(-7916)..tostring(m[w(-8173)][(game:GetService(w(-6427)))[w(-7686)][w(-7991)]])end while _G[w(-7444)]==A do M[w(-7943)](w(-6315),function()local l=UI[w(-7489)](R(w(-7958)))and true or false if m[w(-7462)]==w(-6181)and l then m[w(-7462)]=w(-6407)m[w(-6985)]=w(-6655)pcall(UI[w(-6769)],R(w(-7958)),false)if m[w(-6237)]()then m[w(-7462)]=w(-6177)n=tick()m[w(-6985)]=U()pcall(UI[w(-6769)],R(w(-7958)),true)notify(w(-7741),m[w(-8215)],3)else m[w(-7462)]=w(-6181)m[w(-6985)]=w(-7656)notify(w(-6816),m[w(-8215)],4)end elseif m[w(-7462)]==w(-6177)and not l then m[w(-7057)]()m[w(-6985)]=w(-6525)elseif m[w(-7462)]==w(-6177)and tick()-n>=m[w(-6926)]then m[w(-6985)]=m[w(-6237)]()and U()or w(-7993)n=tick()end end)task[w(-6585)](.2)end end)task[w(-8109)](function()local m=M[w(-8205)]local n=game:GetService(w(-6427))local U,l={},0 while _G[w(-7444)]==A do if m[w(-7462)]==w(-6177)then M[w(-7943)](w(-8195),function()local F=tick()if F-l>=1 then l=F U={}for n,l in ipairs(n:GetPlayers())do local F=l[w(-7991)]if m[w(-8173)][F]then local m=l[w(-6159)]local n=m and m:FindFirstChild(w(-6447))if n then U[#U+1]={[w(-7257)]=F;[w(-7941)]=n}end end end end local W={}local A=workspace[w(-6994)]local t=A and A[w(-8127)][w(-6641)]if t then for n,U in ipairs(U)do local l=m[w(-8173)][U[w(-7257)]]local F,A=pcall(function()return U[w(-7941)][w(-6641)]end)if l and F then local n=A+m[w(-6182)]local F=math[w(-7853)](((((n-t))[w(-7630)]-m[w(-7602)]))/((m[w(-6395)]-m[w(-7602)])),0,1)local R=math[w(-7306)]((m[w(-6442)]+((m[w(-7600)]-m[w(-6442)]))*F)+.5)local p=m[w(-8011)](U[w(-7257)],l,R)W[U[w(-7257)]]=true local v,S=WorldToScreen(n)if S then p[w(-6641)]=Vector2[w(-6146)](v[w(-7186)],v[w(-7034)]+m[w(-6366)])p[w(-7381)]=true else p[w(-7381)]=false end end end end for n in pairs(m[w(-6169)])do if not W[n]then m[w(-7685)](n)end end end)task[w(-6585)]()else m[w(-8096)]()task[w(-6585)](.2)end end m[w(-8096)]()end)task[w(-8109)](function()local m=M[w(-8118)]local n=game:GetService(w(-8125))local U,l=pcall(function()return n:GenerateGUID(false)end)m[w(-6410)]=(U and l)or(tostring(math[w(-7771)](10000000,99999999))..tostring(math[w(-7771)](10000000,99999999)))while _G[w(-7444)]==A do local U,l=pcall(function()return game:HttpGet(m[w(-8149)]..(w(-6963)..(m[w(-6410)]..M[w(-8205)][w(-6561)]())))end)local F,W=pcall(function()return n:JSONDecode(l)end)if U and(F and(type(W)==w(-7093)and tonumber(W[w(-8009)])))then m[w(-6365)]=tonumber(W[w(-8009)])_jQv7[w(-7406)][w(-8009)]=m[w(-6365)]end local t=tick()while _G[w(-7444)]==A and tick()-t<m[w(-6926)]do task[w(-6585)](1)end end m[w(-6626)]()end)M[w(-7131)]={[w(-6926)]=30,[w(-6915)]=0;[w(-6809)]={}}task[w(-8109)](function()local m,n=M[w(-7131)],M[w(-8118)]local U,l=pcall(function()return tostring(game[w(-7222)])end)if not U or#l<8 then return end local F=tick()while _G[w(-7444)]==A and(((not n[w(-6410)]or not _jQv7[w(-6170)]))and tick()-F<60)do task[w(-6585)](.5)end local W=tick()while _G[w(-7444)]==A and tick()-W<3 do task[w(-6585)](.5)end if not n[w(-6410)]or _G[w(-7444)]~=A then return end local t=n[w(-8149)]..(w(-7142)..(n[w(-6410)]..(w(-6943)..l)))while _G[w(-7444)]==A do local U=m[w(-6926)]local l,F=pcall(function()return game:HttpGet(t..(w(-7960)..math[w(-7306)](tick()*1000)))end)local W,R=pcall(function()return(game:GetService(w(-8125))):JSONDecode(F)end)if l and(W and type(R)==w(-7093))then if R[w(-6775)]==false then pcall(function()game:HttpGet(n[w(-8149)]..(w(-6963)..(n[w(-6410)]..M[w(-8205)][w(-6561)]())))end)U=2 else local n=tonumber(R[w(-6915)])or 0 local U=n>m[w(-6915)]if type(R[w(-7466)])==w(-7093)then for n,l in pairs(R[w(-7466)])do if not m[w(-6809)][l]then m[w(-6809)][l]=true U=true end end end if U and n>0 then notify(w(-6849),w(-7342),5)end m[w(-6915)]=n end end local p=tick()while _G[w(-7444)]==A and tick()-p<U do task[w(-6585)](1)end end pcall(function()game:HttpGet(t..w(-6889))end)end)M[w(-7829)]={[w(-6550)]={w(-6225),w(-6409),w(-7947),w(-7682)};[w(-7576)]={[w(-6225)]=1,[w(-6409)]=2,[w(-7947)]=3,[w(-7682)]=4},[w(-6926)]=.05;[w(-7147)]=w(-6225)}M[w(-7829)][w(-6382)]=function(m)local n=workspace:FindFirstChild(w(-8221))local U=n and n:FindFirstChild(w(-6074))if not U then return nil end local l=U:FindFirstChild(w(-6678))local F=l and l:FindFirstChild(tostring(m))local W=F and F:FindFirstChild(w(-7852))if not W then local n=U:FindFirstChild(w(-7942))local l=n and n:FindFirstChild(w(-7672))local F=l and l:FindFirstChild(w(-8046))W=F and F:FindFirstChild(tostring(m))end if not W then return nil end if W[w(-7378)]==w(-6845)then return W end for m,n in ipairs(W:GetDescendants())do if n[w(-7378)]==w(-6845)then return n end end return nil end M[w(-7829)][w(-6383)]=function()local m=M[w(-7829)]local n=UI[w(-7489)](R(w(-7860)))if type(n)==w(-7154)and m[w(-6550)][math[w(-7306)](n)+1]then return math[w(-7306)](n)+1 end if type(n)==w(-8193)and m[w(-7576)][n]then return m[w(-7576)][n]end return m[w(-7576)][m[w(-7147)]]or 1 end M[w(-7829)][w(-7098)]=function()local m=M[w(-7829)]local n=m[w(-6383)]()local U=m[w(-6382)](n)local l=tick()if not U then if l-((m[w(-7442)]or 0))>=10 then m[w(-7442)]=l local U=workspace:FindFirstChild(w(-8221))~=nil notify(U and(w(-7074)..tostring(m[w(-6550)][n]))or w(-7019),w(-8111),3)end return false end local F=pcall(fireclickdetector,U)if not F and l-((m[w(-7442)]or 0))>=10 then m[w(-7442)]=l notify(w(-6251),w(-8111),3)end return F end task[w(-8109)](function()while _G[w(-7444)]==A do if UI[w(-7489)](R(w(-6282)))then M[w(-7829)][w(-7098)]()end task[w(-6585)](M[w(-7829)][w(-6926)])end end)M[w(-8076)]={[w(-8215)]=w(-7487),[w(-7791)]=Vector3[w(-6146)](1369.4,-216.6,-4693.8);[w(-6358)]=6,[w(-7393)]=50;[w(-6310)]=20,[w(-6087)]=false}M[w(-8076)]={[w(-8215)]=w(-7487),[w(-7791)]=Vector3[w(-6146)](1369.4,-216.6,-4693.8);[w(-7658)]=Vector3[w(-6146)](1276.8,42.2,-4814.1);[w(-7602)]=80,[w(-6358)]=6,[w(-7393)]=50;[w(-6310)]=20,[w(-6087)]=false}M[w(-8076)][w(-6474)]=function()local m=M[w(-8076)]if m[w(-6087)]then return end local n=(game:GetService(w(-6427)))[w(-7686)][w(-6159)]local U=n and n:FindFirstChild(w(-6447))local l=n and n:FindFirstChild(w(-6538))if not U or not l then notify(w(-7848),m[w(-8215)],3)return end local F=U[w(-6641)]if((F-m[w(-7658)]))[w(-7630)]<m[w(-7602)]then notify(w(-7903),m[w(-8215)],3)return end local W,t=pcall(function()return l[w(-8103)]end)if W and t==true then notify(w(-7243),m[w(-8215)],3)return end local R=l:FindFirstChild(w(-7610))local function p()local m,n=pcall(function()return R[w(-7898)]end)if m and typeof(n)==w(-6207)then return n end return nil end local v=R and p()m[w(-6087)]=true notify(w(-7950),m[w(-8215)],3)local S=tick()local y=0 local O=false local s=F while _G[w(-7444)]==A and tick()-S<m[w(-6310)]do local n,l=pcall(function()return U[w(-6641)]end)if not n or typeof(l)~=w(-6207)then break end s=l local W=v and p()if W then if((W-v))[w(-7630)]>m[w(-7393)]and((W-m[w(-7791)]))[w(-7630)]>m[w(-7393)]then O=true break end elseif((l-F))[w(-7630)]>m[w(-7393)]and((l-m[w(-7791)]))[w(-7630)]>m[w(-7393)]then O=true break end if((l-m[w(-7791)]))[w(-7630)]>m[w(-6358)]then pcall(function()U[w(-6641)]=m[w(-7791)]end)y=y+1 end task[w(-6585)]()end m[w(-6087)]=false if O then notify(w(-6576),m[w(-8215)],3)else notify(w(-6440),m[w(-8215)],4)end end M[w(-6825)]={[w(-6178)]={87;65,83,68,90;81;32,16;17},[w(-7873)]=124;[w(-7258)]={{87;83};{65;68}};[w(-7637)]=45,[w(-6218)]=90;[w(-7636)]=tick();[w(-6434)]=60}M[w(-6825)][w(-6166)]=function()if not isrbxactive()then return false end if ismouse1pressed()or ismouse2pressed()then return true end for m,w in ipairs(M[w(-6825)][w(-6178)])do if iskeypressed(w)then return true end end return false end M[w(-6825)][w(-7261)]=function()if not isrbxactive()then return false end local m=math[w(-7771)](0,1)==0 and 2 or-2 mousemoverel(m,0)task[w(-6585)](.05+math[w(-7771)]()*.05)mousemoverel(-m,0)local n=M[w(-6825)][w(-7258)][math[w(-7771)](1,#M[w(-6825)][w(-7258)])]for m,n in ipairs(n)do keypress(n)task[w(-6585)](.02+math[w(-7771)]()*.02)keyrelease(n)task[w(-6585)](.05)end return true end task[w(-8109)](function()local m=M[w(-6825)]local n=0 while _G[w(-7444)]==A do task[w(-6585)](.25)if UI[w(-7489)](R(w(-6307)))then local U,l=pcall(m[w(-6166)])if U and l then m[w(-7636)]=tick()elseif tick()-m[w(-7636)]>=m[w(-6434)]then local U,l=pcall(m[w(-7261)])if U and l then m[w(-7636)]=tick()m[w(-6434)]=math[w(-7771)](m[w(-7637)],m[w(-6218)])elseif tick()-n>=300 then n=tick()notify(w(-6212),w(-6824),5)end end else m[w(-7636)]=tick()end end end)local function MH()UI[w(-7623)](w(-6732),function(m)local n=m:Section(w(-6270)..string[w(-7620)](w(-7499),math[w(-7306)](tonumber(string[w(-6580)](t,2))/1000)%40+1),w(-6697),nil,260)n:Toggle(R(w(-7782)),w(-7897))n:Combo(R(w(-7564)),w(-7884),y,0)n:Toggle(R(w(-8153)),w(-7510))n:Toggle(R(w(-6059)),w(-6158))n:Toggle(R(w(-6263)),w(-6448))n:Tip(w(-7317))n:Toggle(R(w(-8032)),w(-6530))n:Toggle(R(w(-7180)),w(-7579))n:Tip(w(-7892))n:Toggle(R(w(-6066)),w(-7037))n:Toggle(R(w(-6500)),w(-7412))local U=n:Keybind(R(w(-6265)),M[w(-7575)],w(-6351),function()M[w(-6875)]=true end)M[w(-6802)][w(-8129)]=U pcall(function()U:AddToHotkey(w(-7434),R(w(-6500)))end)n:Button(w(-7434),function()ky()end)local l=m:Section(w(-7688),w(-6697))l:Toggle(R(w(-7981)),w(-7278))l:Toggle(R(w(-6992)),w(-7365))l:Toggle(R(w(-6541)),w(-6342))l:Toggle(R(w(-6727)),w(-6690))l:Toggle(R(w(-7750)),w(-6240))l:ColorPicker(R(w(-6191)),1,.24,.24,1,function(...)M[w(-6191)]=M[w(-7524)](...)or M[w(-6191)]end)l:Combo(R(w(-6135)),w(-7931),qi[w(-6598)][w(-6264)],0)l:SliderInt(R(w(-6708)),w(-7125),0,25000,0)local F=m:Section(w(-7533)..t,w(-6697),{w(-8221);w(-7949);w(-6763)})if F[w(-6571)]==1 then F:Toggle(R(w(-6269)),w(-6183))F:Toggle(R(w(-7558)),w(-6119))F:Toggle(R(w(-6998)),w(-7323))F:Toggle(R(w(-7176)),w(-7544))elseif F[w(-6571)]==2 then F:Toggle(R(w(-7925)),w(-7615))local m=F:Keybind(R(w(-7313)),Di,w(-6351),function()Wy=true end)M[w(-6802)][w(-6613)]=m pcall(function()m:AddToHotkey(w(-7615),R(w(-7925)))end)F:Toggle(R(w(-7045)),w(-7169))F:Toggle(R(w(-7751)),w(-7357))F:Toggle(R(w(-6332)),w(-8174))else F:Text(w(-6990))F:Toggle(R(w(-7204)),w(-6373))local m=F:Keybind(R(w(-6229)),V,w(-6351),function()wy=true end)M[w(-6802)][w(-7204)]=m pcall(function()m:AddToHotkey(w(-6373),R(w(-7204)))end)F:Toggle(R(w(-6475)),w(-6421))local n=F:Keybind(R(w(-6837)),z,w(-6351),function()Uy=true end)M[w(-6802)][w(-6475)]=n pcall(function()n:AddToHotkey(w(-6691),R(w(-6475)))end)F:Toggle(R(w(-8107)),w(-6516))F:Toggle(R(w(-8099)),w(-6454))local U=F:Keybind(R(w(-7727)),G,w(-6351),function()ly=true end)M[w(-6802)][w(-8065)]=U pcall(function()U:AddToHotkey(w(-6487),R(w(-8099)))end)F:Toggle(R(w(-6671)),w(-7049))F:Toggle(R(w(-6895)),w(-7708))F:Toggle(R(w(-6282)),w(-7207))F:Combo(R(w(-7860)),w(-6634),M[w(-7829)][w(-6550)],0,function(m,n)if type(n)==w(-8193)and M[w(-7829)][w(-7576)][n]then M[w(-7829)][w(-7147)]=n elseif type(m)==w(-7154)and M[w(-7829)][w(-6550)][m+1]then M[w(-7829)][w(-7147)]=M[w(-7829)][w(-6550)][m+1]end end)F:Button(w(-7880),function()M[w(-7829)][w(-7098)]()end)end local W=m:Section(w(-8163)..t,w(-6697),{w(-6519),w(-7460)})if W[w(-6571)]==1 then W:Toggle(R(w(-7994)),w(-6355))W:Tip(w(-6220))W:Toggle(R(w(-7361)),w(-7054))W:Combo(R(w(-6140)),w(-6632),M[w(-6313)],0)W:Combo(R(w(-7582)),w(-7338),M[w(-7842)],0)W:Button(w(-7435),function()M[w(-7458)]=true end)W:Toggle(R(w(-7832)),w(-6999))W:Combo(R(w(-7102)),w(-7904),M[w(-6456)],0)W:Toggle(R(w(-6918)),w(-7358))W:Combo(R(w(-6645)),w(-7468),M[w(-7461)],0)W:Toggle(R(w(-8162)),w(-8204))else W:Toggle(R(w(-7445)),w(-7128))W:Toggle(R(w(-6700)),w(-6625))W:Toggle(R(w(-6588)),w(-7875))W:Toggle(R(w(-6565)),w(-8117))W:Toggle(R(w(-7504)),w(-6607))W:Tip(w(-7719))W:Toggle(R(w(-7959)),w(-7967))W:Toggle(R(w(-6236)),w(-8027))W:Toggle(R(w(-7368)),w(-6770))W:Toggle(R(w(-7951)),w(-7213))W:Tip(w(-6601))end local A=m:Section(w(-7828)..t,w(-7508),{w(-6755)})A:Text(w(-6755))A:InputText(R(w(-8090)),w(-6292),w(-6099))A:Button(w(-7344),function()M[w(-6204)][w(-7957)]()end)A:Button(w(-7276),function()M[w(-6204)][w(-7437)]()end)A:Toggle(R(w(-7958)),w(-6254))A:Spacing()local p=m:Section(w(-6594),w(-7508))p:Toggle(R(w(-6307)),w(-7746))p:Button(w(-6554),function()task[w(-8109)](M[w(-8076)][w(-6474)])end)p:Button(w(-8200),function()M[w(-6204)][w(-8129)]()end)local v=m:Section(w(-7502),w(-7508))v:Text(w(-6152))v:Toggle(R(w(-7041)),w(-6283))local S=v:Keybind(R(w(-7945)),J,w(-7622),function() end)M[w(-7819)]=S pcall(function()S:AddToHotkey(w(-6283),R(w(-7041)))end)v:Combo(R(w(-7291)),w(-7428),ay,0)local O=m:Section(w(-7497),w(-7508))O:Toggle(R(w(-7808)),w(-7413))O:SliderInt(R(w(-6463)),w(-7427),2,30,10)O:SliderInt(R(w(-6947)),w(-6520),2,30,8)O:SliderInt(R(w(-6161)),w(-7320),2,30,10)local s=m:Section(w(-6878)..t,w(-7508),{w(-7917);w(-6549)})if s[w(-6571)]==1 then s:Combo(R(w(-6989)),w(-6384),M[w(-7062)][w(-6298)],0)s:SliderInt(R(w(-7043)),w(-7214),50,500,400)s:SliderInt(R(w(-7734)),w(-7426),1,10,3)s:SliderInt(R(w(-7082)),w(-6111),20,300,80)s:Toggle(R(w(-6257)),w(-7675),true)s:Combo(R(w(-6435)),w(-7221),M[w(-7062)][w(-7888)],0)s:Tip(w(-7690))s:Toggle(R(w(-7078)),w(-6494),true)s:Tip(w(-6572))else s:Toggle(R(w(-7744)),w(-8148))local m=s:Keybind(R(w(-6871)),M[w(-7559)],w(-7622),function() end)M[w(-7836)]=m pcall(function()m:AddToHotkey(w(-8148),R(w(-7744)))end)s:Toggle(R(w(-6272)),w(-7076))s:Toggle(R(w(-7140)),w(-7876))s:SliderInt(R(w(-7201)),w(-6449),0,300,150)end local i=m:Section(w(-7187),w(-7508))i:Toggle(R(w(-6884)),w(-7568))i:Tip(w(-6198))local e=m:Section(w(-7887),w(-7508))e:Toggle(R(w(-6068)),w(-6081))local f=e:Keybind(R(w(-7179)),q[w(-6176)],w(-7622),function() end)q[w(-7439)]=f local B,g=pcall(function()f:AddToHotkey(w(-6081),R(w(-6068)))end)if not B and not q[w(-7265)]then q[w(-7265)]=true print(w(-7127)..tostring(g))end e:SliderInt(R(w(-7352)),w(-7642),0,1000,q[w(-8079)])e:Toggle(R(w(-7999)),w(-7144))local D=e:Keybind(R(w(-7364)),q[w(-8047)],w(-7622),function() end)q[w(-6291)]=D pcall(function()D:AddToHotkey(w(-7144),R(w(-7999)))end)e:SliderFloat(R(w(-7629)),w(-7457),1,q[w(-7755)],q[w(-7982)],w(-6993))e:Toggle(R(w(-7469)),w(-6815))local r=e:Keybind(R(w(-7100)),q[w(-7587)],w(-7622),function() end)q[w(-7551)]=r pcall(function()r:AddToHotkey(w(-6815),R(w(-7469)))end)e:Toggle(R(w(-7954)),w(-8165))e:Toggle(R(w(-6600)),w(-7638))e:Toggle(R(w(-6711)),w(-7537))local Q=m:Section(w(-6100),w(-7508))Q:Toggle(R(w(-7965)),w(-7772))local L=Q:Keybind(R(w(-6894)),M[w(-6199)][w(-7136)],w(-7622),function() end)M[w(-8110)]=L pcall(function()L:AddToHotkey(w(-6524),R(w(-7965)))end)Q:Toggle(R(w(-7290)),w(-7933))local k=Q:Keybind(R(w(-8028)),M[w(-7723)][w(-7136)],w(-7622),function() end)M[w(-6184)]=k pcall(function()k:AddToHotkey(w(-7933),R(w(-7290)))end)Q:SliderInt(R(w(-7287)),w(-7453),0,85,M[w(-7723)][w(-6482)])local I=m:Section(w(-8147),w(-7508))for m,n in ipairs(Z[w(-6157)])do I:Combo(R(n[w(-7257)]),n[w(-6063)],n[w(-6779)],0)end I:Toggle(R(Z[w(-7085)][w(-7257)]),w(-6147))I:Button(w(-6801),function()if M[w(-6972)](Z[w(-8215)])then Z[w(-7080)]()end end)I:Toggle(R(w(-6940)),w(-6542))local C=I:Keybind(R(w(-7752)),Z[w(-7136)],w(-6351),function()Z[w(-6415)]=true end)M[w(-6802)][w(-7940)]=C pcall(function()C:AddToHotkey(w(-6707),R(w(-6940)))end)I:Toggle(R(w(-8123)),w(-6694))local x=m:Section(w(-6741),w(-7508))x:Toggle(R(w(-8042)),w(-6486))x:Combo(R(w(-8068)),w(-7167),M[w(-7823)],0)x:Toggle(R(w(-6386)),w(-6317))x:Combo(R(w(-6107)),w(-6877),M[w(-8217)],0)x:SliderInt(R(w(-6293)),w(-7345),0,100,32)x:Tip(w(-6764))x:Toggle(R(w(-7422)),w(-7373))x:Combo(R(w(-7030)),w(-6722),M[w(-6798)][w(-6782)],0)x:SliderFloat(R(w(-8159)),w(-7795),0,24,12,w(-7718))x:Toggle(R(w(-7052)),w(-6734))x:SliderFloat(R(w(-7339)),w(-6515),.1,6,1,w(-6363))x:Toggle(R(w(-6738)),w(-7385))x:Tip(w(-6391))end)end pcall(function()local m=(game:GetService(w(-6427)))[w(-7686)][w(-6159)]local n=m and((m:FindFirstChild(w(-6538))or m:FindFirstChildOfClass(w(-6538))))local U=m and m:FindFirstChild(w(-6447))local l=n and tonumber(n[w(-6887)])local F=U and tonumber(U[w(-6887)])local W,A=pcall(function()return n[w(-7867)]end)local t,R=pcall(function()return U[w(-6641)]end)local function S(m)if not l or l<4096 or not W or type(A)~=w(-7154)or A<=0 or type(m)~=w(-7154)then return false end local n,U=pcall(memory_read,w(-8007),l+m)return n and(type(U)==w(-7154)and math[w(-6430)](U-A)<.01)end local function y(m,n)if not F or F<4096 or not t or not R or type(m)~=w(-7154)or type(n)~=w(-7154)then return false end local U,l=pcall(memory_read,w(-7590),F+m)if not U or not l or l<4096 then return false end for m,U in ipairs({R[w(-7186)],R[w(-7034)],R[w(-8100)]})do local F,W=pcall(memory_read,w(-8007),(l+n)+((m-1))*4)if not F or type(W)~=w(-7154)or math[w(-6430)](W-U)>.5 then return false end end return true end local O=M[w(-6186)]or{}local function s(m,n,U)local l=O[m]local F=type(l)==w(-7093)and tonumber(l[n])or nil if F==nil then return nil end return F==U end local function i(m)local n,U=pcall(memory_read,w(-8007),m)return n and(type(U)==w(-7154)and U)or nil end local function e(m)local n,U=pcall(memory_read,w(-7409),m)return n and U or nil end local function f(m)local n,U=pcall(memory_read,w(-7590),m)return n and(type(U)==w(-7154)and(U>4096 and U))or nil end local function B(m)local n,U=pcall(memory_read,w(-7590),m)return n and(type(U)==w(-7154)and U)or nil end local Q={}local function L(m,n)Q[#Q+1]={[w(-7985)]=m;[w(-8201)]=n}end L(w(-7446),S(p))L(w(-6201),y(D,(r-4)-12))L(w(-7040),s(w(-6538),w(-8103),v))L(w(-7234),s(w(-6538),w(-6635),g))L(w(-8036),s(w(-6896),w(-6827),r-4))L(w(-7787),s(w(-6896),w(-6891),q[w(-7787)]))local k=nil for m,n in pairs(M[w(-7389)])do local U=s(w(-6279),m,n)if U==false then k=false break end if U then k=true end end L(w(-7389),k)local I=nil local C={[w(-7167)]=w(-7391),[w(-6929)]=w(-7831),[w(-6233)]=w(-7211),[w(-7239)]=w(-7024);[w(-8227)]=w(-7863)}for m,n in pairs(C)do local U=s(w(-7710),n,M[w(-8144)][m])if U==false then I=false break end if U then I=true end end L(w(-8144),I)local x=m and m:FindFirstChild(w(-6311))local V=x and tonumber(x[w(-6887)])if F and(V and V>4096)then L(w(-7613),i(F+M[w(-7379)][w(-7613)])==1 and i(V+M[w(-7379)][w(-7613)])==0)local m,n,U,l=pcall(function()local m=x[w(-7167)]return m[w(-7911)],m[w(-6348)],m[w(-6935)]end)if m and(type(n)==w(-7154)and(type(U)==w(-7154)and type(l)==w(-7154)))then if n<=1 and(U<=1 and l<=1)then n,U,l=n*255,U*255,l*255 end local m,F,W=e(V+M[w(-6753)]),e((V+M[w(-6753)])+1),e((V+M[w(-6753)])+2)L(w(-6753),m~=nil and(F~=nil and(W~=nil and(math[w(-6430)](m-n)<=2 and(math[w(-6430)](F-U)<=2 and math[w(-6430)](W-l)<=2)))))end end local z=(game:GetService(w(-6427)))[w(-7686)]:FindFirstChild(w(-7938))local G=z and(z:GetChildren())[1]local c=G and tonumber(G[w(-6887)])if c and c>4096 then local m=G[w(-6356)]local n=f(c+M[w(-7631)])local U=n and B(n+M[w(-8120)])local l=n and B(n+M[w(-6751)])local F=l and((l>15 and f(n+M[w(-6141)])or(n+M[w(-6141)])))local W=F~=nil and U==#m if W then for n=1,math[w(-6444)](#m,16),1 do if e((F+n)-1)~=string[w(-7409)](m,n)then W=false break end end end L(w(-6387),W)end local E,N={},0 for m,n in ipairs(Q)do if n[w(-8201)]~=nil then N=N+1 if not n[w(-8201)]then E[#E+1]=n[w(-7985)]end end end if not l or not F then _jQv7[w(-6620)](w(-6729),40,w(-6433))elseif#E==0 then _jQv7[w(-6620)](w(-6699)..(N..(w(-7980)..#Q)),40)else _jQv7[w(-6620)](w(-6210),40,w(-6433))end if M[w(-6737)]then if#E>0 then print(w(-8040)..table[w(-7260)](E,w(-8088)))else print(w(-6597)..(N..(w(-7980)..(#Q..w(-6148)))))end end local Z=game:GetService(w(-7392))local J=0 for m,n in ipairs({Z:FindFirstChild(w(-7143))~=nil,Z:FindFirstChild(w(-7932))~=nil;M[w(-6154)](w(-8094))~=nil})do if n then J=J+1 end end _jQv7[w(-6620)](w(-7371)..(J..w(-6175)),52,J==3 and w(-8201)or w(-6433))local K=M[w(-8219)]()_jQv7[w(-7406)][w(-6193)]=K and w(-6262)or w(-6564)if K then _jQv7[w(-6620)](w(-7664),64)else _jQv7[w(-6620)](w(-7609),64,w(-6433))end end)task[w(-8109)](function()for m=1,3,1 do pcall(function()UI[w(-7134)](w(-6732))end)task[w(-6585)](.05)end task[w(-6585)](.25)_jQv7[w(-6098)]=pcall(MH)_jQv7[w(-8126)]=true end)local function ZH()local m=false pcall(function()local n=iy()local U=n and tonumber(n[w(-6887)])if U and U>4096 then m=memory_read(w(-7409),U+v)==1 end end)return m end task[w(-8109)](function()local m=nil local n=false while _G[w(-7444)]==A do M[w(-7943)](w(-7504),function()local U=UI[w(-7489)](R(w(-7504)))and true or false if U and not n then if not lH()then UI[w(-6769)](R(w(-7504)),false)notify(w(-7541),w(-8050),3)return end m=AH()if not m then UI[w(-6769)](R(w(-7504)),false)notify(w(-7653),w(-8050),3)return end if not WH(m)then m=nil UI[w(-6769)](R(w(-7504)),false)notify(w(-7709),w(-8050),3)return end n=true notify(w(-8054),w(-8050),3)elseif not U and n then n=false m=nil notify(w(-7335),w(-8050),3)elseif U and m then if not WH(m)then n=false m=nil UI[w(-6769)](R(w(-7504)),false)notify(w(-6116),w(-8050),3)end end end)task[w(-6585)](gi)end end)task[w(-8109)](function()local m=w(-8034)local n={}local U=0 local l=false local F=false local W=false local t=false while _G[w(-7444)]==A do M[w(-7943)](w(-6711),function()local A=UI[w(-7489)](R(w(-6711)))and true or false if A~=l then l=A if A then W,t=false,false F=ZH()n=M[w(-6941)](Sy(Q))U=tick()if#n==0 then notify(w(-6996),m,3)end else t=false notify(w(-7335),m,3)end end if A then local l=ZH()if l and(not F and(Oy(n)==0 and((not W or tick()-U>=x))))then wait(C)n=M[w(-6941)](Sy(Q))U=tick()W=true elseif not l and tick()-U>=I then n=M[w(-6941)](Sy(Q))U=tick()end F=l n=M[w(-7720)](n)if#n>0 then applygc(n,L)if not t then t=true notify(w(-8054),m,3)end end end end)task[w(-6585)](k)end end)task[w(-8109)](function()local m={w(-7106);w(-7480);w(-7383)}local n={[w(-7106)]=999999;[w(-7480)]=999999,[w(-7383)]=0}local U=.25 local l=180 local F=2 local W=3 local t,p,v,S,y,O,s={},false,false,0,nil,nil,nil local i=false local function e(m)return m and((m:FindFirstChild(w(-6731))or m:FindFirstChild(w(-7776))))end local function f(m)local n,U=pcall(memory_read,w(-7590),m[w(-7419)]+16)return n and U==m[w(-6485)]end local function B()for m,n in ipairs(t)do if n[w(-6905)]==w(-7383)then return true end end return false end local function g()for m,n in ipairs(t)do if f(n)then pcall(memory_write,w(-8130),n[w(-7419)],n[w(-6643)])end end t={}end local function D()g()local U={}for m,l in ipairs(Sy(m))do local F=tostring(l[w(-6905)])local W=tonumber(l[w(-7419)])if n[F]~=nil and(W and(W>4096 and(not U[W]and tonumber(tostring(l[w(-6545)])))))then local m,n=pcall(memory_read,w(-7590),W+16)local l,A=pcall(memory_read,w(-8130),W)if m and(l and(n and n>4096))then U[W]=true t[#t+1]={[w(-7419)]=W,[w(-6905)]=F,[w(-6485)]=n;[w(-6643)]=A}end end end S=tick()end local function r()local m,U={},false for l,F in ipairs(t)do if f(F)then if F[w(-6905)]==w(-7106)then local m,l=pcall(memory_read,w(-8130),F[w(-7419)])if m and(type(l)==w(-7154)and(l<n[w(-7106)]-.5 and l>n[w(-7106)]-1000))then U=true end end if pcall(memory_write,w(-8130),F[w(-7419)],n[F[w(-6905)]])then m[#m+1]=F end end end t=m return#m,U end while _G[w(-7444)]==A do M[w(-7943)](w(-6066),function()local m=UI[w(-7489)](R(w(-6066)))and true or false if m~=p then p=m if m then v=false local m=(game:GetService(w(-6427)))[w(-7686)][w(-6159)]y=m and m[w(-6887)]O=e(m)and true or false D()else g()s=nil notify(w(-7335),w(-6390),3)end end if not m then return end local n=tick()local U=(game:GetService(w(-6427)))[w(-7686)][w(-6159)]local W=U and U[w(-6887)]local A=e(U)and true or false if W~=y or(A and not O)then s,i=n+F,false end y,O=W,A if s and n>=s then s=nil D()elseif#t==0 and n-S>=l then D()end if#t>0 then local m,n=r()if n and(A and(not i and not B()))then i=true D()r()end if m>0 and not v then v=true notify(w(-8054),w(-6390),3)end end end)task[w(-6585)](U)end g()end)task[w(-8109)](function()local m=w(-6527)local n,U,l,F,W,t,p=.15,600,.5,6,4,1,1 local v,S={},{}local y={}local O,s,i,e,f,B,g,D,r=false,0,0,0,0,1,1,0,0 local function Q(m)local n=X[m]local U=v[m]or{}v[m]=U U[w(-8004)]=tick()local l=Cy(n)if not l then U[w(-6779)],U[w(-6828)]={},nil return end local F={l}if n[w(-6580)]then local m=U[w(-7988)]and(#U[w(-7988)]>0 and tick()-((U[w(-7962)]or 0))<10)if m then for n,U in ipairs(U[w(-7988)])do if not U[w(-6103)]then m=false break end end end if not m then U[w(-7988)],U[w(-7962)]={},tick()for m,l in ipairs(l:GetDescendants())do if m%M[w(-7901)]==0 then task[w(-6585)]()end if l[w(-6356)]==n[w(-6580)]then U[w(-7988)][#U[w(-7988)]+1]=l end end end F=U[w(-7988)]end local W,A={},{}for m,U in ipairs(F)do if not pcall(xy,U,n,W,A)then pcall(Vy,U,n,W)end end U[w(-6779)],U[w(-8213)]=W,W if#A==0 then for m=1,#W,4 do pcall(function()local n=W[m][w(-6641)]A[#A+1]=n[w(-7186)]A[#A+1]=n[w(-8100)]end)end end if#A>0 then U[w(-6828)]=A end end local function L(m)for m,n in ipairs(m[w(-7988)]or{})do if not n[w(-6103)]then return true end end return false end local function k()local m=ey()return m and GH(m)end local function I(m)s=tick()S={}if not m then return end local n=U*U for U=1,#X,1 do local l=v[U]and v[U][w(-6828)]if l then for F=1,#l-1,2 do local W,A=l[F]-m[w(-7186)],l[F+1]-m[w(-8100)]if W*W+A*A<=n then S[#S+1]=U break end end end end end local function C(m)for n,U in ipairs(S)do local l=v[U]local F=l and((m and l[w(-6779)]or l[w(-8213)]))if l then l[w(-8213)]=nil end if F then for m=1,#F,1 do pcall(function()local n=F[m]if n[w(-8048)][w(-7186)]>.01 then n[w(-8048)]=Y end end)end end end end local function x()local m=M[w(-6154)](w(-6134))local n=m and m:FindFirstChild(w(-7475))if not n then return end for m,n in ipairs(n:GetChildren())do local U=n[w(-6887)]if not y[U]then pcall(function()if n:GetAttribute(w(-8216))~=0 then n:SetAttribute(w(-8216),0)end y[U]=true end)end end end local function V()local m=0 for n,U in pairs(v)do m=m+#((U[w(-6779)]or{}))end return m end while _G[w(-7444)]==A do M[w(-7943)](w(-8153),function()local n=UI[w(-7489)](R(w(-8153)))and true or false if n~=O then O=n if not n then v,S,y={},{},{}notify(w(-7335),m,3)return end for m=1,#X,1 do Q(m)end I(k())C(true)local U=V()notify(U>0 and(w(-6898)..(U..w(-7218)))or w(-6873),m,3)return end if not n then return end local U=tick()if not M[w(-7449)]then if U-s>=l then I(k())for m,w in ipairs(S)do if v[w]and L(v[w])then Q(w)end end end if#S>0 then g=g%#S+1 local m=S[g]if U-((v[m]and v[m][w(-8004)]or 0))>=F then Q(m)end end if U-r>=2 then r=U for m=1,#X,1 do local n=v[m]if((not n or not n[w(-6828)]))and(U-((n and n[w(-8004)]or 0))>=6 and Cy(X[m]))then Q(m)end end end if U-i>=W then i=U Q(B)B=B%#X+1 end end local A=U-D>=p if A then D=U end C(A)if U-e>=t then e=U if U-f>=10 then f=U y={}end pcall(x)end end)task[w(-6585)](n)end end)task[w(-8109)](function()local m={w(-6587);[w(-6536)]=w(-7532)}local n,U={},{}local l,F,W,t,p=false,false,0,0,0 local function v()local n={}local U=Cy(m)if U and not pcall(xy,U,m,n)then n={}pcall(Vy,U,m,n)end local l for m,n in ipairs(n)do local U,F=pcall(function()return n[w(-6641)]end)if U and typeof(F)==w(-6207)then l=F break end end if not l then return n end local function F(m)if m[w(-6356)]~=w(-7532)then return end local U=false for m,n in ipairs(m:GetChildren())do if n[w(-7378)]==w(-7974)then U=true break end end if not U then return end local F,W=pcall(function()return m[w(-6641)]end)if F and(typeof(W)==w(-6207)and((W-l))[w(-7630)]<=400)then n[#n+1]=m end end for m,n in ipairs(workspace:GetChildren())do if n[w(-6356)]==w(-7532)then pcall(F,n)elseif n[w(-6356)]==w(-7072)and n[w(-7378)]==w(-7072)then for m,w in ipairs(n:GetChildren())do pcall(F,w)end end end return n end local function S(m)pcall(function()local n=m[w(-6641)]if n[w(-7034)]>Ui+100 then m[w(-6641)]=Vector3[w(-6146)](n[w(-7186)],Ui,n[w(-8100)])end end)end while _G[w(-7444)]==A do M[w(-7943)](w(-7862),function()local m=UI[w(-7489)](R(w(-7751)))and true or false local A=UI[w(-7489)](R(w(-6332)))and true or false if m~=l then l,n,W=m,{},0 notify(m and w(-8054)or w(-7335),w(-8179),3)end if A~=F then F,U,t=A,{},0 notify(A and w(-8054)or w(-7335),w(-6326),3)end local y=tick()if m then if not M[w(-7449)]and y-W>=Mi then n,W=v(),y end for m,n in ipairs(n)do pcall(function()if n[w(-8048)][w(-7186)]>.01 then n[w(-8048)]=Y end end)end end if A then if not M[w(-7449)]and y-t>=Mi then U,t=Gy(),y end if y-p>=1 then p=y for m,w in ipairs(U)do S(w)end end end end)task[w(-6585)](((UI[w(-7489)](R(w(-7751)))or UI[w(-7489)](R(w(-6332)))))and.15 or.5)end end)task[w(-8109)](function()local m={{[w(-7257)]=w(-6269),[w(-6063)]=w(-6183)};{[w(-7257)]=w(-7558);[w(-6063)]=w(-6119)},{[w(-7257)]=w(-6998);[w(-6063)]=w(-7323)};{[w(-7257)]=w(-7176),[w(-6063)]=w(-7544)}}local n={}local U,l,F,W={},{},{},{}local t,p={},{}local v,S,y={},0,0 local function O(m,n)local U=m[w(-6641)]if U[w(-7034)]>Ui+100 then local l=m[w(-6887)]if not n[l]then n[l]={[w(-7178)]=m;[w(-6136)]=U}end m[w(-6641)]=Vector3[w(-6146)](U[w(-7186)],Ui,U[w(-8100)])end end local function s(m)for n,U in pairs(m)do pcall(function()U[w(-7178)][w(-6641)]=U[w(-6136)]end)m[n]=nil end end local function i(m)local n=m:FindFirstChild(w(-7924))local l=n and n:FindFirstChild(w(-6172))if not l then return end for m,w in ipairs(l:GetChildren())do pcall(O,w,U)end end local function e(m,n)if n-S>=M[w(-7025)]then S=n local U=m:FindFirstChild(w(-7764))local l={}if U then pcall(xy,U,{},l)end v=l end for m,n in ipairs(v)do pcall(function()local m=n[w(-8048)]if m[w(-7186)]>.01 then local U=n[w(-6887)]if not l[U]then l[U]={[w(-7178)]=n,[w(-7029)]=m}end n[w(-8048)]=Y end end)end end local function f()for m,n in pairs(l)do pcall(function()n[w(-7178)][w(-8048)]=n[w(-7029)]end)l[m]=nil end v,S={},0 end local function B(m)local n=m:FindFirstChild(w(-7672))local U=n and n:FindFirstChild(w(-7173))return U~=nil and U[w(-6233)]<1 end local function g(m,n)local U=m:FindFirstChild(w(-6786))if not U then return end for m,U in ipairs(U:GetChildren())do pcall(function()local m=U[w(-6887)]if p[m]then return end if U:GetAttribute(w(-8026))==Fi then p[m]=true return end if U:GetAttribute(w(-6426))==true or not B(U)then t[m]=nil return end t[m]=t[m]or n if n-t[m]>=Wi then F[m]={[w(-6235)]=U;[w(-7026)]=U:GetAttribute(w(-7372)),[w(-6202)]=U:GetAttribute(w(-8026))}U:SetAttribute(w(-7372),li)U:SetAttribute(w(-8026),Fi)p[m]=true end end)end end local function D()for m,n in pairs(F)do pcall(function()if n[w(-7026)]~=nil then n[w(-6235)]:SetAttribute(w(-7372),n[w(-7026)])end if n[w(-6202)]~=nil then n[w(-6235)]:SetAttribute(w(-8026),n[w(-6202)])end end)F[m]=nil end t,p={},{}end local function r(m)local n=m:FindFirstChild(w(-7123))local U=n and n:FindFirstChild(w(-7031))if not U then return end for m,n in ipairs(U:GetChildren())do if n[w(-6356)]==w(-7505)then pcall(O,n,W)end end end local Q={[w(-7558)]=i,[w(-6269)]=e;[w(-6998)]=g;[w(-7176)]=r}local L={[w(-7558)]=function()s(U)end,[w(-6269)]=f;[w(-6998)]=D,[w(-7176)]=function()s(W)end}while _G[w(-7444)]==A do local U=false M[w(-7943)](w(-7781),function()local l=tick()if l-y>=M[w(-7926)]then y=l p={}end local F=nil for m,W in ipairs(m)do local A=UI[w(-7489)](R(W[w(-7257)]))and true or false if A~=((n[W[w(-7257)]]or false))then n[W[w(-7257)]]=A if not A then pcall(L[W[w(-7257)]])end notify(A and w(-8054)or w(-7335),w(-6670)..W[w(-6063)],3)end if A then U=true F=F or M[w(-6154)](w(-7168))if F then pcall(Q[W[w(-7257)]],F,l)end end end end)task[w(-6585)](U and M[w(-7459)]or.5)end for m,U in ipairs(m)do if n[U[w(-7257)]]then pcall(L[U[w(-7257)]])end end end)task[w(-8109)](function()local m=false local n={}local U=nil local l=0 local F=ni local W,t={},0 local p,v=60,4 local function S(m)local n,U=m:FindFirstChild(w(-7198)),m:FindFirstChild(w(-7913))return n and(U and(n:FindFirstChild(w(-6693))and(U:FindFirstChild(w(-6693))and(U:FindFirstChild(w(-6836))and(U:FindFirstChild(w(-6965))and true)))))or false end local function y()if tick()-t<p then return W end t=tick()local m,n,U={},{},0 local l={[w(-8094)]=true}for m,n in ipairs((game:GetService(w(-6427))):GetPlayers())do l[n[w(-6356)]]=true end local function F(U)local l=U[w(-6887)]if not n[l]then n[l]=true m[#m+1]=U end end local function A(m,n)for m,W in ipairs(m:GetChildren())do U=U+1 if U%400==0 then task[w(-6585)]()end local t=W[w(-7378)]if t==w(-7072)or t==w(-7938)then local m,U=false,false if t==w(-7072)then m,U=pcall(S,W)end if m and U then F(W)elseif n<v and not((n==1 and l[W[w(-6356)]]))then A(W,n+1)end end end end pcall(A,workspace,1)for m,w in ipairs(j)do local n=Cy(w)if n then for m,w in ipairs(n:GetChildren())do F(w)end end end W=m return m end local function O()local m={}for n,U in ipairs(a)do local l=Cy(U)if l then table[w(-6473)](m,l)end end if#m>0 then return m end local n=M[w(-6154)](w(-7712))if not n then M[w(-6276)]={}return m end if tick()-((M[w(-6666)]or 0))>=5 then M[w(-6666)]=tick()local m={}for n,U in ipairs(n:GetDescendants())do if n%400==0 then task[w(-6585)]()end if U[w(-7378)]==w(-7072)then local w,n=pcall(S,U)if w and n then m[#m+1]=U end end end M[w(-6276)]=m end return M[w(-6276)]or m end local s,i={},0 local function e(m)local n=M[w(-6154)](w(-7712))if not n then return m end local U={}for m,w in ipairs(m)do local l,F=pcall(function()return w:IsDescendantOf(n)end)if not((l and F))then U[#U+1]=w end end return U end local function f(m)local U=tick()if U>=i then i=U+M[w(-7798)]s={}end local l=0 for m,U in ipairs(m)do pcall(function()local m=U[w(-6887)]if s[m]then l=l+1 return end local F=U:GetAttribute(w(-7210))if F~=nil or S(U)then l=l+1 if F~=0 then if not n[m]then n[m]={[w(-7451)]=U;[w(-7254)]=F}end U:SetAttribute(w(-7210),0)end s[m]=true end end)end return l end local B={}local g=u[w(-7250)]local D=0 local function r(m)local n,U=pcall(memory_read,w(-6623),m+12)local l,F=pcall(memory_read,w(-8130),m)if n and(U==3 and(l and type(F)==w(-7154)))then return F end return nil end local function Q()D=tick()local m,n={},{}for U,l in ipairs(Sy({w(-6510),w(-6217)}))do local F=tostring(l[w(-6905)])local W=tonumber(l[w(-7419)])if W and tonumber(tostring(l[w(-6545)]))then if F==w(-6510)then table[w(-6473)](m,W)elseif F==w(-6217)then table[w(-6473)](n,W)end end end for m,U in ipairs(m)do if not B[U]then for m,n in ipairs(n)do if math[w(-6430)](n-U)<=u[w(-6213)]then B[U]=n break end end end end end local function L()for m in pairs(B)do if r(m)==u[w(-6479)]then pcall(memory_write,w(-8130),m,os[w(-6432)]())end end B={}D=0 end local function k(m)for m,n in ipairs(m:GetChildren())do local U,l=pcall(function()return n[w(-6641)]end)if U and(l and pcall(function()return l[w(-7186)]+0 end))then return l end end for m,n in ipairs(m:GetChildren())do for m,n in ipairs(n:GetChildren())do local U,l=pcall(function()return n[w(-6641)]end)if U and(l and pcall(function()return l[w(-7186)]+0 end))then return l end end end return nil end local function I(m,n)local U=ey()local l,F=pcall(function()return U[w(-6641)]end)if not l or not F then return true end local W,A=pcall(k,m)if not W or not A then return true end return((A-F))[w(-7630)]<=n end local function C(m)if#m==0 then L()return 0 end local n=0 for m in pairs(B)do n=n+1 end local U=n>=#m and u[w(-6560)]or g local l=false for m,n in ipairs(m)do local U,F=pcall(k,n)local W=ey()local A,t=pcall(function()return W[w(-6641)]end)if U and(F and(A and(t and((F-t))[w(-7630)]<=M[w(-8108)])))then l=true break end end if l and tick()-D>=U then Q()local m=0 for n in pairs(B)do m=m+1 end g=m>n and u[w(-7250)]or math[w(-6444)](g*2,u[w(-6560)])end local F=0 for m,n in pairs(B)do local U=r(m)local l=r(n)if U and(l and l<u[w(-6479)]/10)then if U~=u[w(-6479)]then pcall(memory_write,w(-8130),m,u[w(-6479)])end F=F+1 else B[m]=nil end end return F>0 and#m or 0 end local function x(m,U)for m,l in ipairs(m)do pcall(function()local m=l[w(-6887)]local F=n[m]if l:GetAttribute(w(-7210))==0 then l:SetAttribute(w(-7210),F and F[w(-7254)]or U or H)end n[m]=nil end)end end local function V()for m,n in pairs(n)do pcall(function()if n[w(-7451)]:GetAttribute(w(-7210))==0 then n[w(-7451)]:SetAttribute(w(-7210),n[w(-7254)])end end)end s,i={},0 W,t={},0 L()n={}end local function z()l=tick()local m={}for n,U in ipairs(Sy(h))do local l=tostring(U[w(-6905)])local F=tonumber(tostring(U[w(-6545)]))local W=tonumber(U[w(-7419)])if mi[l]~=nil and(F and W)then local n,U=pcall(memory_read,w(-8130),W)if n and(type(U)==w(-7154)and math[w(-6430)](U-F)<.0001)then local n=F if math[w(-6430)](F-mi[l])<.0001 then n=wi[l]end table[w(-6473)](m,{[w(-6905)]=l;[w(-6643)]=n;[w(-7419)]=W})end end end if#m==0 then return nil end return m end local function G(m,n)for m,n in ipairs(m)do local U,l=pcall(memory_read,w(-8130),n[w(-7419)])if not U or type(l)~=w(-7154)then return false end local F=mi[n[w(-6905)]]if math[w(-6430)](l-n[w(-6643)])>.0001 and math[w(-6430)](l-F)>.0001 then return false end end for m,U in ipairs(m)do local l=n and U[w(-6643)]or mi[U[w(-6905)]]pcall(function()memory_write(w(-8130),U[w(-7419)],l)end)end return true end local function c()local m=M[w(-6154)](w(-6271))local n=m and m:FindFirstChild(w(-7640))if not n then return true end local U,l=pcall(k,n)local F=ey()local W,A=pcall(function()return F[w(-6641)]end)if not((U and(l and(W and A))))then return false end return((l-A))[w(-7630)]<=1200 end local function E(m)if U and not G(U,false)then U=nil F=ni end local n=c()if n and not M[w(-7670)]then l,F=0,ni end M[w(-7670)]=n if not U and(tick()-l>=F and n)then U=z()if U and G(U,false)then F=ni if m then M[w(-6956)](w(-6082),T,3)end else U=nil F=math[w(-6444)](F*2,20)end end return U~=nil end local function q()if U then G(U,true)end U=nil end local N,Z,J={},{},0 local K=false local function Y()J=tick()local m={}for n,U in ipairs(workspace:GetChildren())do if U:FindFirstChild(w(-7151))then m[#m+1]=U end end N=m end local P,d,X={},0,nil local function b()local m=tick()if M[w(-7455)]~=X or m-d>=10 then X,d=M[w(-7455)],m P={}for m,n in ipairs(X or{})do pcall(function()for m,n in ipairs(n:GetChildren())do if n[w(-6356)]==w(-7151)then local m=n:FindFirstChild(w(-7647))if m then P[#P+1]=m end end end end)end end for m,n in ipairs(P)do pcall(function()if n[w(-7898)]~=true then local m=n[w(-6887)]if Z[m]==nil then Z[m]={[w(-6545)]=n,[w(-7115)]=n[w(-7898)]}end n[w(-7898)]=true end end)end return#P end local function Ui()for m,n in pairs(Z)do pcall(function()n[w(-6545)][w(-7898)]=n[w(-7115)]end)end Z={}N={}P,d,X={},0,nil J=0 end local li,Fi=false,false local function Wi(m,n,U,l)if n>0 then if not U then notify(l and(m..w(-7546))or(m..(w(-8208)..(n..w(-7546)))),T,3)end return true end if not l then notify(m..w(-7314),T,3)end return false end while _G[w(-7444)]==A do M[w(-7943)](w(-6059),function()local n=UI[w(-7489)](R(w(-6059)))and true or false if n and not m then m=true l=0 F=ni li=Wi(w(-6309),f(e(y())),false,false)Fi=Wi(w(-7809),C(O()),false,false)K=Wi(w(-7284),b(),false,false)local n=E(false)M[w(-6956)](n and w(-6082)or(c()and w(-6112)or w(-7983)),T,3)elseif not n and m then m=false li,Fi,K=false,false,false V()Ui()q()notify(w(-7335),T,3)elseif n then li=Wi(w(-6309),f(e(y())),li,true)Fi=Wi(w(-7809),C(O()),Fi,true)K=Wi(w(-7284),b(),K,true)E(true)end end)task[w(-6585)](o)end V()Ui()q()end)task[w(-8109)](function()local m=false local n=false local U=false local l=0 while _G[w(-7444)]==A do M[w(-7943)](w(-7925),function()local F=UI[w(-7489)](R(w(-7925)))and true or false if F~=m then m=F notify(F and w(-8054)or w(-7335),w(-7004),3)end local W=false W=M[w(-8167)](w(-6613),Di)local A=(W and not n)or Wy n=W Wy=false if A and(F and(not U and tick()-l>1))then U=true M[w(-7449)]=true local m,n=pcall(OH)M[w(-7449)]=false if not m then pcall(mouse1release)notify(w(-7189)..tostring(n),w(-7004),3)end Wy=false l=tick()U=false end end)task[w(-6585)](.03)end end)task[w(-8109)](function()local m,n,U=false,false,false while _G[w(-7444)]==A do M[w(-7943)](w(-7045),function()local l=UI[w(-7489)](R(w(-7045)))and true or false if l~=m then m=l if not l then iH()n=false end notify(l and w(-8054)or w(-7335),w(-7337),3)end if not vH()then U=false if n then iH()n=false end return end if not U then U=true local m=pH()if m and((l or UI[w(-7489)](R(w(-7925)))))then task[w(-8109)](function()SH(m)end)end end if l and not n then n=true local m=pH()if m then iH()eH(m)end end end)task[w(-6585)](ci)end iH()end)task[w(-8109)](function()local m={}local n={}local U={}local l=nil local F=0 local W=1 local t=0 local p=0 local v,S={},0 local y,O={},tick()local function s()if tick()-O>60 then y,O={},tick()end local m=M[w(-6154)](w(-7003))return{[w(-6481)]={workspace:GetChildren(),m and m:GetChildren()or{}};[w(-7307)]=1,[w(-6319)]=0;[w(-7525)]={}}end local function i(m)while m>0 do local n=l[w(-6481)][l[w(-7307)]]if not n then return true end l[w(-6319)]=l[w(-6319)]+1 local U=n[l[w(-6319)]]if U==nil then l[w(-7307)]=l[w(-7307)]+1 l[w(-6319)]=0 else m=m-1 local n,F=pcall(function()return U[w(-6887)]end)local W=nil if n then W=y[F]end if W and W[w(-7996)]then y[F]=nil W=nil end if W==nil then local m=l[w(-7307)]==2 and w(-7003)or nil local A,t=pcall(function()return U[w(-6356)]end)local R=A and qi[t]if not R or R[w(-8000)]~=m then W=false else local w,n=pcall(LH,U,m,t)if w and n then W=n end end if n and W~=nil then y[F]=W end end if W then l[w(-7525)][#l[w(-7525)]+1]=W end end end return false end local function e()local m=(game:GetService(w(-6427)))[w(-7686)][w(-6159)]local n=m and m:FindFirstChild(w(-6447))return n and n[w(-6641)]end local function f()local m=workspace[w(-6994)][w(-6812)][w(-7034)]if m and m>0 then return m/bi end return 1 end local B,g={},0 while _G[w(-7444)]==A do local A=true M[w(-7943)](w(-7725),function()local y=B local O=false if tick()-g>=.15 then g=tick()y={}for m,n in pairs(qi)do y[m]=UI[w(-7489)](R(n[w(-7257)]))and true or false if y[m]~=((U[m]or false))then U[m]=y[m]notify(y[m]and w(-8054)or w(-7335),n[w(-6205)],3)end end B=y end for m,w in pairs(y)do if w then O=true break end end A=not O local D=tick()if not O then n={}v={}l=nil else if y[w(-6598)]then if D-S>=M[w(-7889)]then M[w(-7943)](w(-8013),function()S=D local m={}local n,U=pcall(CH,m)if n and U then v=m M[w(-6742)]=D elseif D-((M[w(-6742)]or 0))>30 then v={}end end)end else v={}S=0 end local m=false for n,U in pairs(y)do if U and n~=w(-6598)then m=true break end end if not m then n,l={},nil elseif not l and D-F>=Ni then F=D local m,w=pcall(s)if m then l=w end end if l then M[w(-7943)](w(-7627),function()local m,U=pcall(i,M[w(-7651)])if not m then l=nil elseif U then n=l[w(-7525)]l=nil end end)end if D-t>=1 then t=D local m,w=pcall(f)if m and w then W=w end end end local r,Q=pcall(e)if not r then Q=nil end p=p+1 M[w(-7943)](w(-7375),function()for n,U in ipairs({n;v})do for n,U in ipairs(U)do if y[U[w(-7985)]]then local n=U[w(-7953)]==w(-6747)local l=m[U[w(-7257)]]if not l then l=n and gH(U[w(-7188)])or BH(U[w(-7406)])m[U[w(-7257)]]=l end l[w(-7816)]=p local F,A=pcall(n and xH or zH,U,l,Q,W,D)rH(l,F and A==true)end end end end)for n,U in pairs(m)do if U[w(-7816)]~=p then DH(U)m[n]=nil end end end)task[w(-6585)](A and.25 or(#n==0 and(#v==0 and.1)or 0))end for m,w in pairs(m)do DH(w)end end)task[w(-8109)](function()local m=w(-7585)local n,U=false,false local l,F,W={},{},{}local t,v,S=0,0,0 local function y(m,n)local U=l[n]if U then local n,l=pcall(function()return tonumber(U[w(-6103)][w(-6887)])==tonumber(m[w(-6887)])end)if n and l then return U end end U=m:FindFirstChildOfClass(w(-6538))or false l[n]=U return U or nil end while _G[w(-7444)]==A do local A=false M[w(-7943)](w(-6451),function()local O=UI[w(-7489)](R(w(-7744)))and true or false if O~=U then U=O notify(O and w(-6842)or w(-6079),m,3)end local s=O and fy(M[w(-7836)])if s~=n then n=s l,F,W,t={},{},{},0 notify(s and w(-6369)or w(-7857),m,2)end if not s or M[w(-7449)]then return end A=true local i=tick()if i-S>=30 then S=i l={}end local e,f=ry()for m,n in ipairs(M[w(-7232)])do local U,l=pcall(function()return n:GetChildren()end)if U then for m,n in ipairs(l)do pcall(function()local m=n[w(-6887)]local U=y(n,m)if not U or not Qy(n,e,f)then return end local l=U[w(-7867)]if l>0 then F[m]=true pcall(function()U[w(-7867)]=0 end)local n=tonumber(U[w(-6887)])if n and n>4096 then pcall(memory_write,w(-8007),n+p,0)end elseif F[m]and not W[m]then W[m]=true t=t+1 end end)end end end if t>0 and i-v>=1 then v=i notify(t..w(-6361),m,2)t=0 end end)task[w(-6585)](A and M[w(-7242)]or.25)end end)task[w(-8109)](function()local m=w(-6692)local n=false local U={}local l=(game:GetService(w(-6427)))[w(-7686)][w(-7991)]local F={}local function W(m)for n,U in ipairs((game:GetService(w(-6427))):GetPlayers())do if U[w(-7991)]==m then local m,n=pcall(function()return U[w(-6347)]end)if m and(n and n~=w(-6099))then return n end local l,F=pcall(function()return U[w(-6356)]end)if l and(F and F~=w(-6099))then return F end end end return tostring(m)end local function t(m,w)local n,U=pcall(function()return m:GetAttribute(w)end)return n and U or nil end local function p(m)local n,U=pcall(function()local n=m:FindFirstChildOfClass(w(-6538))return n and n[w(-7867)]end)return n and(U~=nil and U>0)end local function v()for m,n in pairs(U)do pcall(function()if n[w(-6396)]~=nil and n[w(-7507)]:GetAttribute(w(-6997))==0 then n[w(-7507)]:SetAttribute(w(-6997),n[w(-6396)])end if n[w(-6743)]~=nil and n[w(-7507)]:GetAttribute(w(-6104))==0 then n[w(-7507)]:SetAttribute(w(-6104),n[w(-6743)])end end)end U={}end local function S(m)local n=m[w(-7507)]local U=t(n,w(-6997))if U~=0 then if U~=nil then m[w(-6396)]=U end n:SetAttribute(w(-6997),0)end local l=t(n,w(-6104))if l~=0 then if l~=nil then m[w(-6743)]=l end n:SetAttribute(w(-6104),0)end if t(n,w(-7768))~=3 then local U=t(n,w(-7124))if not U then if not m[w(-7069)]then pcall(function()m[w(-7069)]=(n:FindFirstChild(w(-6447)))[w(-6641)]end)end U=m[w(-7069)]end if U then pcall(function()n:SetAttribute(w(-6728),U)end)end n:SetAttribute(w(-7768),3)end end while _G[w(-7444)]==A do local A=false M[w(-7943)](w(-8121),function()local y=UI[w(-7489)](R(w(-6272)))and true or false if y~=n then n=y F={}if not y then v()end notify(y and w(-8054)or w(-7335),m,3)end if not y or M[w(-7449)]then return end A=true local O={}for m,n in ipairs(M[w(-7232)])do O[#O+1]=n end local s=M[w(-6154)](w(-6134))local i=s and s:FindFirstChild(w(-7588))if i then local m=false for w,n in ipairs(O)do if n==i then m=true break end end if not m then O[#O+1]=i end end local e,f,B=0,{},{}for m,n in ipairs(Dy(O))do local F,W=pcall(function()return n[w(-6887)]end)if F and(not M[w(-8044)][W]and p(n))then f[W]=true local m=tonumber(t(n,w(-6349)))if m and(m>0 and m~=l)then B[m]=((B[m]or 0))+1 end local F=U[W]if not F then F={[w(-7507)]=n}U[W]=F e=e+1 end pcall(S,F)end end for m in pairs(U)do if not f[m]then U[m]=nil end end if e>0 then notify(e..w(-7905),m,2)end local g=tick()for n,U in pairs(B)do if not F[n]or g-F[n]>=60 then F[n]=g notify(W(n)..(w(-7333)..(U..w(-7538))),m,4)end end end)task[w(-6585)](A and M[w(-7242)]or.3)end v()end)task[w(-8109)](function()local m=M[w(-7379)]local n=game:GetService(w(-7392))local U,l,F={},{},{}local W,t,p,v,S=false,nil,nil,nil,0 local function y(m)local n,U=pcall(memory_read,w(-8007),m)return n and U or nil end local function O(m)local n,U=pcall(memory_read,w(-7409),m)return n and U or nil end local function s()return Vector3[w(-6146)](tonumber(UI[w(-7489)](R(w(-6463))))or 10,tonumber(UI[w(-7489)](R(w(-6947))))or 8,tonumber(UI[w(-7489)](R(w(-6161))))or 10)end local function i(n,U,l,F,W)local A,t=pcall(function()return n[w(-7348)]~=nil and(n[w(-6900)][w(-6103)]~=nil and(tonumber(n[w(-7941)][w(-6103)][w(-6887)])==n[w(-7348)]and tonumber(n[w(-7941)][w(-6887)])==n[w(-6206)]))end)if not A or not t then return end pcall(memory_write,w(-8007),n[w(-6206)]+m[w(-7613)],U)pcall(memory_write,w(-7409),n[w(-6206)]+M[w(-6753)],l)pcall(memory_write,w(-7409),(n[w(-6206)]+M[w(-6753)])+1,F)pcall(memory_write,w(-7409),(n[w(-6206)]+M[w(-6753)])+2,W)end local function e(m,n)pcall(function()m[w(-7941)][w(-8048)]=n end)pcall(function()m[w(-7941)][w(-6441)]=false end)end local function f(n,U)local l=tonumber(U[w(-6887)])if not l or l<=4096 then return nil end local F,W=pcall(function()return U[w(-8048)]end)local A,t=pcall(function()return U[w(-6441)]end)local R,p=pcall(function()return tonumber(n[w(-6887)])end)return{[w(-6900)]=n,[w(-7941)]=U;[w(-6206)]=l,[w(-7348)]=R and p or nil;[w(-7555)]=n:FindFirstChildOfClass(w(-6538))or n:FindFirstChild(w(-6538));[w(-7029)]=F and W or Vector3[w(-6146)](2,2,1);[w(-6155)]=((A and t~=nil))and t or true;[w(-6673)]=y(l+m[w(-7613)])or 1;[w(-6703)]={O(l+M[w(-6753)])or 0;O((l+M[w(-6753)])+1)or 0;O((l+M[w(-6753)])+2)or 0},[w(-6507)]=0,[w(-6502)]=tick();[w(-7407)]=0;[w(-6548)]=0}end local function B(n,U)i(n,m[w(-6689)],m[w(-6944)][1],m[w(-6944)][2],m[w(-6944)][3])e(n,U)n[w(-6507)]=tick()+m[w(-7298)]end local function g(m)pcall(function()m[w(-7941)][w(-8048)]=m[w(-7029)]end)pcall(function()m[w(-7941)][w(-6441)]=m[w(-6155)]end)i(m,m[w(-6673)],m[w(-6703)][1],m[w(-6703)][2],m[w(-6703)][3])end local function D(n)local U=tick()if U-n[w(-6548)]>m[w(-6778)]then n[w(-6548)],n[w(-7407)]=U,0 end if n[w(-7407)]>=m[w(-7185)]then return false end n[w(-7407)]=n[w(-7407)]+1 return true end local function r(m)local U={}for m,l in ipairs(m)do local F,W=pcall(function()return l[w(-6900)][w(-6103)]end)if F and(W and(W~=n and pcall(function()l[w(-6900)][w(-6103)]=n end)))then U[#U+1]={[w(-6776)]=l,[w(-7452)]=W}end end if#U==0 then return end task[w(-6585)]()for m,n in ipairs(U)do if not pcall(function()n[w(-6776)][w(-6900)][w(-6103)]=n[w(-7452)]end)then task[w(-6585)]()pcall(function()n[w(-6776)][w(-6900)][w(-6103)]=n[w(-7452)]end)end end end local function Q()local n={}for m,U in pairs(U)do g(U)n[#n+1]=U end U,F={},{}for U=1,#n,m[w(-7174)]do local l={}for m=U,math[w(-6444)]((U+m[w(-7174)])-1,#n),1 do l[#l+1]=n[m]end r(l)end end local function L(n)if v and pcall(function()return v[w(-6103)][w(-6356)]end)then return v end if n-S>=m[w(-7175)]then S=n v=M[w(-6154)](w(-6134))end return v end while _G[w(-7444)]==A do local n,A=false,{}M[w(-7943)](w(-8064),function()local v=UI[w(-7489)](R(w(-7808)))and true or false local S=s()local O=tostring(S)if v~=W then W=v if v then l,t,p={},O,nil notify(string[w(-7890)](w(-6352),math[w(-7306)](S[w(-7186)]),math[w(-7306)](S[w(-7034)]),math[w(-7306)](S[w(-8100)])),m[w(-8215)],3)else Q()notify(w(-6780),m[w(-8215)],3)end end if not v or M[w(-7449)]then return end n=true local r=tick()if r-((m[w(-6646)]or 0))>=60 then m[w(-6646)],l=r,{}end local k={}for m,w in ipairs(M[w(-7232)])do k[#k+1]=w end local I=L(r)if I then k[#k+1]=I end for n,F in ipairs(k)do local W,A=pcall(function()return F:GetChildren()end)for n,F in ipairs(W and A or{})do local W,A=pcall(function()return tostring(F[w(-6887)])end)if W and(A and(not U[A]and not l[A]))then local n=F[w(-6356)]==w(-6114)local W,t=pcall(function()return F:GetAttribute(w(-6104))~=nil end)local R=((n or(W and t)))and F:FindFirstChild(w(-6447))if R then local n=f(F,R)if n then U[A]=n B(n,S)n[w(-7450)]=r+m[w(-7700)]end elseif not n and(W and not t)then l[A]=true end end end end if O~=t then t,p=O,r+m[w(-7431)]for m,w in pairs(U)do e(w,S)end end if p and r>=p then p=nil for m in pairs(U)do F[m]=true end end for n,W in pairs(U)do if W[w(-7450)]and r>=W[w(-7450)]then W[w(-7450)]=nil F[n]=true end if r>=W[w(-6507)]then W[w(-6507)]=r+(((r-W[w(-6502)]<m[w(-7571)])and m[w(-7298)]or m[w(-6961)]))local A=pcall(function()return W[w(-6900)][w(-6103)][w(-6356)]end)local t,R=pcall(function()return W[w(-7555)][w(-7867)]end)if not A then U[n]=nil elseif t and(R and R<=0)then g(W)U[n],l[n]=nil,true else local l=W[w(-6900)]:FindFirstChild(w(-6447))local A,t=pcall(function()return tonumber(l[w(-6887)])end)if A and(t and t~=W[w(-6206)])then local m=f(W[w(-6900)],l)if m then U[n]=m B(m,S)F[n]=true end else local U,l=pcall(function()return W[w(-7941)][w(-8048)]end)local A=y(W[w(-6206)]+m[w(-7613)])if not U or not l or math[w(-6430)](l[w(-7186)]-S[w(-7186)])>.01 or math[w(-6430)](l[w(-7034)]-S[w(-7034)])>.01 or math[w(-6430)](l[w(-8100)]-S[w(-8100)])>.01 then e(W,S)if not W[w(-7450)]and D(W)then F[n]=true end end if A and math[w(-6430)](A-m[w(-6689)])>.001 then i(W,m[w(-6689)],m[w(-6944)][1],m[w(-6944)][2],m[w(-6944)][3])F[n]=true end end end end end for n in pairs(F)do F[n]=nil if U[n]then A[#A+1]=U[n]end if#A>=m[w(-7174)]then break end end end)if#A>0 then r(A)end task[w(-6585)](n and m[w(-6783)]or.3)end Q()end)task[w(-8109)](function()local m=(game:GetService(w(-6427)))[w(-7686)]local n=tostring(m[w(-7991)])..w(-6826)local U,l,F,W=nil,0,false,nil local t,R={},0 local function p()local m,n=pcall(function()return(game:GetService(w(-7567)))[w(-7416)][w(-7840)][w(-7274)][w(-6803)][w(-7282)][w(-8212)][w(-7570)]end)return m and n or nil end local function v(m)keypress(m)task[w(-6585)](.15)keyrelease(m)end local function S()if not isrbxactive()then notify(w(-6345),w(-7342),3)return end notify(w(-7271),w(-7342),2)M[w(-8118)][w(-6626)]()task[w(-6585)](.5)v(27)task[w(-6585)](1)v(76)task[w(-6585)](1)v(13)end local function y(m)if R>500 then t,R={},0 end t[m],R=true,R+1 end while _G[w(-7444)]==A do M[w(-7943)](w(-8143),function()local m=tick()if U and not pcall(function()return U[w(-6103)][w(-6356)]end)then U=nil end if not U then if m-l<5 then return end l,F=m,false U=p()if not U then return end end local A,R=pcall(function()return U:GetChildren()end)if not A then return end if not F then for m,n in ipairs(R)do local U,l=pcall(function()return n[w(-6356)]end)if U then y(l)end end F=true return end for m=math[w(-6932)](1,#R-3),#R,1 do local U=R[m]local l,F=pcall(function()return U[w(-6356)]end)if l and(F and not t[F])then y(F)if string[w(-6580)](F,1,#n)==n then local m,n=pcall(function()return U[w(-7184)][w(-7432)][w(-7293)]end)local l=m and(type(n)==w(-8193)and string[w(-8053)](n,w(-6468)))l=l and string[w(-6532)](l)if l==w(-6854)then W=w(-8177)elseif l==w(-7014)then W=w(-8129)end end end end end)if W==w(-8177)then W=nil S()elseif W==w(-8129)then W=nil ky()end task[w(-6585)](.3)end end)task[w(-8109)](function()local m,n=false,false while _G[w(-7444)]==A do M[w(-7943)](w(-6500),function()local U=UI[w(-7489)](R(w(-6500)))and true or false if U~=m then m=U notify(U and w(-8054)or w(-7335),w(-7397),3)end local l=U and M[w(-8167)](w(-8129),M[w(-7575)])or false local F=(l and not n)or(U and M[w(-6875)])n=l M[w(-6875)]=false if F and not py then ky()end end)task[w(-6585)](.05)end end)task[w(-8109)](function()local m=w(-6637)local n,U,l,F,W=300,.5,.25,.5,15 local t,p={},{}local v,S,y=false,false,nil local O,s,i=0,0,0 local function e(m,w)local n,U=pcall(function()return m:GetAttribute(w)end)return n and U or nil end local function f(m,w,n)if e(m,w)~=n then pcall(function()m:SetAttribute(w,n)end)end end local function B()local m=M[w(-6154)](w(-6134))local n=m and m:FindFirstChild(w(-6114))t[w(-6506)]=m and m:FindFirstChild(w(-7588))t[w(-7941)]=n and n:FindFirstChild(w(-6447))t[w(-7555)]=n and n:FindFirstChildOfClass(w(-6538))local U,l=pcall(function()return t[w(-7941)][w(-6887)]end)t[w(-7419)]=U and l or nil end local function g()if not t[w(-7555)]then return nil end local m,n=pcall(function()return t[w(-7555)][w(-7867)]end)return m and(type(n)==w(-7154)and n)or nil end local function D(m)local n=m[w(-7507)]m[w(-7552)]=m[w(-7552)]or n:FindFirstChild(w(-7995))local U,l=pcall(function()return m[w(-7552)][w(-7898)]end)m[w(-6089)]={[w(-6982)]=e(n,w(-8105)),[w(-6855)]=e(n,w(-6997)),[w(-6743)]=e(n,w(-6104));[w(-8052)]=e(n,w(-7768)),[w(-8186)]=U and l or nil}M[w(-8044)][m[w(-6905)]]=true end local function r(m)local n=m[w(-7507)]f(n,w(-8105),true)if((tonumber(e(n,w(-6997)))or 0))<1000 then f(n,w(-6997),1000)end if((tonumber(e(n,w(-6104)))or 0))<=0 then f(n,w(-6104),2)end m[w(-7552)]=m[w(-7552)]or n:FindFirstChild(w(-7995))if m[w(-7552)]then local n,U=pcall(function()return m[w(-7552)][w(-7898)][w(-6887)]end)if not n or U~=t[w(-7419)]then pcall(function()m[w(-7552)][w(-7898)]=t[w(-7941)]end)end end f(n,w(-7768),2)end local function Q(m)local n=m[w(-6089)]M[w(-8044)][m[w(-6905)]]=nil if not n then return end local U=m[w(-7507)]pcall(function()U:SetAttribute(w(-8105),n[w(-6982)])end)pcall(function()U:SetAttribute(w(-6997),n[w(-6855)])end)pcall(function()U:SetAttribute(w(-6104),n[w(-6743)])end)pcall(function()U:SetAttribute(w(-7768),n[w(-8052)])end)if m[w(-7552)]then pcall(function()m[w(-7552)][w(-7898)]=n[w(-8186)]end)end m[w(-6089)]=nil end local function L()for m,n in pairs(p)do pcall(Q,n)end p={}M[w(-8044)]={}end local function k(m)s=m for m,n in pairs(p)do local U,l=pcall(function()return n[w(-7507)][w(-6103)]end)if not U or not l then M[w(-8044)][m]=nil p[m]=nil end end if not t[w(-6506)]or not t[w(-7941)]then return end local U,l=pcall(function()return t[w(-7941)][w(-6641)]end)if not U then return end for m,U in ipairs(t[w(-6506)]:GetChildren())do if e(U,w(-6104))~=nil then local m,F=pcall(function()return U[w(-6887)]end)if m and not p[F]then local m,W=pcall(function()return(((U:FindFirstChild(w(-6447)))[w(-6641)]-l))[w(-7630)]end)if not m or W<=n then p[F]={[w(-7507)]=U,[w(-6905)]=F,[w(-6957)]=false;[w(-7359)]=0}end end end end end while _G[w(-7444)]==A do local n=false M[w(-7943)](w(-7065),function()local A=UI[w(-7489)](R(w(-7140)))and true or false if A~=v then v=A if not A then L()end S,O,s=false,0,0 notify(A and w(-8054)or w(-7335),m,3)end if not A or M[w(-7449)]then return end y=y or tonumber((game:GetService(w(-6427)))[w(-7686)][w(-7991)])local f=tick()if f-O>=F or not t[w(-7941)]or t[w(-7941)][w(-6103)]==nil then O=f local m=t[w(-7419)]B()if t[w(-7419)]~=m then L()S,s=false,0 end end if not t[w(-7941)]then if next(p)then L()end S=false return end local I=g()if not I then return end if I<=0 then if not S then S=true L()notify(w(-7418),m,4)end return end S=false n=true if f-s>=U then k(f)end local C,x,V=0,0,0 for m,n in pairs(p)do V=V+1 if f>=n[w(-7359)]then n[w(-7359)]=f+l local m=tonumber(e(n[w(-7507)],w(-6349)))==y if m and not n[w(-6957)]then if not n[w(-6089)]then pcall(D,n)end C=C+1 elseif not m and n[w(-6957)]then pcall(Q,n)end n[w(-6957)]=m end if n[w(-6957)]then x=x+1 pcall(r,n)end end if C>0 then notify(C..(w(-6948)..(x..(w(-7980)..(V..w(-7765))))),m,2)elseif V>0 and(x==0 and f-i>=W)then i=f notify(V..w(-6986),m,3)end end)task[w(-6585)](n and M[w(-7242)]or.3)end L()end)task[w(-8109)](function()local m=M[w(-7062)]local n=w(-8006)local U=(game:GetService(w(-6427)))[w(-7686)]local l=tonumber(U[w(-7991)])local F={}local W,t,p,v=w(-6656),0,0,0 local function S(m,w,n)local U,l=pcall(function()return m:GetAttribute(w)end)if not U or l~=n then pcall(function()m:SetAttribute(w,n)end)end end local function y(m)local n,U=pcall(function()return m[w(-6887)]end)return n and U or nil end local function O(m)local n=m[w(-6900)]local U,l=pcall(function()return m[w(-7552)][w(-7898)]end)m[w(-6089)]={[w(-6982)]=n:GetAttribute(w(-8105)),[w(-6855)]=n:GetAttribute(w(-6997));[w(-6743)]=n:GetAttribute(w(-6104));[w(-8052)]=n:GetAttribute(w(-7768)),[w(-8186)]=U and l or nil}end local function s(m)local n,U=m[w(-6089)],m[w(-6900)]if not n then return end pcall(function()U:SetAttribute(w(-8105),n[w(-6982)])end)pcall(function()U:SetAttribute(w(-6997),n[w(-6855)])end)pcall(function()U:SetAttribute(w(-6104),n[w(-6743)])end)pcall(function()U:SetAttribute(w(-7768),n[w(-8052)])end)if m[w(-7552)]then pcall(function()m[w(-7552)][w(-7898)]=n[w(-8186)]end)end m[w(-6089)],m[w(-7118)]=nil,nil end local function i()for m,n in pairs(F)do if n[w(-7616)]then pcall(s,n)end end F={}v=0 end local function e(m,n)local U=y(n)if m[w(-7552)]and((m[w(-7118)]~=U or y(m[w(-7552)][w(-7898)])~=U))then pcall(function()m[w(-7552)][w(-7898)]=n end)m[w(-7118)]=U end S(m[w(-6900)],w(-7768),2)end local function f(m,n)local U=m[w(-6900)]S(U,w(-8105),true)S(U,w(-6997),tonumber(UI[w(-7489)](R(w(-7043))))or 400)S(U,w(-6104),tonumber(UI[w(-7489)](R(w(-7734))))or 3)e(m,n)end local function B(m,n)local U=m[w(-6900)]S(U,w(-8105),false)S(U,w(-6997),0)S(U,w(-6104),0)e(m,n)end local function g(m)local n=m[w(-6900)]S(n,w(-6997),0)S(n,w(-6104),0)S(n,w(-7768),3)m[w(-7118)]=nil end local function D()local m={}for n,U in ipairs(M[w(-7232)])do local W,A=pcall(function()return U:GetChildren()end)if W then for n,U in ipairs(A)do pcall(function()local n=U[w(-6887)]local W=F[n]if not W then local m=U:FindFirstChildOfClass(w(-6538))local l=U:FindFirstChild(w(-6447))if not m or not l then return end W={[w(-6900)]=U;[w(-7555)]=m;[w(-6907)]=l;[w(-7552)]=U:FindFirstChild(w(-7995))}F[n]=W end if not W[w(-7552)]then W[w(-7552)]=U:FindFirstChild(w(-7995))end if W[w(-7555)][w(-7867)]<=0 then return end local A=tonumber(U:GetAttribute(w(-6349)))==l if A and not W[w(-6089)]then O(W)end if not A then W[w(-6089)],W[w(-7118)]=nil,nil end W[w(-7616)]=A m[n]=true end)end end end for w in pairs(F)do if not m[w]then F[w]=nil end end end local function r(n)local l={}local F=m[w(-7888)][((tonumber(UI[w(-7489)](R(w(-6435))))or 0))+1]or w(-7484)if F==w(-7562)then return l end local W=tonumber(UI[w(-7489)](R(w(-7082))))or 80 for m,A in ipairs((game:GetService(w(-6427))):GetPlayers())do if A~=U then pcall(function()local m=A[w(-6159)]local U=m and m:FindFirstChildOfClass(w(-6538))local t=m and m:FindFirstChild(w(-6447))if not U or not t or U[w(-7867)]<=0 then return end local R,p=pcall(function()return A[w(-7474)]and A[w(-7474)][w(-6356)]or w(-6099)end)if F~=w(-7484)and not((R and p==F))then return end if((t[w(-6641)]-n[w(-6641)]))[w(-7630)]<=W then l[#l+1]={[w(-6907)]=t,[w(-7419)]=y(t);[w(-7839)]=0}end end)end end return l end while _G[w(-7444)]==A do local l=false M[w(-7943)](w(-6831),function()local A=m[w(-6298)][((tonumber(UI[w(-7489)](R(w(-6989))))or 0))+1]or w(-6656)if A~=W then if A==w(-6656)then i()end notify(A==w(-6656)and w(-7335)or(A..w(-7110)),n,3)W=A end if A==w(-6656)or M[w(-7449)]then return end if UI[w(-7489)](R(w(-6272)))or UI[w(-7489)](R(w(-7140)))then if next(F)then i()end if tick()-p>=10 then p=tick()notify(w(-7970),n,4)end return end l=true local S=tick()if S-t>=.5 then t=S D()local m=0 for n,U in pairs(F)do if U[w(-7616)]then m=m+1 end end if m>v then notify(m..w(-6736),n,2)end v=m end local y=U[w(-6159)]local O=y and y:FindFirstChild(w(-6447))if not O then return end local s=r(O)local e=UI[w(-7489)](R(w(-7078)))local Q=UI[w(-7489)](R(w(-6257)))for m,n in pairs(F)do if n[w(-7616)]then local m,U=nil,math[w(-6120)]for l,F in ipairs(s)do local W,A=pcall(function()return((F[w(-6907)][w(-6641)]-n[w(-6907)][w(-6641)]))[w(-7630)]end)if W then local l=e and A+F[w(-7839)]*100000 or A if F[w(-7419)]and F[w(-7419)]==n[w(-6381)]then l=l-30 end if l<U then m,U=F,l end end end if m then m[w(-7839)]=m[w(-7839)]+1 n[w(-6381)]=m[w(-7419)]f(n,m[w(-6907)])elseif Q then B(n,O)else g(n)end end end end)task[w(-6585)](l and.2 or.3)end i()end)task[w(-8109)](function()local m,n,U=false,false,false while _G[w(-7444)]==A do M[w(-7943)](w(-8099),function()local l=UI[w(-7489)](R(w(-8099)))and true or false if l~=m then m=l notify(l and w(-8054)or w(-7335),c[w(-8215)],3)end local F=false F=M[w(-8167)](w(-8065),G)local W=(F and not n)or ly n=F ly=false if W and(l and not U)then U=true local m=qH()if not m then notify(w(-7711),c[w(-8215)],3)elseif not((m[w(-7133)]and(m[w(-6424)]and m[w(-8184)])))then notify(w(-7318),c[w(-8215)],3)else local n,U=pcall(NH,m)if not n then notify(w(-7189)..tostring(U),c[w(-8215)],3)end end ly=false U=false end end)task[w(-6585)](.03)end end)task[w(-8109)](function()local m=false local n={}local U=0 local l={}local F={}local W=false local function t(m)local U={}for m,l in ipairs(m:GetChildren())do if l[w(-6356)]==w(-7414)then local m=l[w(-6887)]local F=n[m]if not F then local m=l:FindFirstChild(w(-6522))local n=m and GH(l)if n then F={[w(-7388)]=l;[w(-7495)]=m,[w(-6136)]=n}end end if F then U[m]=F end end end n=U end while _G[w(-7444)]==A do local A=N[w(-6188)]M[w(-7943)](w(-8107),function()local p=UI[w(-7489)](R(w(-8107)))and true or false if p~=m then m=p n={}l={}F={}W=false U=0 notify(p and w(-8054)or w(-7335),N[w(-8215)],3)end if not p then return end local v=tick()if v-U>=N[w(-7250)]then U=v local m=M[w(-6154)](w(-8221))if m then t(m)else n={}end if not W then local m=0 for w in pairs(n)do m=m+1 end if m>0 then W=true notify(m..w(-6715),N[w(-8215)],3)end end end if next(n)==nil then return end local S=(game:GetService(w(-6427)))[w(-7686)][w(-6159)]local y=S and S:FindFirstChild(w(-6447))local O=y and GH(y)if not O then return end A=N[w(-6783)]for m,n in pairs(n)do local U=((n[w(-6136)]-O))[w(-7630)]<=N[w(-6482)]if U or(l[m]and not F[m])then local W pcall(function()W=n[w(-7388)]:GetAttribute(w(-6749))end)if W==true then if l[m]and not F[m]then F[m]=true notify(w(-6949),N[w(-8215)],2)end else F[m]=nil if U and v-((l[m]or 0))>=N[w(-7514)]then l[m]=v pcall(function()n[w(-7495)]:FireServer()end)end end end end end)task[w(-6585)](A)end end)task[w(-8109)](function()local m=false local n={}local U=0 local l={}local F,W=nil,0 local t=false local function p(m)if m:IsA(w(-7607))then return GH(m)end for m,n in ipairs(m:GetDescendants())do if n:IsA(w(-7607))then local m=GH(n)if m then return m end end end return nil end local function v(m)local U={}for m,l in ipairs(m:GetChildren())do local F=l[w(-6887)]local W=n[F]if not W then local m=l:FindFirstChild(w(-6323))local n=m and p(l)if n then W={[w(-7495)]=m;[w(-6136)]=n}end end if W then U[F]=W end end n=U end local function S()local m=(game:GetService(w(-6427)))[w(-7686)]for m,n in ipairs(m:GetChildren())do if n[w(-6356)]==w(-7898)and(n:FindFirstChild(w(-6859))and n:FindFirstChild(w(-6499)))then return n end end return nil end local function y()local m=(game:GetService(w(-6427)))[w(-7686)]:FindFirstChild(w(-7694))local n=m for m,w in ipairs(E[w(-7936)])do n=n and n:FindFirstChild(w)end if not n then return nil end local U=(tostring(n[w(-7293)])):gsub(w(-7301),w(-6099))local l,F=U:match(w(-7641))return tonumber(l),tonumber(F)end local function O(m)if not F or F[w(-6103)]==nil then F=nil if m-W>=E[w(-7821)]then W=m F=S()end if not F then return false end end local n,U local l,A,t=pcall(y)if l then U=t end pcall(function()n=tonumber(F[w(-6859)][w(-7898)])if not U or U<=0 then local m=tonumber(F[w(-6499)][w(-7898)])or 0 local n=1 local l=F:FindFirstChild(w(-6231))local W=F:FindFirstChild(w(-7370))if l and(l[w(-7898)]==true and W)then n=tonumber(W[w(-7898)])or 1 end U=m*n end end)if l and(A and((not n or A>n)))then n=A end if not n or not U or U<=0 then return false end return n>=U end while _G[w(-7444)]==A do local A=E[w(-6188)]M[w(-7943)](w(-6671),function()local p=UI[w(-7489)](R(w(-6671)))and true or false if p~=m then m=p n={}l={}U=0 F,W,t=nil,0,false notify(p and w(-8054)or w(-7335),E[w(-8215)],3)end if not p then return end local S=tick()if S-U>=E[w(-7250)]then U=S local m=M[w(-6154)](w(-8221))local l=m and m:FindFirstChild(w(-6684))if l then v(l)else n={}end end if next(n)==nil then return end local y=(game:GetService(w(-6427)))[w(-7686)][w(-6159)]local s=y and y:FindFirstChild(w(-6447))local i=s and GH(s)if not i then return end A=E[w(-6783)]local e={}for m,n in pairs(n)do if((n[w(-6136)]-i))[w(-7630)]<=E[w(-6482)]and S-((l[m]or 0))>=E[w(-7514)]then e[#e+1]=m end end if#e==0 then return end if O(S)then if not t then t=true notify(w(-8194),E[w(-8215)],3)end return end if t then t=false notify(w(-7661),E[w(-8215)],2)end for m,U in ipairs(e)do local F=n[U]l[U]=S pcall(function()F[w(-7495)]:FireServer()end)end end)task[w(-6585)](A)end end)task[w(-8109)](function()local m=w(-6380)local n,U,l,F=15,3,.2,1 local W,t,p,v=false,{},{},false local function S(m,n)local U,l=pcall(function()return tostring(m[w(-6887)])end)return(U and l)or tostring(n)end local function y(m,n)if p[m]then return p[m]end local U,l=pcall(function()return n[w(-7177)]end)local F=U and(l and GH(l))if not F then for m,w in ipairs(n:GetChildren())do F=GH(w)if F then break end end end p[m]=F return F end while _G[w(-7444)]==A do local A=F M[w(-7943)](w(-6895),function()local F=UI[w(-7489)](R(w(-6895)))and true or false if F~=W then W=F t,p,v={},{},false notify(F and w(-8054)or w(-7335),m,3)end if not F then return end local O=M[w(-6154)](w(-8221))local s=O and O:FindFirstChild(w(-6403))if not s then return end local i=(game:GetService(w(-6427)))[w(-7686)][w(-6159)]local e=i and i:FindFirstChild(w(-6447))local f=e and GH(e)if not f then return end local B=s:GetChildren()local g=B[1]and y(S(B[1],1),B[1])if g and((g-f))[w(-7630)]>300 then return end local D,r,Q=tick(),false,false for m,l in ipairs(B)do if l:GetAttribute(w(-7581))==true then if l:GetAttribute(w(-6701))==true then r=true else Q=true local F=S(l,m)local W=y(F,l)local A=l:FindFirstChild(w(-7975))if A and(W and(((W-f))[w(-7630)]<=n and D-((t[F]or 0))>=U))then t[F]=D pcall(function()A:FireServer()end)end end end end if Q then A=l end if r and not v then v=true notify(w(-8206),m,5)elseif not r then v=false end end)task[w(-6585)](A)end end)task[w(-8109)](function()local m,n,U=false,false,false M[w(-7716)],M[w(-7584)]=false,false while _G[w(-7444)]==A do M[w(-7943)](w(-7041),function()local n=false n=M[w(-8167)](w(-7204),V)if(n and not m)or wy then wy=false if n then m=true end Zy()elseif not n then m=false end local l=false l=M[w(-8167)](w(-6475),z)if(l and not U)or Uy then Uy=false if l then U=true end Py()elseif not l then U=false end local F=UI[w(-7489)](R(w(-7041)))and true or false if F~=M[w(-7716)]then M[w(-7716)]=F notify(F and w(-6842)or w(-6079),w(-6906),3)end M[w(-7584)]=F and fy(M[w(-7819)])end)task[w(-6585)](.03)end end)task[w(-8109)](function()local m=workspace[w(-6994)]local n=false local U=nil local l=os[w(-6432)]()local F=0 local W=nil local t=nil local R=0 local p={}local v=0 local S=nil local function y()local m=dy()if not m then return nil end local n={[w(-6122)]=m,[w(-6501)]=m:FindFirstChild(w(-6061)),[w(-6928)]=m:FindFirstChild(w(-7017));[w(-7477)]=m:FindFirstChild(w(-8134));[w(-7079)]=m:FindFirstChild(w(-7394))}if n[w(-6501)]and(n[w(-6928)]and(n[w(-7477)]and n[w(-7079)]))then return n end return nil end local function O()local m=nil pcall(function()m=t and t[w(-6122)]:GetAttribute(w(-7997))end)return m end local function s()local m=false pcall(function()m=t~=nil and t[w(-6122)]:GetAttribute(w(-6785))==true end)return m end local function i(m)local n=os[w(-6432)]()if m or not t or n-R>=M[w(-7774)]then R=n local m,w=pcall(y)t=m and w or nil end return t end while _G[w(-7444)]==A do local A=M[w(-7716)]and(M[w(-7584)]and true)or false local R=oy()if R~=W then if W~=nil then notify(w(-8003)..R,w(-6906),3)end W=R end if A then if not n then n=true notify(w(-8054),w(-6906),3)i(true)U=O()l=os[w(-6432)]()F=0 v=0 end pcall(function()if M[w(-7449)]then return end if not i(false)then return end local n=os[w(-6432)]()if n-F>=Si then pcall(function()t[w(-6501)]:FireServer(true)end)F=n end local W=O()if W~=nil and W~=U then U=W l=n end local A=n-l if W~=nil and(((W<=0 or(W<Ri and A>=Oi)))and not s())then pcall(function()t[w(-6928)]:FireServer()end)task[w(-6585)](yi)U=O()l=os[w(-6432)]()end local y=(game:GetService(w(-6427)))[w(-7686)]local e=y[w(-6159)]and y[w(-6159)]:FindFirstChild(w(-6447))if e and(W and W>0)then if R~=S or n-v>=M[w(-6881)]then S=R v=n p=nH()end local U,l=t[w(-7477)],t[w(-7079)]for n,F in ipairs(p)do if UH(F)and((e[w(-6641)]-F[w(-6907)][w(-6641)]))[w(-7630)]<=pi then m[w(-8127)]=CFrame[w(-6908)](m[w(-8127)][w(-6641)],F[w(-6907)][w(-6641)])for m=1,Ai,1 do if not UH(F)then break end local n=F[w(-6907)][w(-6641)]pcall(function()U:FireServer()end)task[w(-6585)](si)pcall(function()l:FireServer(n,F[w(-6739)])end)end end end end end)task[w(-6585)](vi)else if n then n=false t=nil p={}notify(w(-7335),w(-6906),3)end task[w(-6585)](.25)end end end)local function JH(m)if m==w(-7577)then return sy(w(-6236))end return sy(m)end local function KH()local m={}for n,U in ipairs(Sy(true))do if typeof(U)==w(-7093)then local n,l=pcall(function()return U[w(-6211)]~=nil or(U[w(-6414)]~=nil and U[w(-6414)][w(-7267)]~=nil)end)if n and l then m[#m+1]=U end end end Ry=m end local function YH()for m,n in ipairs(Ry)do pcall(function()if n[w(-6211)]then n[w(-6211)]:SetTarget(Vector3[w(-6146)](0,0,0))n[w(-6211)]:Accelerate(Vector3[w(-6146)](0,0,0))end if n[w(-6414)]and n[w(-6414)][w(-7267)]then n[w(-6414)][w(-7267)]:SetTarget(0)n[w(-6414)][w(-7267)]:Accelerate(0)end end)end end local function PH()local m=tonumber(UI[w(-7489)](R(w(-7564))))or 0 return y[m+1]or w(-6109)end local function dH(m)local n=tonumber(m[w(-6887)])if not n or n<=4096 then return nil end local U=memory_read(w(-7590),n+D)if not U or U<=4096 then return nil end return memory_read(w(-8007),U+r)end task[w(-8109)](function()local m=false local n=false local U=nil local l=nil local F=0 local W=tick()local t=0 local v=nil local S,y,D=nil,false,false local function r(m,n,U)local l,F=pcall(memory_read,w(-8007),U+p)local W,A=pcall(function()return m[w(-7867)]end)if not((l and(W and(type(F)==w(-7154)and(type(A)==w(-7154)and math[w(-6430)](F-A)<.01)))))then return false end local t,R=pcall(memory_read,w(-7409),U+g)if not t or(R~=0 and R~=1)then return false end local v,S=pcall(function()return m[w(-6635)]end)if v and(type(S)==w(-7519)and((S and 1 or 0))~=R)then return false end local y,O=pcall(dH,n)if not y or type(O)~=w(-7154)or O~=O or math[w(-6430)](O)>2000 then return false end local s,i=pcall(function()return n[w(-6827)][w(-7034)]end)if s and(type(i)==w(-7154)and math[w(-6430)](i-O)>5)then return false end return true end local function Q()if v then pcall(function()memory_write(w(-7409),v+g,0)end)end t=0 v=nil F=0 end local function L()pcall(function()local m=l or Iy()if m then if _G[w(-6425)]then m[w(-8048)]=_G[w(-6425)]end if _G[w(-8059)]then m[w(-6641)]=_G[w(-8059)]end end end)l=nil end local function k(m)if m==w(-6109)then L()elseif m==w(-6567)then Q()L()end end local I,C=nil,0 local function x()local m=tick()if not l or m>=C then C=m+M[w(-7170)]I=nil if not l or l[w(-6103)]==nil then l=Iy()I=nil if not l then return false end _G[w(-6425)]=_G[w(-6425)]or l[w(-8048)]_G[w(-8059)]=_G[w(-8059)]or l[w(-6641)]end if l[w(-8048)][w(-7186)]<2000 then l[w(-8048)]=O I=nil end end local n=(game:GetService(w(-6427)))[w(-7686)][w(-6159)]local U=n and n:FindFirstChild(w(-6447))if not U then return false end local F=U[w(-6641)]local W=I local A=M[w(-8030)]if not W or math[w(-6430)](F[w(-7186)]-W[w(-7186)])>A or math[w(-6430)](F[w(-7034)]-W[w(-7034)])>A or math[w(-6430)](F[w(-8100)]-W[w(-8100)])>A then l[w(-6641)]=F I=F end return true end local function V()local m=tick()local n=math[w(-6444)](m-W,.1)W=m local U=(game:GetService(w(-6427)))[w(-7686)][w(-6159)]local l=U and U:FindFirstChildOfClass(w(-6538))local A=U and U:FindFirstChild(w(-6447))if not((l and A))then F=0 return false end local R=tonumber(l[w(-6887)])if not R or R<=4096 then return false end if R~=S and t==0 then S=R y=r(l,A,R)if not y and not D then D=true M[w(-6956)](w(-6400),w(-6117),5)end end if not y then return x()end local p=dH(A)if not p then return false end if t>0 then if m>=t then memory_write(w(-7409),R+g,0)t=0 end return true end if p<B then F=F+(-p)*n local U,l=pcall(memory_read,w(-7409),R+g)if F>=e and(U and l==0)then memory_write(w(-7409),R+g,1)v=R t=m+f F=0 end else F=0 end return true end while _G[w(-7444)]==A do local l=.25 M[w(-7943)](w(-7782),function()local F=UI[w(-7489)](R(w(-7782)))and true or false if not F then if m then k(U)U=nil n=false m=false notify(w(-7335),w(-6117),3)end return end local A=PH()if A~=U then if U then k(U)end I=nil U=A n=false W=tick()end m=true local t,p if A==w(-6567)then t,p=pcall(V)l=i else t,p=pcall(x)l=s end if t and(p and not n)then n=true notify(w(-6898)..(A..w(-6148)),w(-6117),3)end end)task[w(-6585)](l)end k(U)end)task[w(-8109)](function()local m,n=false,false local U=false local l,F={},{}local W=-1 local t,p,v,S=nil,0,0,tick()local function y()local m=0 pcall(function()local n=(game:GetService(w(-6427)))[w(-7686)]:FindFirstChild(w(-7938))for n,U in ipairs(n:GetChildren())do local l=U:GetAttribute(w(-8157))if type(l)==w(-7154)then m=m+l end end end)return m end while _G[w(-7444)]==A do local n=false M[w(-7943)](w(-7976),function()if not py and tick()-my>hi then local m=tick()if m-p>=1 then p=m local n=M[w(-7878)]local U=m-S>=M[w(-7172)]if(t~=nil and n~=t)or U then S=m for w in pairs(l)do F[w]=m+2 end end t=n end local U,A={},{}local R=false for n,U in ipairs(Ay)do if U~=w(-7577)then if JH(U)then if not l[U]and not F[U]then F[U]=m+M[w(-8056)]end if F[U]and F[U]<=m then R=true end else l[U],F[U],oi[U]=nil,nil,false end end end if R then for m,n in ipairs(Ay)do if n~=w(-7577)and F[n]then for m,l in ipairs(ai[n][w(-6247)])do if not A[l]then U[#U+1]=l A[l]={}end table[w(-6473)](A[l],n)end end end end if#U>0 then n=true local m={}for n,U in ipairs(Sy(U))do local l=tostring(U[w(-6905)])local F=A[l]if F then for n,F in ipairs(F)do if M[w(-6970)](U,ai[F][w(-7906)][l])then m[F]=m[F]or{}table[w(-6473)](m[F],U)end end end end for n,U in pairs(A)do for n,U in ipairs(U)do if F[U]then F[U]=nil l[U]=m[U]or{}pcall(applygc,M[w(-7900)](U,l[U],true),ai[U][w(-7906)])if#l[U]>0 and not oi[U]then oi[U]=true notify(w(-8054),w(-6670)..ai[U][w(-6063)],3)end end end end elseif m-v>=4 then v=m for m,n in pairs(l)do if#n>0 then local U=M[w(-7720)](n)if#U==0 then l[m]=nil else l[m]=U M[w(-6200)](M[w(-7900)](m,U),ai[m][w(-7906)])end end end end if JH(w(-7577))then local U=(game:GetService(w(-6427)))[w(-7686)][w(-6159)]local l=U and U[w(-6887)]local F=ty[w(-7577)]==nil or ty[w(-7577)]==0 local A=F or#Ry==0 or l~=W if A and((ty[w(-7577)]or 0))<=m then n=true W=l ty[w(-7577)]=m+Hi KH()end else ty[w(-7577)]=0 end end local A=UI[w(-7489)](R(w(-7204)))and true or false if A~=m then m=A notify(A and w(-8054)or w(-7335),w(-6847),3)end local y=UI[w(-7489)](R(w(-6475)))and true or false if y~=U then U=y notify(y and w(-8054)or w(-7335),w(-6664),3)end if sy(w(-6236))and not py then YH()end end)task[w(-6585)](n and ui or.25)end end)Z[w(-7485)]=function(m)local n=game:GetService(w(-7392))local U=n:FindFirstChild(m,true)if not U then pcall(function()U=game:FindFirstChild(m,true)end)end return U end Z[w(-7565)]=function()local m,n={},{}for U,l in ipairs(Z[w(-6157)])do local F=tonumber(UI[w(-7489)](R(l[w(-7257)])))or 0 local W=l[w(-6779)][F+1]table[w(-6473)](n,tostring(F))if W and W~=w(-7562)then table[w(-6473)](m,{[w(-7654)]=l;[w(-6545)]=W})end end local U=UI[w(-7489)](R(Z[w(-7085)][w(-7257)]))and true or false table[w(-6473)](n,U and w(-7476)or w(-6826))if U then table[w(-6473)](m,{[w(-7654)]=Z[w(-7085)];[w(-6545)]=Z[w(-6593)]})end return m,table[w(-7260)](n,w(-7301))end Z[w(-7080)]=function()if tick()-Z[w(-6781)]<.3 then return end Z[w(-6781)]=tick()if not Z[w(-6423)]()then notify(w(-6667),Z[w(-8215)],3)return end local m=Z[w(-7565)]()if#m==0 then notify(w(-7968),Z[w(-8215)],3)return end Z[w(-7349)]=true Z[w(-7223)]=true Z[w(-7907)]=nil end Z[w(-7340)]=function(m)if not Z[w(-7349)]then return end Z[w(-7349)]=false Z[w(-7223)]=false Z[w(-7907)]=nil if m then notify(m,Z[w(-8215)],3)end end task[w(-8109)](function()while _G[w(-7444)]==A do if Z[w(-7349)]then M[w(-7943)](w(-6940),function()if Z[w(-6423)]()then Z[w(-7907)]=nil else Z[w(-7907)]=Z[w(-7907)]or tick()if tick()-Z[w(-7907)]>=Z[w(-7626)]then Z[w(-7340)](w(-7063))end end end)task[w(-6585)](M[w(-8228)])else task[w(-6585)](.1)end end end)task[w(-8109)](function()local m,n=false,false while _G[w(-7444)]==A do M[w(-7943)](w(-6940),function()local U=UI[w(-7489)](R(w(-6940)))and true or false if U~=m then m=U if not U then Z[w(-7340)]()end notify(U and w(-8097)or w(-6513),Z[w(-8215)],3)end local l=false if U then l=M[w(-8167)](w(-7940),Z[w(-7136)])end local F=(l and not n)or(Z[w(-6415)]and U)Z[w(-6415)]=false n=l if F then Z[w(-7080)]()end end)task[w(-6585)](.05)end end)Z[w(-6393)]={[w(-7438)]=1;[w(-6917)]=1;[w(-7039)]=1,[w(-7332)]=1,[w(-6909)]=2;[w(-6299)]=2;[w(-7111)]=2,[w(-6657)]=3;[w(-6660)]=4;[w(-7678)]=5;[w(-8066)]=6,[w(-6681)]=2}Z[w(-6423)]=function()local m,n,U,l=pcall(q[w(-7048)])if not m or not l then return nil end local F,W=pcall(function()return tostring(l[w(-6887)])end)return F and W or nil end Z[w(-8223)]=false Z[w(-8101)]={[w(-6657)]=true;[w(-7332)]=true;[w(-6660)]=true;[w(-7678)]=true,[w(-8066)]=true,[w(-7039)]=true}Z[w(-6578)]={}Z[w(-6558)]={[w(-7678)]=w(-7039);[w(-6660)]=w(-7039),[w(-6657)]=w(-7332)}Z[w(-7833)]=function(m)task[w(-6585)](1.8)end Z[w(-6531)]=function(m,n,U)if n then Z[w(-6578)]={}end local l={}for m,n in ipairs(m)do for m,U in ipairs(n[w(-7654)][w(-7270)])do if Z[w(-6578)][U]~=n[w(-6545)]then l[#l+1]={[w(-6810)]=U,[w(-6545)]=n[w(-6545)];[w(-7010)]=Z[w(-6393)][U]or 2,[w(-6719)]=#l+1}end end end table[w(-7944)](l,function(m,n)if m[w(-7010)]~=n[w(-7010)]then return m[w(-7010)]<n[w(-7010)]end return m[w(-6719)]<n[w(-6719)]end)local F={}for m,n in ipairs(m)do for m,U in ipairs(n[w(-7654)][w(-7270)])do F[U]=n[w(-6545)]end end local W={}for m,n in ipairs(l)do local U=Z[w(-6558)][n[w(-6810)]]if U and F[U]then W[U]=true end end for m,n in ipairs({w(-7039),w(-7332)})do if W[n]then for m=#l,1,-1 do if l[m][w(-6810)]==n then table[w(-7007)](l,m)end end l[#l+1]={[w(-6810)]=n;[w(-6545)]=F[n]}end end if Z[w(-8223)]then print(string[w(-7890)](w(-7595),#l,tostring(n)))end local A=true for m,n in ipairs(l)do if U and n[w(-6810)]==w(-6657)then Z[w(-7833)](n[w(-6545)])end local F,W=pcall(function()return Z[w(-6501)]:FireServer(n[w(-6810)],n[w(-6545)])end)if F then Z[w(-6578)][n[w(-6810)]]=n[w(-6545)]else A=false end if Z[w(-8223)]then print(string[w(-7890)](w(-6772),m,n[w(-6810)],n[w(-6545)],tostring(F),tostring(W)))end if m<#l then task[w(-6585)](Z[w(-8101)][n[w(-6810)]]and.3 or.08)end end return A end Z[w(-7486)]={.1,.7;1.8}task[w(-8109)](function()local m,n=false,false local U,l,F=nil,nil,0 local W,t=nil,0 while _G[w(-7444)]==A do local A=false M[w(-7943)](w(-8123),function()local p=UI[w(-7489)](R(w(-8123)))and true or false if p~=m then m=p U=nil notify(p and w(-6644)or w(-7922),Z[w(-8215)],3)end A=p or Z[w(-7349)]if A~=n then n=A U,l,F,W,t=nil,nil,0,nil,0 Z[w(-6294)]=Z[w(-6294)]or Z[w(-7485)](w(-6208))if Z[w(-6294)]then pcall(function()Z[w(-6294)]:FireServer(A)end)end end if not A or M[w(-7449)]then return end Z[w(-6501)]=Z[w(-6501)]or Z[w(-7485)](w(-6784))if not Z[w(-6501)]then return end local v=tick()if v-F>=.1 then F=v local m=Z[w(-6423)]()if m~=l then l,U,W,t=m,nil,nil,0 Z[w(-6578)]={}end end if not l then return end if not W then W,t=v,0 Z[w(-6294)]=Z[w(-6294)]or Z[w(-7485)](w(-6208))if Z[w(-6294)]then pcall(function()Z[w(-6294)]:FireServer(false)end)pcall(function()Z[w(-6294)]:FireServer(true)end)end end local S,y=Z[w(-7565)]()local O=l..(w(-6290)..y)local s=Z[w(-7223)]if t<#Z[w(-7486)]then if v-W<Z[w(-7486)][t+1]then return end t=t+1 s=true end if O==U and not s then return end local i=t>=#Z[w(-7486)]and((s or O~=U))U=O local e if#S==0 then e=w(-7968)elseif Z[w(-6531)](S,s,s and t>=#Z[w(-7486)])then e=w(-7273)else e=w(-7754)end if Z[w(-7223)]or(p and i)then Z[w(-7223)]=false notify(e,Z[w(-8215)],4)end end)if A then task[w(-6585)](.1)else task[w(-6585)](.25)end end if Z[w(-6294)]then pcall(function()Z[w(-6294)]:FireServer(false)end)end end)q[w(-7297)]=function(m)local n,U=pcall(function()return m:GetAttribute(w(-7536))==true and tonumber(m:GetAttribute(w(-7513)))==(game:GetService(w(-6427)))[w(-7686)][w(-7991)]end)return n and U end q[w(-7048)]=function()local m=M[w(-6154)](w(-8094))if not m then return nil end local n=ey()local U,l=pcall(function()return n[w(-6641)]end)for m,n in ipairs(m:GetChildren())do local F=n:FindFirstChild(w(-6076))local W=true if F and(U and l)then local m,n=pcall(function()return((F[w(-6641)]-l))[w(-7630)]end)W=not m or n<=q[w(-6797)]end if F and(W and q[w(-7297)](n))then local m={}for U,l in ipairs(q[w(-7417)])do local F=n:FindFirstChild(l)if F then m[#m+1]=F end end local U=n:FindFirstChild(w(-7072))local l=U and U:FindFirstChild(w(-7649))if l then m[#m+1]=l end return F,m,n end end return nil end q[w(-6615)]=function()local m=q[w(-7146)]local n=tick()if m and n-m[w(-8004)]<2 then return m[w(-6364)],m[w(-6942)],m[w(-6900)]end if m and(m[w(-6900)]and(m[w(-6900)][w(-6103)]and q[w(-7297)](m[w(-6900)])))then m[w(-8004)]=n return m[w(-6364)],m[w(-6942)],m[w(-6900)]end local U,l,F=q[w(-7048)]()q[w(-7146)]={[w(-6364)]=U,[w(-6942)]=l;[w(-6900)]=F,[w(-8004)]=n}return U,l,F end task[w(-8109)](function()local m=false local n=false local U,l,F,W,t=nil,{},nil,0,nil local p=Vector3[w(-6146)](0,0,0)local v=tick()local S=false local function y(m)local w,n=pcall(iskeypressed,m)return w and n end local O={}local function s(m)local n=tonumber(m[w(-6887)])if not n or n<=4096 then return nil end local U=memory_read(w(-7590),n+D)if not U or U<=4096 then return nil end return U end local function i()O={}for m,w in ipairs(l)do local n,U=pcall(s,w)O[#O+1]=n and U or false end end local function e(m)for n,U in ipairs(l)do local l=O[n]if l then if M[w(-6284)](U,l)then memory_write(w(-8007),(l+r)-4,m[w(-7186)])memory_write(w(-8007),l+r,m[w(-7034)])memory_write(w(-8007),(l+r)+4,m[w(-8100)])end else U[w(-6827)]=m end end end local function f(m)local n=q[w(-6902)]local U=tonumber(UI[w(-7489)](R(w(-7352))))or q[w(-8079)]local l=workspace[w(-6994)][w(-8127)]local F,W=l[w(-6497)],l[w(-6149)]local A=Vector3[w(-6146)](0,0,0)if y(n[w(-7644)])then A=A+F end if y(n[w(-6062)])then A=A-F end if y(n[w(-6980)])then A=A+W end if y(n[w(-7294)])then A=A-W end local t=Vector3[w(-6146)](0,0,0)if A[w(-7630)]>.01 then t=A[w(-6952)]*U end if y(n[w(-8049)])then t=t+Vector3[w(-6146)](0,q[w(-6856)],0)end if y(n[w(-6921)])then t=t-Vector3[w(-6146)](0,q[w(-6856)],0)end local v=math[w(-7853)](q[w(-6179)]*m,0,1)p=p+((t-p))*v e(p)end local B,g=nil,0 while _G[w(-7444)]==A do local A=false M[w(-7943)](w(-6068),function()local y=UI[w(-7489)](R(w(-6068)))and true or false if y~=n then n=y notify(y and w(-6842)or w(-6079),q[w(-6301)],3)end local O=y and fy(q[w(-7439)])if O~=m then m=O p=Vector3[w(-6146)](0,0,0)U,F,W,t,S,B=nil,nil,0,nil,false,nil notify(O and w(-7652)or w(-8033),q[w(-6301)],2)end if not O then return end local s=tick()local e=math[w(-6444)](s-v,.1)v=s if ZH()then B=nil else B=B or s if s-B>.5 then U,F,t=nil,nil,nil p=Vector3[w(-6146)](0,0,0)return end end if U and not U[w(-6103)]then U,F=nil,nil end if U and s-W>M[w(-6555)]then W=s if not F or not F[w(-6103)]or not q[w(-7297)](F)then local m,n,W=q[w(-7048)]()if m and W~=F then U,l,F=m,n or{},W i()end end end if not U and s-g>=.25 then g=s local m,n,A=q[w(-7048)]()if m then U,l,F=m,n or{},A W=s i()end end if U then t,S=nil,false A=true f(e)else t=t or s if not S and s-t>q[w(-6371)]then S=true notify(w(-6667),q[w(-6301)],3)end end end)M[w(-7679)]=m if A then task[w(-6585)](.016)else task[w(-6585)](.03)end if not A then v=tick()end end end)task[w(-8109)](function()local m=false local n,U,l=nil,0,0 local F=false local function W(m)local n,U=pcall(memory_read,w(-6623),m+12)local l,F=pcall(memory_read,w(-8130),m)if n and(U==3 and(l and type(F)==w(-7154)))then return F end return nil end local function t()local m=tonumber(UI[w(-7489)](R(w(-7629))))or q[w(-7982)]return math[w(-7853)](m,1,q[w(-7755)])end local function p()local m,n={},{}for U,l in ipairs(Sy({w(-6814),w(-7440)}))do local F=tonumber(l[w(-7419)])local A=F and W(F)if A then local U=tostring(l[w(-6905)])if U==w(-6814)then m[#m+1]={[w(-7419)]=F;[w(-6545)]=A}elseif U==w(-7440)then n[#n+1]={[w(-7419)]=F,[w(-6545)]=A}end end end local U,l=nil,math[w(-6120)]for m,F in ipairs(m)do for m,n in ipairs(n)do local W=math[w(-6430)](n[w(-7419)]-F[w(-7419)])if W<=q[w(-6860)]and W<l then U={[w(-6927)]=F[w(-7419)];[w(-6730)]=F[w(-6545)];[w(-6252)]=n[w(-6545)],[w(-8137)]=nil}l=W end end end return U end local function v()if not n then return end local m=W(n[w(-6927)])if m and(n[w(-8137)]and math[w(-6430)](m-n[w(-8137)])<.001)then pcall(memory_write,w(-8130),n[w(-6927)],n[w(-6730)])end n=nil end while _G[w(-7444)]==A do M[w(-7943)](w(-7999),function()local A=UI[w(-7489)](R(w(-7999)))and true or false if A~=m then m=A notify(A and w(-6842)or w(-6079),q[w(-7914)],3)end local S=A and fy(q[w(-6291)])if S~=F then F=S if not S then v()end U=0 notify(S and string[w(-7890)](w(-6922),t())or w(-6610),q[w(-7914)],2)end if not S or M[w(-7449)]then return end local y=tick()if y-l<.5 then return end l=y if not ZH()then if n then v()end q[w(-7046)]=q[w(-6124)]return end if n and not W(n[w(-6927)])then n=nil end if not n and y-U>=((q[w(-7046)]or q[w(-6124)]))then U=y n=p()q[w(-7046)]=n and q[w(-6124)]or math[w(-6444)](((q[w(-7046)]or q[w(-6124)]))*2,30)if n then notify(string[w(-7890)](w(-8166),n[w(-6252)]*t()),q[w(-7914)],2)end end if n then local m=n[w(-6730)]+n[w(-6252)]*((t()-1))local U=W(n[w(-6927)])if U and math[w(-6430)](U-m)>.001 then pcall(memory_write,w(-8130),n[w(-6927)],m)end n[w(-8137)]=m end end)task[w(-6585)](.03)end v()end)task[w(-8109)](function()local m={}local n,U=nil,{}local l,F,W=0,0,0 local t=false local function p(m)local n={}for m,U in ipairs(m:GetDescendants())do if U[w(-7378)]==w(-7072)and(U[w(-6356)]:sub(1,5)==w(-6353)and(U[w(-6356)]~=w(-7277)and U[w(-6356)]~=w(-6108)))then local m=U:FindFirstChild(w(-6660))if m and not m:FindFirstChild(w(-8146))then n[#n+1]=m end end end return n end local function v()for n,U in ipairs(M[w(-6758)])do if U[w(-6103)]then local n=U:FindFirstChild(w(-8160))if n then local U,l=pcall(function()return n[w(-8048)]end)if U and(l and l[w(-7186)]>.01)then local U=n[w(-6887)]if m[U]or l[w(-7186)]>=q[w(-6937)]then if not m[U]then m[U]={[w(-7178)]=n;[w(-7029)]=l}end pcall(function()n[w(-8048)]=Y end)end end end end end for n,U in pairs(m)do if U[w(-7178)][w(-6103)]==nil then m[n]=nil end end end local function S()for m,n in pairs(m)do if n[w(-7178)][w(-6103)]then pcall(function()n[w(-7178)][w(-8048)]=n[w(-7029)]end)end end m={}end local function y(m)local n=m:GetAttribute(w(-8089))if type(n)~=w(-7154)or n==0 then return end m:SetAttribute(w(-8089),0)local U=m:GetAttribute(w(-7430))local l=m:GetAttribute(w(-7137))if type(U)==w(-7154)and(type(l)==w(-7154)and l<U)then m:SetAttribute(w(-7137),U)end end local function O()for m,n in ipairs(U)do pcall(function()n[w(-6233)]=0 end)pcall(function()n[w(-7369)]=0 end)end end while _G[w(-7444)]==A do local m=.25 M[w(-7943)](w(-7954),function()local A=UI[w(-7489)](R(w(-7954)))and true or false if A~=t then t=A if not A then S()n,U=nil,{}end notify(A and w(-6842)or w(-6079),q[w(-6888)],3)end if not A then return end local s=tick()if s-F>=q[w(-7429)]then F=s pcall(v)end if not ZH()then n,U=nil,{}m=.1 return end if not n or not n[w(-6103)]or s-l>=2 then l=s local m,F,W=q[w(-6615)]()if W~=n then n=W U=W and p(W)or{}end end if n then if s-W>=.05 then W=s pcall(y,n)end O()end m=nil end)task[w(-6585)](m)end S()end)task[w(-8109)](function()local m,n,U,l=nil,{},nil,{}local F,W=0,0 local t,p=false,false local v=false local function S(m)local n=tonumber(m[w(-6887)])if not n or n<=4096 then return false end local U=memory_read(w(-7590),n+D)if not U or U<=4096 then return false end return U end local function y(w,F,W)m,n,U=w,F or{},W l={}for m,w in ipairs(n)do local n,U=pcall(S,w)l[m]=n and U or false end end local function O()m,n,U,l=nil,{},nil,{}v=false end local function s()for m,w in ipairs(q[w(-6777)])do local n,U=pcall(iskeypressed,w)if n and U then return true end end return false end local function i()return UI[w(-7489)](R(w(-6068)))and fy(q[w(-7439)])end local function e()for m,U in ipairs(l)do if U and M[w(-6284)](n[m],U)then return Vector3[w(-6146)](memory_read(w(-8007),(U+r)-4),memory_read(w(-8007),U+r),memory_read(w(-8007),(U+r)+4))end end return((n[1]or m))[w(-6827)]end local function f(m)for n,U in ipairs(n)do local F=l[n]if F then if M[w(-6284)](U,F)then memory_write(w(-8007),(F+r)-4,m[w(-7186)])memory_write(w(-8007),F+r,m[w(-7034)])memory_write(w(-8007),(F+r)+4,m[w(-8100)])end else pcall(function()U[w(-6827)]=m end)end end end local function B()local n=e()local U=n:Dot(m[w(-8127)][w(-6497)])if not v and U<=q[w(-8170)]then return end v=U>.5 f(Vector3[w(-6146)](0,math[w(-6444)](n[w(-7034)],0),0))end while _G[w(-7444)]==A do local n=.1 M[w(-7943)](w(-7469),function()local l=UI[w(-7489)](R(w(-7469)))and true or false if l~=p then p=l notify(l and w(-6842)or w(-6079),q[w(-7561)],3)end local A=l and fy(q[w(-7551)])if A~=t then t=A O()notify(A and w(-6583)or w(-7918),q[w(-7561)],2)end if not A then return end if not ZH()then O()return end local S=tick()if not m or not m[w(-6103)]then if S-F>=.3 then F,W=S,S local m,n,U,l=pcall(q[w(-7048)])if m and n then y(n,U,l)else O()end end elseif S-W>=3 then W=S if not U or not U[w(-6103)]or not q[w(-7297)](U)then O()end end if not m then return end n=.016 if s()and not i()then local m=pcall(B)if not m then O()end else v=false end end)task[w(-6585)](n)end end)task[w(-8109)](function()local m,n,U,l=nil,{},nil,{}local F,W=0,0 local t,p=false,false local v={}local S=Vector3[w(-6146)](0,1,0)local function y(m)local n=tonumber(m[w(-6887)])if not n or n<=4096 then return false end local U=memory_read(w(-7590),n+D)if not U or U<=4096 then return false end return U end local function O(w,F,W)m,n,U=w,F or{},W l,v={},{}for m,w in ipairs(n)do local n,U=pcall(y,w)if n and U then l[#l+1]=U v[#v+1]=w end end end local function s()m,n,U,l=nil,{},nil,{}v={}p=false end local function i()for m,n in ipairs(l)do if M[w(-6284)](v[m],n)then memory_write(w(-8007),n+q[w(-7787)],0)memory_write(w(-8007),(n+q[w(-7787)])+8,0)end end end local function e()local n=m[w(-8127)]local U=n[w(-7121)]if U[w(-7034)]<q[w(-8128)]or(p and U[w(-7034)]<q[w(-6830)])then p=true local m=U:Cross(S)if m[w(-7630)]<.05 then m=n[w(-6497)]end local F=m[w(-6952)]*q[w(-6609)]for m,n in ipairs(l)do if M[w(-6284)](v[m],n)then memory_write(w(-8007),n+q[w(-7787)],F[w(-7186)])memory_write(w(-8007),(n+q[w(-7787)])+8,F[w(-8100)])if U[w(-7034)]<0 then local m=memory_read(w(-8007),n+r)if m<q[w(-8151)]then memory_write(w(-8007),n+r,q[w(-8151)])end end end end elseif p then p=false i()end end while _G[w(-7444)]==A do local n=.1 M[w(-7943)](w(-6600),function()local A=UI[w(-7489)](R(w(-6600)))and true or false if A~=t then t=A if not A and p then pcall(i)end s()notify(A and w(-8054)or w(-7335),q[w(-7813)],3)end if not A then return end if not ZH()then s()return end local v=tick()if not m or not m[w(-6103)]then if v-F>=.3 then F,W=v,v local m,n,U,l=pcall(q[w(-7048)])if m and n then O(n,U,l)else s()end end elseif v-W>=3 then W=v if not U or not U[w(-6103)]or not q[w(-7297)](U)then s()end end if not m or#l==0 then return end n=p and q[w(-6744)]or.1 if not pcall(e)then s()end end)task[w(-6585)](n)end end)task[w(-8109)](function()_G[w(-6627)]=_G[w(-6627)]or{}local m=_G[w(-6627)]local n={}local U=false local l,F,W,t=nil,0,0,nil local function p(m)return{[w(-6275)]=memory_read(w(-6623),m),[w(-8191)]=memory_read(w(-6623),m+4),[w(-8011)]=memory_read(w(-6623),m+12)}end local function v(m,n)memory_write(w(-6623),m,n[w(-6275)])memory_write(w(-6623),m+4,n[w(-8191)])memory_write(w(-6623),m+12,n[w(-8011)])end local function S()local m=0 pcall(function()local n=(game:GetService(w(-6427)))[w(-7686)]:FindFirstChild(w(-7938))for n,U in ipairs(n:GetChildren())do local l=U:GetAttribute(w(-8157))if type(l)==w(-7154)then m=m+l end end end)return m end local function y()local n=0 for U,l in ipairs(Sy({w(-8005)}))do local F=tonumber(l[w(-7419)])if F and tostring(l[w(-6905)])==w(-8005)then local U=tostring(F)if not m[U]then local W,A=pcall(p,F)if W and(A[w(-8011)]==M[w(-8188)]and A[w(-6275)]==0)then m[U]={[w(-7419)]=F,[w(-7405)]=A,[w(-8039)]=l}n=n+1 end end end end return n end local function O()n={}for m,U in pairs(m)do n[#n+1]=U[w(-8039)]end end local function s(n)local U=0 for n=1,n,1 do U=y()if U>0 or next(m)then break end task[w(-6585)](.15)end O()return U end local function i()n=M[w(-7720)](n)if#n>0 then pcall(applygc,n,{[w(-8005)]=true})end end local function e()local U=0 for n,l in pairs(m)do if l[w(-8039)]and(#M[w(-7720)]({l[w(-8039)]})==1 and pcall(v,l[w(-7419)],l[w(-7405)]))then U=U+1 end m[n]=nil end n={}return U end while _G[w(-7444)]==A do M[w(-7943)](w(-7951),function()local m=UI[w(-7489)](R(w(-7951)))and true or false local A=tick()if m~=U then U=m if m then l,t=A,M[w(-7878)]notify(w(-6842),M[w(-6091)],3)else l=nil local m=e()notify(m>0 and(w(-7501)..(m..w(-8139)))or w(-6079),M[w(-6091)],3)end end if not m then return end if A-W>=1 then W=A local m=M[w(-7878)]if m~=t then t=m l=A+2 end end if l and(A>=l and not M[w(-7449)])then local m=#n==0 l=nil local U=s(m and M[w(-7563)]or 1)i()F=tick()if U>0 then notify(U..w(-7763),M[w(-6091)],3)elseif#n==0 then notify(w(-6869),M[w(-6091)],3)end elseif A-F>=M[w(-6339)]then F=A i()end end)task[w(-6585)](.25)end e()end)task[w(-8109)](function()local m={}local n={}local U=false local function l()local n=0 for U,l in pairs(m)do if l[w(-6103)]then pcall(function()l:SetAttribute(M[w(-6748)],true)end)n=n+1 end m[U]=nil end return n end while _G[w(-7444)]==A do M[w(-7943)](w(-7180),function()local F=UI[w(-7489)](R(w(-7180)))and true or false if F~=U then U=F if F then n={}notify(w(-6842),M[w(-7624)],3)else local m=l()notify(m>0 and(w(-7501)..(m..w(-7421)))or w(-6079),M[w(-7624)],3)end end if not F then return end local W=(game:GetService(w(-6427)))[w(-7686)]:FindFirstChild(w(-7938))if not W then return end local A=tick()local t={}for U,l in ipairs(W:GetChildren())do local F=tostring(l[w(-6887)])t[F]=n[F]or A if m[F]or A-t[F]<M[w(-8181)]then if l:GetAttribute(M[w(-6748)])==true then l:SetAttribute(M[w(-6748)],false)if not m[F]then m[F]=l notify(l[w(-6356)]..w(-6335),M[w(-7624)],2)end end end end n=t for n,U in pairs(m)do if not U[w(-6103)]then m[n]=nil end end end)task[w(-6585)](M[w(-6340)])end l()end)task[w(-8109)](function()local m=(game:GetService(w(-6427)))[w(-7686)]local n=.6 local U,l,F,W=false,false,0,false local t=game:GetService(w(-7392))local p={}local function v()if not M[w(-6768)]then M[w(-6768)]=true M[w(-6956)](w(-6983),M[w(-6460)],5)end end local function S(m)local n,U=pcall(memory_read,w(-7590),m)return n and(type(U)==w(-7154)and U)or nil end local function y(m)local n,U=pcall(memory_read,w(-6623),m)return n and(type(U)==w(-7154)and U)or nil end local function O(m)local n=y(m+M[w(-8120)])if not n or n<1 or n>15 then return nil end local U={}for n=1,n,1 do local l,F=pcall(memory_read,w(-7409),((m+M[w(-6141)])+n)-1)if not l or type(F)~=w(-7154)then return nil end U[n]=string[w(-6968)](F)end return table[w(-7260)](U)end local function s(m)local n=p[m]if n and O(n)==m then return n end p[m]=nil local U=t:FindFirstChild(w(-7580))local l=U and U:FindFirstChild(w(-7732))local F=l and l:FindFirstChild(m)n=F and S(tonumber(F[w(-6887)])+M[w(-7631)])if n and O(n)==m then p[m]=n return n end return nil end local function i(m,n)local U=y(m+M[w(-6216)])if not U or U<1 or U>1000000 then return false end return pcall(memory_write,w(-6623),m+M[w(-6216)],U+n)end local function e(m,n,U)local l,F=s(n),s(U)local W=tonumber(m[w(-6887)])+M[w(-7631)]local A=S(W)if F and A==F then return true end if not l or not F or A~=l or not i(F,1)then v()return false end if not pcall(memory_write,w(-7590),W,F)or S(W)~=F then i(F,-1)return false end i(l,-1)return true end local function f(m)local n=m:GetAttribute(w(-8157))return type(n)==w(-7154)and n%2==1 end _G[w(-8192)]=_G[w(-8192)]or{}local B=_G[w(-8192)]local function g(m)local n=tostring(m[w(-6887)])local U=m[w(-6356)]local l=M[w(-7390)][U]if not l or B[n]then return false end local F=m:GetAttribute(M[w(-7233)])or M[w(-7343)][U]if not e(m,U,l)then return false end B[n]={[w(-7985)]=U,[w(-6096)]=F}pcall(function()m:SetAttribute(M[w(-7233)],M[w(-7343)][l])end)return true end local function D(m)local n=tostring(m[w(-6887)])local U=B[n]if not U then return false end if not e(m,M[w(-7390)][U[w(-7985)]],U[w(-7985)])then return false end B[n]=nil pcall(function()m:SetAttribute(M[w(-7233)],U[w(-6096)]or M[w(-7343)][U[w(-7985)]])end)return true end local function r(n)local U=m:FindFirstChild(w(-7938))if not U then return 0,0,0 end local l,F,W=0,0,0 for m,U in ipairs(U:GetChildren())do local A=tostring(U[w(-6887)])local t=(n and(M[w(-7390)][U[w(-6356)]]and not B[A]))or(not n and B[A])if t then if f(U)then F=F+1 elseif(n and g(U))or(not n and D(U))then l=l+1 else W=W+1 end end end return l,F,W end while _G[w(-7444)]==A do M[w(-7943)](w(-7994),function()local m=tick()local A=UI[w(-7489)](R(w(-7994)))and true or false if A~=l then l=A F=m end if l~=U and m-F>=n then U=l W=false M[w(-6768)]=false notify(U and w(-6842)or w(-6079),M[w(-6460)],3)end if l~=U or U then M[w(-7488)]=false end if not U and M[w(-7488)]then return end local t,p,v=r(U)if not U and(p==0 and v==0)then M[w(-7488)]=true end if t>0 then notify(U and(t..w(-8176))or(t..w(-8139)),M[w(-6460)],3)end if p>0 and not W then W=true notify(U and w(-6529)or w(-6197),M[w(-6460)],3)elseif p==0 then W=false end end)task[w(-6585)](M[w(-7715)])end local Q=tick()+M[w(-6971)]while tick()<Q do local m,n=r(false)if n==0 then break end task[w(-6585)](M[w(-7715)])end end)task[w(-8109)](function()local m=w(-6712)local n=w(-6234)local U=(game:GetService(w(-6427)))[w(-7686)]local l,F,W,t={},{},false,w(-6099)local function p()local m=((tonumber(UI[w(-7489)](R(w(-6140))))or 0))+1 local n=tonumber(UI[w(-7489)](R(w(-7582))))or 0 return M[w(-6459)][m],M[w(-6313)][m],n end local function v()local m,n,U=p()if not m then return end if U==0 then for w,n in ipairs(M[w(-6865)])do l[n]=m end elseif M[w(-6865)][U]then l[M[w(-6865)][U]]=m end t=n..(w(-7483)..((M[w(-7842)][U+1]or w(-7398))))end local function S(m)local n=m:GetAttribute(w(-8157))return type(n)==w(-7154)and n%2==1 end local function y(m,w)return pcall(function()m:SetAttribute(n,w)end)end local function O(m)if not m and next(F)==nil then return 0,0 end local W=U:FindFirstChild(w(-7938))if not W then return 0,0 end local A,t,R=0,0,{}for U,W in ipairs(W:GetChildren())do local p=tostring(W[w(-6887)])R[p]=true local v=m and l[W[w(-6356)]]or nil local O=W:GetAttribute(n)local s=false if v then if F[p]==nil then F[p]={[w(-6545)]=O}end if O~=v then s=y(W,v)end elseif F[p]then if O~=F[p][w(-6545)]then s=y(W,F[p][w(-6545)])end F[p]=nil end if s then A=A+1 if S(W)then t=t+1 end end end for m in pairs(F)do if not R[m]then F[m]=nil end end return A,t end while _G[w(-7444)]==A do M[w(-7943)](w(-7361),function()local n=UI[w(-7489)](R(w(-7361)))and true or false if n~=W then W=n if n then v()else l={}end end if M[w(-7458)]then M[w(-7458)]=false if n then v()else notify(w(-8061),m,3)end end local U,F=O(n)if U>0 then local U=n and(w(-8104)..t)or w(-6324)if F>0 then U=U..w(-6589)end notify(U,m,3)elseif not n and(W==false and(U==0 and M[w(-7814)]==false))then M[w(-7814)]=true end end)task[w(-6585)](.3)end O(false)end)task[w(-8109)](function()local m=w(-7921)local n=5 local U=32 local l=8 local F,W,t,p,v,S=nil,false,0,5,false,0 local function y(m,n)local U,l=pcall(memory_read,m,n)if U and type(l)==w(-7154)then return l end end local function O(m)return m and(m>1099511627776 and m<1.4073748835533e+14)end local function s(m)local n=m and y(w(-8130),m)return n~=nil and((n==0 or n>1000000000))end local function i()t=tick()for m,F in ipairs(Sy({w(-6925)}))do local W=y(w(-7590),tonumber(F[w(-7419)]))if O(W)and y(w(-7409),W+n)==6 then local m=y(w(-7590),W+U)local n=O(m)and y(w(-7590),m+l)if O(n)and y(w(-6623),n+12)==3 then local m=y(w(-8130),n)if m and((m==0 or m>1000000000))then return n end end end end end while _G[w(-7444)]==A do M[w(-7943)](w(-6588),function()local n=UI[w(-7489)](R(w(-6588)))and true or false if n~=W then W=n if n then p,t,v,S=5,0,false,0 else if F then notify(w(-7335),m,3)end F=nil end end if not n then return end if F and not s(F)then F,t,p=nil,0,5 end if not F then if tick()-t<p then return end F=i()if F then p,v,S=5,false,0 notify(w(-8054),m,3)else S=S+1 p=math[w(-6444)](p*2,60)if S>=3 and not v then v=true M[w(-6956)](w(-6983),m,5)end return end end local U=y(w(-8130),F)if U and U~=0 then pcall(memory_write,w(-8130),F,0)end end)task[w(-6585)](UI[w(-7489)](R(w(-6588)))and.05 or.25)end end)task[w(-8109)](function()local m=w(-6195)local n=w(-7367)local U=.01 local l=3 local F,W,t,p,v={},false,0,5,false local function S(m,n)local U,l=pcall(memory_read,m,n)if U and type(l)==w(-7154)then return l end end local function y(m)return S(w(-7590),m[w(-7419)]+16)==m[w(-6485)]and S(w(-6623),m[w(-7419)]+12)==l end local function O()for m,n in ipairs(F)do if y(n)then pcall(memory_write,w(-8130),n[w(-7419)],n[w(-6643)])end end F={}end local function s()t=tick()local m={}for W,A in ipairs(Sy({n}))do local t=tonumber(A[w(-7419)])if t and(t>4096 and(not m[t]and tostring(A[w(-6905)])==n))then local n=S(w(-7590),t+16)local W=S(w(-8130),t)if n and(n>4096 and(S(w(-6623),t+12)==l and(W and(W>U and W<60))))then m[t]=true F[#F+1]={[w(-7419)]=t;[w(-6485)]=n;[w(-6643)]=W}end end end return#F>0 end while _G[w(-7444)]==A do M[w(-7943)](w(-7959),function()local n=UI[w(-7489)](R(w(-7959)))and true or false if n~=W then W=n if n then p,t,v=5,0,false else local n=#F>0 O()if n then notify(w(-7335),m,3)end end end if not n then return end if#F==0 then if tick()-t<p then return end if s()then p,v=5,false notify(w(-8054),m,3)else p=math[w(-6444)](p*2,120)if not v then v=true M[w(-6956)](w(-6983),m,5)end return end end local l={}for m,n in ipairs(F)do if y(n)then l[#l+1]=n if S(w(-8130),n[w(-7419)])~=U then pcall(memory_write,w(-8130),n[w(-7419)],U)end end end F=l end)task[w(-6585)](.5)end O()end)task[w(-8109)](function()local m=w(-8035)local n=w(-6278)local U=3 local l,F,W=nil,nil,{}local t,p,v,S,y=false,0,0,5,false local function O(m,n)local U,l=pcall(memory_read,m,n)if U and type(l)==w(-7154)then return l end end local function s()p=tick()local m=M[w(-6154)](w(-6271))local n=m and m:FindFirstChild(w(-6912))if not n then return nil end local U=n:FindFirstChild(w(-6912))if U and U:IsA(w(-7607))then return U end for m,n in ipairs(n:GetChildren())do if n:IsA(w(-7607))then return n end end end local function i(m)local n={[w(-7067)]=m[w(-6441)];[w(-6418)]=m[w(-6233)],[w(-7244)]={}}for m,U in ipairs(m:GetChildren())do if U[w(-7378)]==w(-7493)then n[w(-7244)][#n[w(-7244)]+1]={[w(-8074)]=U;[w(-6418)]=U[w(-6233)]}end end return n end local function e()pcall(function()if l[w(-6441)]then l[w(-6441)]=false end if l[w(-6233)]~=1 then l[w(-6233)]=1 end for m,n in ipairs(F[w(-7244)])do if n[w(-8074)][w(-6233)]~=1 then n[w(-8074)][w(-6233)]=1 end end end)end local function f(m)return O(w(-7590),m[w(-7419)]+16)==m[w(-6485)]and O(w(-6623),m[w(-7419)]+12)==U end local function B()v=tick()local m={}for l,F in ipairs(Sy({n}))do local A=tonumber(F[w(-7419)])if A and(A>4096 and(not m[A]and tostring(F[w(-6905)])==n))then local n=O(w(-7590),A+16)local l=O(w(-8130),A)if n and(n>4096 and(O(w(-6623),A+12)==U and(l and(l>0 and l<10000))))then m[A]=true W[#W+1]={[w(-7419)]=A;[w(-6485)]=n,[w(-6643)]=l}end end end return#W>0 end local function g()local m={}for n,U in ipairs(W)do if f(U)then m[#m+1]=U if O(w(-8130),U[w(-7419)])~=0 then pcall(memory_write,w(-8130),U[w(-7419)],0)end end end W=m end local function D()if l and F then pcall(function()l[w(-6441)]=F[w(-7067)]l[w(-6233)]=F[w(-6418)]for m,n in ipairs(F[w(-7244)])do n[w(-8074)][w(-6233)]=n[w(-6418)]end end)end for m,n in ipairs(W)do if f(n)then pcall(memory_write,w(-8130),n[w(-7419)],n[w(-6643)])end end l,F,W=nil,nil,{}end while _G[w(-7444)]==A do M[w(-7943)](w(-6263),function()local n=UI[w(-7489)](R(w(-6263)))and true or false if n~=t then t=n if n then p,v,S,y=0,0,5,false notify(w(-8054),m,3)else local n=l~=nil or#W>0 D()if n then notify(w(-7335),m,3)end end end if not n then return end local U=false if l and not l[w(-6103)]then l,F=nil,nil end if not l and tick()-p>=5 then local m=s()if m then local n,W=pcall(i,m)if n then l,F=m,W U=w(-7683)end end end local A=M[w(-6154)](w(-6134))local O=A and A:FindFirstChild(w(-6114))~=nil if#W==0 and(O and tick()-v>=S)then if B()then S=5 U=w(-7594)else S=math[w(-6444)](S*2,120)end end if l then e()end if#W>0 then g()end if U then notify(U,m,3)end end)task[w(-6585)](.5)end D()end)task[w(-8109)](function()local m=w(-6843)local n=2837091387 local U=24 local l=40 local F,W=10,10 local t,p,v,S={},false,nil,0 local y={[n]=true}for m,w in ipairs(M[w(-6537)])do y[w[2]]=true end local function O(m)local n,U=pcall(memory_read,w(-7590),m)if n and(type(U)==w(-7154)and(U>65536 and U<1.4073748835533e+14))then return U end end local function s(m)local n,U=pcall(memory_read,w(-8130),m)return n and U or nil end local function i()t,S={},tick()for m,n in ipairs(Sy({w(-6752)}))do local F=tonumber(n[w(-7419)])local W=F and O(F)local A=W and O(W+U)local R=A and O(A+l)if R then for m=0,63,1 do if y[s(R+m*16)]then t[#t+1]=R+m*16 break end end end end return#t>0 end local function e(m)local n={}for U,l in ipairs(t)do if y[s(l)]and pcall(memory_write,w(-8130),l,m)then n[#n+1]=l end end t=n return#n end local function f()local m=((tonumber(UI[w(-7489)](R(w(-7102))))or 0))+1 local n=M[w(-6537)][m]or M[w(-6537)][1]return n[2],n[1]end while _G[w(-7444)]==A do M[w(-7943)](w(-7832),function()local U=UI[w(-7489)](R(w(-7832)))and true or false if U~=p then p=U M[w(-6966)]=false if not U then e(n)v=nil notify(w(-7335),m,3)end end if not U then return end if#t==0 and tick()-S>=W then if i()then W=F else W=math[w(-6444)](W*2,300)if not M[w(-6966)]then M[w(-6966)]=true M[w(-6956)](w(-6983),m,5)end end end if#t==0 then return end local l,A=f()if l~=v then if e(l)>0 then v=l notify(w(-8104)..A,m,3)else v=nil end end end)task[w(-6585)](.5)end e(n)end)task[w(-8109)](function()local m=w(-6547)local n=game:GetService(w(-6427))local U=n[w(-7686)]local l=workspace[w(-6994)]local F,W=.38,2 local t={[w(-6987)]=w(-7498);[w(-7550)]=true}local p,v={},{}for m,n in pairs({[w(-6142)]={255,255;255};[w(-6126)]={255,196,60},[w(-7550)]={255;70;70};[w(-7528)]={255,255;85};[w(-8075)]={255;255,255}})do p[m]=Color3[w(-7521)](n[1],n[2],n[3])v[m]=Color3[w(-7521)](math[w(-7306)](n[1]/4),math[w(-7306)](n[2]/4),math[w(-7306)](n[3]/4))end local S=Color3[w(-7521)](0,0,0)local y={}local function O(m,n)local U=Drawing[w(-6146)](m)for m,n in pairs(n)do pcall(function()U[m]=n end)end U[w(-7381)]=false y[#y+1]=U return U end local s={[w(-6950)]=w(-6910);[w(-6935)]=w(-6190),[w(-6504)]=w(-8138);[w(-6452)]=w(-6305),[w(-6242)]=w(-7885),[w(-6562)]=w(-8077);[w(-6348)]=w(-6306);[w(-7330)]=w(-7743);[w(-6173)]=w(-6429);[w(-7861)]=w(-6090);[w(-8180)]=w(-8085);[w(-7797)]=w(-8164),[w(-6882)]=w(-8029);[w(-7845)]=w(-6617),[w(-8119)]=w(-7424);[w(-7476)]=w(-6721);[w(-6619)]=w(-7757);[w(-7911)]=w(-7220);[w(-7490)]=w(-6879),[w(-6563)]=w(-6604);[w(-6923)]=w(-6258);[w(-6085)]=w(-6876);[w(-6833)]=w(-7224);[w(-7186)]=w(-8058);[w(-7034)]=w(-8071);[w(-8100)]=w(-7022),[w(-8133)]=w(-8067);[w(-7964)]=w(-7928),[w(-6767)]=w(-7849),[w(-6083)]=w(-7228);[w(-6978)]=w(-7279);[w(-7608)]=w(-7000);[w(-6543)]=w(-6773),[w(-7226)]=w(-6663),[w(-6255)]=w(-7749),[w(-6226)]=w(-7255);[w(-6168)]=w(-7681),[w(-7742)]=w(-7766),[w(-6861)]=w(-7762);[w(-6221)]=w(-6713);[w(-8102)]=w(-7116);[w(-7209)]=w(-6346),[w(-6503)]=w(-8168),[w(-8156)]=w(-7454),[w(-6319)]=w(-6115);[w(-7745)]=w(-7411);[w(-7511)]=w(-7212),[w(-6654)]=w(-6974),[w(-7724)]=w(-6794);[w(-7241)]=w(-7312),[w(-6776)]=w(-7051),[w(-7452)]=w(-7731),[w(-7401)]=w(-6302),[w(-6458)]=w(-7977);[w(-7621)]=w(-6113),[w(-6131)]=w(-7730),[w(-6710)]=w(-7036);[w(-7448)]=w(-7535);[w(-7618)]=w(-8154),[w(-6092)]=w(-7667);[w(-7096)]=w(-7801);[w(-6686)]=w(-7324);[w(-7499)]=w(-6621);[w(-7285)]=w(-7263),[w(-7591)]=w(-7081),[w(-6759)]=w(-6368),[w(-6826)]=w(-8016);[w(-7908)]=w(-6417),[w(-7398)]=w(-6379)}local i={}for m,n in pairs(s)do local U={}for m in n:gmatch(w(-6080))do U[#U+1]=m end local l={}for m,n in ipairs(U)do local U=1 while U<=#n do if n:sub(U,U)==w(-6817)then local F=U while U<=#n and n:sub(U,U)==w(-6817)do U=U+1 end local W=false for w,n in ipairs(l)do if n[1]==F-1 and(n[3]==U-F and n[2]+n[4]==m-1)then n[4]=n[4]+1 W=true break end end if not W then l[#l+1]={F-1,m-1,U-F,1}end else U=U+1 end end end i[m]={[w(-7618)]=#U[1],[w(-7423)]=l}end local function e()return{[w(-7229)]=w(-6099);[w(-7614)]={},[w(-6863)]={};[w(-7423)]={},[w(-6259)]=0}end local function f(m)m[w(-7441)]=m[w(-7229)]local n,U={},0 for m in m[w(-7229)]:gmatch(w(-7285))do local l=i[m]or i[w(-7398)]for m,l in ipairs(l[w(-7423)])do n[#n+1]={U+l[1],l[2],l[3];l[4]}end U=(U+l[w(-7618)])+1 end m[w(-7423)],m[w(-6259)]=n,math[w(-6932)](U-1,0)for n=#m[w(-7614)]+1,#n,1 do m[w(-6863)][n]=O(w(-6969),{[w(-7818)]=true;[w(-6233)]=1,[w(-6160)]=65})m[w(-7614)][n]=O(w(-6969),{[w(-7818)]=true;[w(-6233)]=1;[w(-6160)]=66})end for n=#n+1,#m[w(-7614)],1 do m[w(-7614)][n][w(-7381)]=false m[w(-6863)][n][w(-7381)]=false end m[w(-6905)],m[w(-6703)],m[w(-6168)],m[w(-8140)]=nil,nil,nil,false end local function B(m)if m[w(-8140)]then for n=1,#m[w(-7614)],1 do m[w(-7614)][n][w(-7381)]=false m[w(-6863)][n][w(-7381)]=false end m[w(-8140)]=false end end local function g(m,n,U,l,F,W)W=math[w(-7306)](W*20+.5)/20 if m[w(-7441)]~=m[w(-7229)]then f(m)end local A=math[w(-6932)](1,math[w(-7306)](l/8+.5))local t,R=math[w(-7306)]((n-(m[w(-6259)]*A)/2)+.5),math[w(-7306)]((U-4*A)+.5)local S=(t*100000+R*10)+A local y,O,s=S~=m[w(-6905)],m[w(-6703)]~=F,m[w(-6168)]~=W for n,U in ipairs(m[w(-7423)])do local l,S=m[w(-7614)][n],m[w(-6863)][n]if y then l[w(-6641)]=Vector2[w(-6146)](t+U[1]*A,R+U[2]*A)l[w(-8048)]=Vector2[w(-6146)](U[3]*A,U[4]*A)S[w(-6641)]=Vector2[w(-6146)](t+((U[1]+1))*A,R+((U[2]+1))*A)S[w(-8048)]=Vector2[w(-6146)](U[3]*A,U[4]*A)end if O then l[w(-7167)]=p[F]S[w(-7167)]=v[F]end if s then l[w(-6233)]=W S[w(-6233)]=W end if not m[w(-8140)]then l[w(-7381)]=true S[w(-7381)]=true end end m[w(-6905)],m[w(-6703)],m[w(-6168)],m[w(-8140)]=S,F,W,true end local D,r={},{}for m=1,4,1 do r[m]=O(w(-6151),{[w(-7167)]=S;[w(-6344)]=W+2;[w(-6233)]=1;[w(-6160)]=60})D[m]=O(w(-6151),{[w(-6344)]=W;[w(-6233)]=1;[w(-6160)]=61})end local Q=O(w(-7503),{[w(-7818)]=false,[w(-6327)]=48,[w(-6344)]=W,[w(-6233)]=1;[w(-6160)]=61})local L,k=e(),e()local I={}for m=1,12,1 do I[m]={[w(-6654)]=e();[w(-6129)]=false;[w(-6260)]=0}end local C pcall(function()C=U:GetMouse()end)local function x()if C then local m,n,U=pcall(function()return C[w(-7186)],C[w(-7034)]end)if m and type(n)==w(-7154)then return n,U end end local m=l[w(-6812)]return m[w(-7186)]/2,m[w(-7034)]/2 end local function V(m)return 1-((1-m))^3 end local function z(m)return m<0 and 0 or(m>1 and 1 or m)end local function G(m)return((tostring(m or w(-6099))):gsub(w(-7628),w(-6099)))end local c={{1;1};{1,-1},{-1;1};{-1;-1}}local E={[w(-6260)]=-1,[w(-7953)]=w(-6142)}local q={[w(-6260)]=-1;[w(-7663)]=0;[w(-6716)]=-10}local N=false local function Z()local m,n=pcall(function()return U[w(-6347)]end)local l=m and G(n)or w(-6099)if l==w(-6099)then l=G(U[w(-6356)])end return l end local function J(m,n,U)local l=tick()if t[w(-6569)]then if not((E[w(-7953)]==w(-7550)and(m~=w(-7550)and l-E[w(-6260)]<F*1.8)))then E[w(-7953)]=m end E[w(-6260)]=l end if t[w(-6569)]and(n and n>0)then local U for m,n in ipairs(I)do if not n[w(-6129)]then U=n break end end if not U then U=I[1]for m,n in ipairs(I)do if n[w(-6260)]<U[w(-6260)]then U=n end end end local F=math[w(-7604)](math[w(-7771)](-75,-15))U[w(-6129)],U[w(-6260)],U[w(-7953)],U[w(-7549)],U[w(-7237)]=true,l,m,math[w(-6078)](F),math[w(-7989)](F)U[w(-6654)][w(-7229)]=tostring(math[w(-7306)](n+.5))end if m==w(-7550)and t[w(-7550)]then q[w(-7663)]=l-q[w(-6716)]<5 and q[w(-7663)]+1 or 1 q[w(-6716)],q[w(-6260)]=l,l local m=G(U)if m==w(-6099)then m=w(-7231)end L[w(-7229)]=m..(w(-6127)..Z())local n={w(-6099),w(-7990);w(-7068)}k[w(-7229)]=n[q[w(-7663)]]or(w(-6336)..q[w(-7663)])end end local function Y(m,n,U)local l,A=E[w(-7953)],t[w(-6987)]==w(-7006)local R=(F*((l==w(-7550)and 1.8 or 1)))*((A and.7 or 1))local v=m-E[w(-6260)]if E[w(-6260)]<0 or v>R then if N then for m=1,4,1 do D[m][w(-7381)]=false r[m][w(-7381)]=false end Q[w(-7381)]=false N=false end return end N=true local S=p[l]local y=(W+((l==w(-7550)and 1 or 0)))-((A and 1 or 0))local O=v<R*.45 and 1 or z(1-((v-R*.45))/((R*.55)))local s=A and 0 or(l==w(-7550)and.8 or.55)local i=((1+s*((1-V(z(v/((R*.22))))))))*((l==w(-7550)and 1.3 or 1))local e,f=7*i,9*i if A then e,f=3*i,5*i end for m,l in ipairs(c)do local F=Vector2[w(-6146)](n+(l[1]*e)*.7071,U+(l[2]*e)*.7071)local W=Vector2[w(-6146)](n+(l[1]*((e+f)))*.7071,U+(l[2]*((e+f)))*.7071)local A,t=D[m],r[m]t[w(-7020)],t[w(-7120)],t[w(-6344)],t[w(-6233)],t[w(-7381)]=F,W,y+2,O*.55,true A[w(-7020)],A[w(-7120)],A[w(-6344)],A[w(-7167)],A[w(-6233)],A[w(-7381)]=F,W,y,S,O,true end end local function P(m,n,U)for l,F in ipairs(I)do if F[w(-6129)]then local l=m-F[w(-6260)]local W=F[w(-7953)]==w(-7550)and 1.1 or.85 if l>W then F[w(-6129)]=false B(F[w(-6654)])else local m=l/W local A=F[w(-7953)]==w(-7550)and 22 or(F[w(-7953)]==w(-6126)and 20 or 17)local t=26+22*V(m)g(F[w(-6654)],n+F[w(-7549)]*t,U+F[w(-7237)]*t,A*((1+.5*((1-V(z(l/.12)))))),F[w(-7953)],m<.55 and 1 or z(1-((m-.55))/.45))end end end local F=m-q[w(-6260)]if q[w(-6260)]<0 or F>2.6 or not t[w(-7550)]then B(L)B(k)return end local W=((F<2.2 and 1 or z(1-((F-2.2))/.4)))*z(F/.08)local A=l[w(-6812)]local R,p=math[w(-7306)](A[w(-7186)]/2),math[w(-7306)](A[w(-7034)]*.68)g(L,R,p,16,w(-8075),W)if k[w(-7229)]~=w(-6099)then g(k,R,p+22,16,w(-7528),W)else B(k)end end local d={}local function X(m)local n=w(-7398)local l=U[w(-6159)]if l then for m,U in ipairs(l:GetChildren())do if U[w(-7378)]==w(-8222)then n=U[w(-6356)]break end end end if(n:lower()):find(w(-7247))then return false end local F=d[n]if not F then F={}d[n]=F end local W=math[w(-7306)](m+.5)F[W]=((F[W]or 0))+1 local A,t,R=nil,0,0 for m,w in pairs(F)do R=R+w if w>t then A,t=m,w end end return R>=2 and(A and W>=A*1.4)end local b,j,a={},false,0 local function o(m)local l={}for m,n in ipairs(n:GetPlayers())do if n~=U and n[w(-6159)]then l[#l+1]={n[w(-6159)],n[w(-6347)]or n[w(-6356)]}end end pcall(function()for m,n in ipairs((game:GetService(w(-6412))):GetTagged(K))do l[#l+1]={n,w(-6388)}end end)for n,U in ipairs(l)do local l,F=U[1],U[2]pcall(function()local n=l[w(-6887)]local U=b[n]local W=l:FindFirstChild(w(-6447))local A=l:FindFirstChild(w(-6538))local t=W and W:FindFirstChild(w(-6991))local R=t and t:FindFirstChild(w(-6056))local p=R and tonumber(R[w(-7293)])local v=A and A[w(-7867)]or 100 if not U then U={[w(-7973)]=t and t[w(-6887)],[w(-7241)]=p or 0,[w(-7937)]=-10,[w(-7866)]=v<=0}b[n]=U if not j then U[w(-6809)]=m return end end U[w(-6809)]=m local S if t and p then local m=t[w(-6887)]if m~=U[w(-7973)]then S=p U[w(-7973)]=m elseif p>U[w(-7241)]then S=p-U[w(-7241)]end U[w(-7241)]=p elseif not t then U[w(-7973)],U[w(-7241)]=nil,0 end if v>0 then U[w(-7866)]=false end if S and S>0 then U[w(-7937)]=m local n=X(S)and w(-6126)or w(-6142)if v<=0 and not U[w(-7866)]then n=w(-7550)U[w(-7866)]=true end J(n,S,F)elseif v<=0 and(not U[w(-7866)]and m-U[w(-7937)]<1)then U[w(-7866)]=true J(w(-7550),0,F)end end)end j=true if m-a>5 then a=m for n,U in pairs(b)do if m-U[w(-6809)]>5 then b[n]=nil end end end end local T,H,u=false,0,false local h,mi=false,false while _G[w(-7444)]==A do local n=tick()local U=UI[w(-7489)](R(w(-6918)))and true or false local l=UI[w(-7489)](R(w(-8162)))and true or false if U~=h then h=U notify(U and w(-8054)or w(-7335),m,3)end if l~=mi then mi=l notify(l and w(-8054)or w(-7335),w(-7843),3)end local F=U or l if F~=T then T=F if F then j,b=false,{}end end if F or u then if n-H>.2 then H=n t[w(-6987)]=M[w(-7461)][((tonumber(UI[w(-7489)](R(w(-6645))))or 0))+1]or w(-7498)t[w(-7550)]=UI[w(-7489)](R(w(-8162)))and true or false t[w(-6569)]=UI[w(-7489)](R(w(-6918)))and true or false end M[w(-7943)](w(-6918),function()if F then o(n)end local m,U=x()Y(n,m,U)P(n,m,U)end)u=n-math[w(-6932)](E[w(-6260)],q[w(-6260)])<3 if not F and not u then for m,n in ipairs(y)do pcall(function()n[w(-7381)]=false end)end for m,n in ipairs(I)do n[w(-6129)]=false n[w(-6654)][w(-8140)]=false end L[w(-8140)],k[w(-8140)],E[w(-6260)],q[w(-6260)]=false,false,-1,-1 end task[w(-6585)](M[w(-8228)])else task[w(-6585)](.25)end end for m,w in ipairs(y)do pcall(function()w:Remove()end)end end)task[w(-8109)](function()local m,n,U={},{},nil local l=false local F=0 local function W()if M[w(-7225)]then return end local m=(game:GetService(w(-6427)))[w(-7686)]local n={}local U=m:FindFirstChild(w(-6405))if U and U:FindFirstChild(w(-7216))then n[#n+1]=U[w(-7216)]end local l=(game:GetService(w(-6253))):FindFirstChild(w(-8124))if l and l:FindFirstChild(w(-7216))then n[#n+1]=l[w(-7216)]end for m,n in ipairs(n)do local U,l=pcall(decompile,n)if U and type(l)==w(-8193)then local m=l:find(w(-6890))or l:find(w(-7070),1,true)if m then local n for m in(l:sub(math[w(-6932)](1,m-600),m)):gmatch(w(-6870))do n=m end if n then M[w(-7865)]=n M[w(-7225)]=true return end end end end end local function t()pcall(W)m,n,U={},{},nil local l,F={},{}for m,n in ipairs(Sy({M[w(-7865)],M[w(-7850)]}))do local U=tonumber(n[w(-7419)])local W=tostring(n[w(-6905)])if U then if W==M[w(-7865)]then l[#l+1]=U elseif W==M[w(-7850)]then F[#F+1]=U end end end if#l==0 or#F==0 then return false end local A,t=pcall(memory_read,w(-7590),F[1]+M[w(-7061)])if not A or not t or t<4096 then return false end U=t for l,F in ipairs(l)do local W,A=pcall(memory_read,w(-7590),F+M[w(-7061)])if W and(A and(A>4096 and A~=U))then m[#m+1]=F n[#n+1]=A end end return#m>0 end local function p()local n=0 for m,l in ipairs(m)do pcall(memory_write,w(-7590),l+M[w(-7061)],U)local F,W=pcall(memory_read,w(-7590),l+M[w(-7061)])if F and W==U then n=n+1 end end return n end local function v()local l=0 for m,F in ipairs(m)do local W,A=pcall(memory_read,w(-7590),F+M[w(-7061)])if W and A==U then pcall(memory_write,w(-7590),F+M[w(-7061)],n[m])l=l+1 end end m,n={},{}return l end while _G[w(-7444)]==A do M[w(-7943)](w(-8032),function()local W=UI[w(-7489)](R(w(-8032)))and true or false if W~=l then l=W if W then if t()then notify(w(-7094)..(p()..(w(-7980)..(#m..w(-7961)))),M[w(-6677)],3)else M[w(-6956)](w(-7737),M[w(-6677)],4)end F=tick()else notify(w(-7501)..(v()..w(-6431)),M[w(-6677)],3)end end if W and(#m>0 and tick()-F>=M[w(-7948)])then F=tick()for m,l in ipairs(m)do local F,W=pcall(memory_read,w(-7590),l+M[w(-7061)])if F and W==n[m]then pcall(memory_write,w(-7590),l+M[w(-7061)],U)end end end end)task[w(-6585)](.25)end v()end)task[w(-8109)](function()local m=game:GetService(w(-6648))local n={}local U,l,F=false,-1,0 local function W()local n=m:FindFirstChildOfClass(w(-6279))return n and tonumber(n[w(-6887)])end local function t(m)local n={}for U,l in pairs(M[w(-7389)])do local F=((U==w(-7167)or U==w(-8018)))and 3 or 1 n[U]={}for F=0,F-1,1 do n[U][F+1]=memory_read(w(-8007),(m+l)+F*4)end end return n end local function p(m,n)for U,l in pairs(M[w(-7389)])do local F=n[U]if F~=nil then if type(F)==w(-7154)then F={F}end for n,U in ipairs(F)do memory_write(w(-8007),(m+l)+((n-1))*4,U)end end end end local function v(m)local U=W()if not U then return false end if not n[U]then n[U]=t(U)end p(U,m or n[U])return true end pcall(v,nil)while _G[w(-7444)]==A do M[w(-7943)](w(-8042),function()if M[w(-6285)]or M[w(-6075)]then F=0 return end local m=UI[w(-7489)](R(w(-8042)))and true or false local n=((tonumber(UI[w(-7489)](R(w(-8068))))or 0))+1 local W=false if m~=U then U,l,W=m,n,true notify(m and(w(-7094)..((M[w(-7823)][n]or w(-7398))))or w(-6185),M[w(-6533)],3)elseif m and n~=l then l,W=n,true notify(w(-6328)..((M[w(-7823)][n]or w(-7398))),M[w(-6533)],2)end local A=tick()if W or(m and A-F>=M[w(-6057)])then F=A v(m and M[w(-7436)][n]or nil)end end)task[w(-6585)](M[w(-7205)])end pcall(v,nil)end)task[w(-8109)](function()local m=w(-7779)local n=M[w(-8144)]local U,l,F,W,t={},false,-1,-1,0 local p,v=nil,0 local function S()if p and tick()-v<10 then return p end local m=workspace:FindFirstChildOfClass(w(-7710))p,v=m and tonumber(m[w(-6887)]),tick()return p end local function y(m)local n,U=pcall(memory_read,w(-8007),m)return n and U or nil end local function O(m,n)if n then pcall(memory_write,w(-8007),m,n)end end local function s(m)if U[m]then return U[m]end U[m]={[w(-7188)]={y(m+n[w(-7167)]),y((m+n[w(-7167)])+4),y((m+n[w(-7167)])+8)};[w(-7202)]=y(m+n[w(-6233)]),[w(-6698)]=y(m+n[w(-6929)]);[w(-7066)]=y(m+n[w(-7239)]);[w(-6189)]=y(m+n[w(-8227)])}return U[m]end local function i(m)local n=math[w(-7853)](m/100,0,1)return n,(n^1.5)*100 end local function e(m,U,l)local F=s(m)local W=M[w(-8095)][U]or F local A=W[w(-7188)]or F[w(-7188)]O(m+n[w(-7167)],A[1])O((m+n[w(-7167)])+4,A[2])O((m+n[w(-7167)])+8,A[3])O(m+n[w(-6233)],W[w(-7202)]or F[w(-7202)])O(m+n[w(-6929)],W[w(-6698)]or F[w(-6698)])local t,R=i(l)O(m+n[w(-7239)],t)O(m+n[w(-8227)],R)end local function f()for m,U in pairs(U)do O(m+n[w(-7167)],U[w(-7188)][1])O((m+n[w(-7167)])+4,U[w(-7188)][2])O((m+n[w(-7167)])+8,U[w(-7188)][3])O(m+n[w(-6233)],U[w(-7202)])O(m+n[w(-6929)],U[w(-6698)])O(m+n[w(-7239)],U[w(-7066)])O(m+n[w(-8227)],U[w(-6189)])end end while _G[w(-7444)]==A do M[w(-7943)](w(-6386),function()if M[w(-6075)]then t=0 return end local n=UI[w(-7489)](R(w(-6386)))and true or false if not n and not l then return end local U=((tonumber(UI[w(-7489)](R(w(-6107))))or 0))+1 local A=tonumber(UI[w(-7489)](R(w(-6293))))or 32 local p=S()if not p then return end local v=tick()if n~=l then l=n if n then e(p,U,A)notify(w(-8104)..(((M[w(-8217)][U]or w(-7398)))..(w(-7101)..A)),m,3)else f()notify(w(-6540),m,3)end F,W,t=U,A,v return end if not n then return end if U~=F then notify(w(-6328)..((M[w(-8217)][U]or w(-7398))),m,2)end if U~=F or A~=W or v-t>=M[w(-6057)]then F,W,t=U,A,v e(p,U,A)end end)task[w(-6585)](M[w(-7205)])end f()end)task[w(-8109)](function()local m=M[w(-6798)]local n=game:GetService(w(-6648))local U,l={},{}local F,W,t,p,v=false,nil,-1,tick(),0 local S,y,O local s={[w(-6177)]=false;[w(-6608)]={};[w(-7621)]=0}local function i(m)local n,U=pcall(memory_read,w(-8007),m)return n and U or nil end local function e(m,n)if m and n then pcall(memory_write,w(-8007),m,n)end end local function f(m)local n,U=pcall(function()return tonumber(m[w(-6887)])end)return n and U or nil end local function B()if tick()-v<2 and S then return end v=tick()S,y,O=f(n),nil,nil for m,n in ipairs(n:GetChildren())do if not y and n[w(-7378)]==w(-6279)then y=f(n)end if not O and n[w(-7378)]==w(-7605)then O=f(n)end end end local function g(m,w,n)return m+((w-m))*n end local function D(n)n=n%24 for U=1,#m[w(-6178)]-1,1 do local l,F=m[w(-6178)][U],m[w(-6178)][U+1]if n>=l[w(-8156)]and n<=F[w(-8156)]then local m=((n-l[w(-8156)]))/((F[w(-8156)]-l[w(-8156)]))local U={[w(-6539)]=g(l[w(-6539)],F[w(-6539)],m);[w(-8020)]=g(l[w(-8020)],F[w(-8020)],m);[w(-6321)]=g(l[w(-6321)],F[w(-6321)],m);[w(-8199)]={};[w(-7188)]={};[w(-6590)]={}}for n=1,3,1 do U[w(-8199)][n]=g(l[w(-8199)][n],F[w(-8199)][n],m)U[w(-7188)][n]=g(l[w(-7188)][n],F[w(-7188)][n],m)U[w(-6590)][n]=g(l[w(-6590)][n],F[w(-6590)][n],m)end return U end end return m[w(-6178)][1]end local function r(m,n,U,l)if not n or m[n]then return end local F={}for m=0,l-1,1 do F[m]=i((n+U)+m*4)end m[n]={[w(-6639)]=U,[w(-6800)]=F}end local function Q(m)for m,n in pairs(m)do for U,l in pairs(n[w(-6800)])do e((m+n[w(-6639)])+U*4,l)end end end task[w(-8109)](function()while _G[w(-7444)]==A do if s[w(-6177)]and S then for m,n in ipairs(s[w(-6608)])do local U=S+n[1]local l,F=i(U),i(U+4)if not l or not F or math[w(-6430)](l-n[2])>.0005 or math[w(-6430)](F-n[3])>.0005 then e(U,n[2])e(U+4,n[3])e(U+8,n[4])end end local n,U=pcall(memory_read,w(-7409),S+m[w(-6919)])if n and U~=s[w(-7621)]then pcall(memory_write,w(-7409),S+m[w(-6919)],s[w(-7621)])end task[w(-6585)]()else task[w(-6585)](M[w(-7205)])end end end)local function L()s[w(-6177)]=false Q(U)Q(l)U,l={},{}end local function k(m,w,n,l)r(U,S+m,0,3)e(S+m,w)e((S+m)+4,n)e((S+m)+8,l)end local function I(n)local U=(((n-6))/12)*math[w(-6461)]local F,W,A=math[w(-6078)](U),math[w(-7989)](U),m[w(-7109)]local t=math[w(-6745)]((F*F+W*W)+A*A)F,W,A=F/t,W/t,A/t if S then local n=W>-0.05 local U,l,t=F,W,A if not n then U,l,t=-F,-W,-A end k(m[w(-8091)],F,W,A)k(m[w(-7966)],-F,-W,-A)k(m[w(-7703)],U,l,t)s[w(-7621)]=n and 0 or 1 pcall(memory_write,w(-7409),S+m[w(-6919)],s[w(-7621)])local R={{m[w(-7703)],U;l,t};{m[w(-8091)];F,W;A};{m[w(-7966)],-F,-W;-A}}if not M[w(-6075)]then local n=math[w(-7853)](((W+.1))/.6,0,1)local U=g(m[w(-6756)][1],m[w(-6416)][1],n)local l=g(m[w(-6756)][2],m[w(-6416)][2],n)local F=g(m[w(-6756)][3],m[w(-6416)][3],n)k(m[w(-7529)],U,l,F)k(m[w(-7934)],U,l,F)R[#R+1]={m[w(-7529)],U;l;F}R[#R+1]={m[w(-7934)];U,l;F}end s[w(-6608)],s[w(-6177)]=R,true end if M[w(-6075)]then return end local R=D(n)if y then r(l,y,M[w(-7389)][w(-7167)],9)for m=1,3,1 do e((y+M[w(-7389)][w(-7167)])+((m-1))*4,R[w(-7188)][m])e((y+M[w(-7389)][w(-8018)])+((m-1))*4,R[w(-6590)][m])end e(y+M[w(-7389)][w(-8182)],R[w(-8020)])e(y+M[w(-7389)][w(-6606)],R[w(-6321)])end if O then local m=M[w(-6277)][w(-8021)]r(l,O,m[w(-7009)],4)for n=1,3,1 do e((O+m[w(-7009)])+((n-1))*4,R[w(-8199)][n])end e(O+m[w(-6322)],R[w(-6539)])end end local function C(m)m=m%24 return string[w(-7890)](w(-8070),math[w(-7306)](m),math[w(-7306)](((m%1))*60))end while _G[w(-7444)]==A do local n=UI[w(-7489)](R(w(-7422)))and true or false M[w(-6285)]=n if n or F then M[w(-7943)](w(-7422),function()local U=tick()local l=math[w(-6444)](U-p,.1)p=U local A=((tonumber(UI[w(-7489)](R(w(-7030))))or 0))+1 local v=m[w(-6761)][A]local S=v or tonumber(UI[w(-7489)](R(w(-8159))))or 12 local y=UI[w(-7489)](R(w(-7052)))and true or false local O=tonumber(UI[w(-7489)](R(w(-7339))))or 1 if n~=F then F=n if n then W=S notify(w(-7094)..(((m[w(-6782)][A]or w(-7398)))..(w(-7499)..C(S))),m[w(-8215)],3)else L()notify(w(-6274),m[w(-8215)],3)return end elseif A~=t then notify(((m[w(-6782)][A]or w(-7398)))..((v and(w(-7499)..C(v))or w(-7979))),m[w(-8215)],2)end t=A if y then W=((((W or S))+O*l))%24 else W=S end B()I(W)end)else p=tick()end task[w(-6585)](n and 0 or M[w(-7205)])end L()end)task[w(-8109)](function()local m=M[w(-6277)]local n=game:GetService(w(-6648))local U=game:GetService(w(-6427))local l,F={},{}local W,t,p,v=false,false,0,0 local function S(m)local n,U=pcall(memory_read,w(-8007),m)return n and U or nil end local function y(m,n)if m and n then pcall(memory_write,w(-8007),m,n)end end local function O(m)local n,U=pcall(memory_read,w(-7409),m)return n and U or nil end local function s(m,n)if m and n then pcall(memory_write,w(-7409),m,n)end end local function i(m)local n,U=pcall(function()return tonumber(m[w(-6887)])end)return n and U or nil end local function e()local U={}local function l(m,n,l)if not m then return end for l,F in pairs(l)do local W=n[l]if W then if type(F)==w(-7093)then for w=1,#F,1 do U[#U+1]={(m+W)+((w-1))*4,F[w]}end else U[#U+1]={m+W;F}end end end end for n,U in ipairs(n:GetChildren())do if U[w(-7378)]==w(-6279)then l(i(U),M[w(-7389)],m[w(-7389)])elseif U[w(-7378)]==w(-7605)then l(i(U),m[w(-8021)],m[w(-6492)])end end l(i(workspace:FindFirstChildOfClass(w(-7710))),M[w(-8144)],m[w(-7803)])for m,w in ipairs(U)do w[3]=S(w[1])end return U end local function f(m,n,U,l)local F=(.3*m+.59*n)+.11*U if l and(math[w(-6444)](l[w(-7186)],l[w(-7034)],l[w(-8100)])<=1.2 and math[w(-6932)](l[w(-7186)],l[w(-7034)],l[w(-8100)])<=40)then return 40,255,110 end if F<70 then return 0,6,2 end local W=math[w(-7853)](math[w(-7306)](F*.42),12,110)return 0,W,math[w(-7306)](W*.3)end local function B(n)local U=i(n)if not U or l[U]then return end local F=U+m[w(-6944)]local W,A,t=O(F),O(F+1),O(F+2)if not W or not A or not t then return end local R,p=pcall(function()return n[w(-8048)]end)local v,S=pcall(function()return tonumber(n[w(-6103)][w(-6887)])end)l[U]={W,A,t;n;v and S or nil}local y,e,B=f(W,A,t,R and p or nil)s(F,y)s(F+1,e)s(F+2,B)end local function g()local n={}for m,U in ipairs(U:GetPlayers())do n[U[w(-6356)]]=true end local l,F=pcall(function()return workspace:GetChildren()end)if not l then return end local W=0 for U,l in ipairs(F)do if not M[w(-6075)]or _G[w(-7444)]~=A then return end if not n[l[w(-6356)]]and(l[w(-7378)]~=w(-7710)and l[w(-7378)]~=w(-6631))then if m[w(-7356)][l[w(-7378)]]then B(l)end local n,U=pcall(function()return l:GetDescendants()end)if n then for n,U in ipairs(U)do if not M[w(-6075)]then return end if m[w(-7356)][U[w(-7378)]]then B(U)end W=W+1 if W%m[w(-7589)]==0 then task[w(-6585)]()end end end end end end local function D()for m,w in ipairs(F)do y(w[1],w[3])end F={}local n=0 for U,l in pairs(l)do local F,W=pcall(function()return l[5]~=nil and tonumber(l[4][w(-6103)][w(-6887)])==l[5]end)if F and W then local n=U+m[w(-6944)]s(n,l[1])s(n+1,l[2])s(n+2,l[3])end n=n+1 if n%4000==0 then task[w(-6585)]()end end l={}end while _G[w(-7444)]==A do local n=UI[w(-7489)](R(w(-6738)))and true or false M[w(-6075)]=n if n~=W then W=n M[w(-7943)](w(-6738),function()if n then F=e()for m,n in ipairs(F)do y(n[1],n[2])end p,v=0,tick()notify(w(-6133),m[w(-8215)],3)else D()notify(w(-7299),m[w(-8215)],3)end end)end if n then local n=tick()if n-v>=M[w(-6057)]then v=n for m,w in ipairs(F)do y(w[1],w[2])end end if not t and n-p>=m[w(-7250)]then t=true task[w(-8109)](function()pcall(g)p=tick()t=false end)end end task[w(-6585)](M[w(-7205)])end M[w(-6075)]=false D()end)M[w(-6884)]=function(m)local n=w(-7874)local U=game:GetService(w(-6427))local l=game:GetService(w(-7392))local F=U[w(-7686)]:GetMouse()local W={[1]=w(-6914),[2]=w(-7354),[3]=w(-6916),[4]=w(-6763),[5]=w(-7702),[6]=w(-7183),[7]=w(-7809),[8]=w(-7104),[9]=w(-6586);[10]=w(-6544);[11]=w(-6420);[12]=w(-6844),[14]=w(-7949),[15]=w(-8221);[16]=w(-6123);[17]=w(-6309)}local A={[w(-7687)]=Color3[w(-7521)](8,10,15);[w(-7676)]=Color3[w(-7521)](34,38,48);[w(-6105)]=Color3[w(-7521)](225,229,238);[w(-6580)]=Color3[w(-7521)](200,205,215);[w(-7001)]=Color3[w(-7521)](110,118,132),[w(-7038)]=Color3[w(-7521)](255,60,70);[w(-7971)]=Color3[w(-7521)](30,110,255),[w(-8075)]=Color3[w(-6146)](1,1,1);[w(-6249)]=Color3[w(-7521)](8,10,15);[w(-8218)]=Color3[w(-7521)](90,220,130);[w(-8158)]=Color3[w(-7521)](255,190,70);[w(-6489)]=Color3[w(-7521)](255,85,85)}local t={[1]={w(-8106);A[w(-8218)]},[2]={w(-7056);A[w(-8158)]};[3]={w(-6093),A[w(-6489)]}}local R={{0;w(-6630);A[w(-7971)]};{1;w(-8106);A[w(-8218)]},{3;w(-6093);A[w(-6489)]}}local p=Drawing[w(-7166)][w(-6967)]or Drawing[w(-7166)][w(-7517)]or 0 local v=Drawing[w(-7166)][w(-7374)]or p local S=Drawing[w(-7166)][w(-7471)]or p local y,O,s,i,e,f,B,g=370,36,28,26,6,24,64,68 local D=i*e local r=((O+s)+D)+f local Q=workspace[w(-6994)][w(-6812)]local L,k=(Q[w(-7186)]-y)-24,math[w(-7306)](Q[w(-7034)]*.3)local I,C={},{}M[w(-7804)]=I local function x(m,n)local U=Drawing[w(-6146)](m)for m,n in pairs(n)do pcall(function()U[m]=n end)end U[w(-7381)]=false I[#I+1]=U C[U]={[w(-7381)]=false}return U end local function V(m,w,n)local U=C[m]if U[w]~=n then U[w]=n m[w]=n end end local function z(m,n,U)local l=C[m]if l[w(-7805)]~=n or l[w(-7327)]~=U then l[w(-7805)],l[w(-7327)]=n,U m[w(-6641)]=Vector2[w(-6146)](n,U)end end local function G(m,n,U)local l=C[m]if l[w(-7013)]~=n or l[w(-6863)]~=U then l[w(-7013)],l[w(-6863)]=n,U m[w(-8048)]=Vector2[w(-6146)](n,U)end end local function c(m,n)for m,U in ipairs(m)do V(U,w(-7381),n)end end local E,q={},{}local function N(m,w)local n=x(m,w)E[#E+1]=n return n end local function Z(m,n)local U=x(m,n)q[#q+1]=U return U end local J=N(w(-6969),{[w(-7818)]=true;[w(-7167)]=A[w(-7687)];[w(-6233)]=.93,[w(-6160)]=20;[w(-6933)]=6})local K=N(w(-6969),{[w(-7818)]=false,[w(-7167)]=A[w(-7676)];[w(-6344)]=1;[w(-6233)]=1;[w(-6160)]=21,[w(-6933)]=6})local Y=N(w(-6969),{[w(-7818)]=true,[w(-7167)]=A[w(-7038)],[w(-6233)]=1;[w(-6160)]=22})local P=N(w(-6969),{[w(-7818)]=true;[w(-7167)]=A[w(-7971)],[w(-6233)]=1,[w(-6160)]=22})local d=N(w(-7293),{[w(-7293)]=w(-7272);[w(-7639)]=S;[w(-8048)]=17;[w(-7167)]=A[w(-6105)],[w(-6953)]=false;[w(-6467)]=false,[w(-6233)]=1,[w(-6160)]=23})local X=N(w(-7293),{[w(-7293)]=w(-6099),[w(-7639)]=v,[w(-8048)]=12;[w(-7167)]=A[w(-8218)];[w(-6953)]=false;[w(-6467)]=false;[w(-6233)]=1,[w(-6160)]=23})local b=N(w(-7293),{[w(-7293)]=w(-6826),[w(-7639)]=v,[w(-8048)]=14;[w(-7167)]=A[w(-7001)];[w(-6953)]=false;[w(-6467)]=false,[w(-6233)]=1,[w(-6160)]=23})local j=N(w(-6969),{[w(-7818)]=true,[w(-7167)]=A[w(-7676)],[w(-6233)]=1;[w(-6160)]=22})local a=N(w(-6969),{[w(-7818)]=true,[w(-7167)]=A[w(-7676)],[w(-6233)]=1,[w(-6160)]=22})local o,T={},{}for m,n in ipairs(R)do o[m]=N(w(-7293),{[w(-7293)]=n[2],[w(-7639)]=v;[w(-8048)]=12;[w(-7167)]=A[w(-7001)];[w(-6953)]=false,[w(-6467)]=false,[w(-6233)]=1,[w(-6160)]=23})T[m]=N(w(-6969),{[w(-7818)]=true,[w(-7167)]=n[3],[w(-6233)]=1;[w(-6160)]=23})end local H={}for m=1,e+1,1 do H[m]={[w(-7972)]=N(w(-6969),{[w(-7818)]=true;[w(-7167)]=A[w(-8075)],[w(-6233)]=0,[w(-6160)]=21;[w(-6933)]=4});[w(-6465)]=N(w(-7503),{[w(-7818)]=true;[w(-6839)]=3;[w(-6327)]=12;[w(-7167)]=A[w(-7971)];[w(-6233)]=0,[w(-6160)]=23});[w(-8012)]=N(w(-7503),{[w(-7818)]=true;[w(-6839)]=4;[w(-6327)]=20;[w(-7167)]=A[w(-8218)];[w(-6233)]=0;[w(-6160)]=22});[w(-6766)]=N(w(-7503),{[w(-7818)]=true;[w(-6839)]=4,[w(-6327)]=16,[w(-7167)]=A[w(-8218)];[w(-6233)]=0;[w(-6160)]=23});[w(-7985)]=N(w(-7293),{[w(-7293)]=w(-6099),[w(-7639)]=p;[w(-8048)]=14;[w(-7167)]=A[w(-6580)],[w(-6953)]=false,[w(-6467)]=false;[w(-6233)]=0;[w(-6160)]=23});[w(-7592)]=N(w(-6969),{[w(-7818)]=true,[w(-7167)]=A[w(-8218)],[w(-6233)]=0,[w(-6160)]=22;[w(-6933)]=3});[w(-8011)]=N(w(-7293),{[w(-7293)]=w(-6099),[w(-7639)]=v,[w(-8048)]=11,[w(-7167)]=A[w(-8218)],[w(-6953)]=false;[w(-6467)]=true,[w(-6233)]=0;[w(-6160)]=23});[w(-6868)]=N(w(-7293),{[w(-7293)]=w(-6099),[w(-7639)]=v;[w(-8048)]=11,[w(-7167)]=A[w(-7001)];[w(-6953)]=false;[w(-6467)]=true,[w(-6233)]=0,[w(-6160)]=23});[w(-6747)]=N(w(-7293),{[w(-7293)]=w(-6099);[w(-7639)]=v;[w(-8048)]=11;[w(-7167)]=A[w(-7038)];[w(-6953)]=false;[w(-6467)]=true;[w(-6233)]=0,[w(-6160)]=23});[w(-7883)]=N(w(-6969),{[w(-7818)]=true;[w(-7167)]=A[w(-7971)],[w(-6233)]=0;[w(-6160)]=22,[w(-6933)]=4});[w(-7738)]=N(w(-6969),{[w(-7818)]=false;[w(-7167)]=A[w(-7971)];[w(-6344)]=1,[w(-6233)]=0;[w(-6160)]=22,[w(-6933)]=4});[w(-7145)]=N(w(-7293),{[w(-7293)]=w(-6099),[w(-7639)]=v;[w(-8048)]=11;[w(-7167)]=A[w(-8158)],[w(-6953)]=false;[w(-6467)]=true;[w(-6233)]=0,[w(-6160)]=23})}end local u=N(w(-6969),{[w(-7818)]=true;[w(-7167)]=A[w(-7676)],[w(-6233)]=.6,[w(-6160)]=22,[w(-6933)]=2})local h=N(w(-6969),{[w(-7818)]=true,[w(-7167)]=A[w(-7001)];[w(-6233)]=1,[w(-6160)]=23;[w(-6933)]=2})local mi=N(w(-7293),{[w(-7293)]=w(-6248);[w(-7639)]=v,[w(-8048)]=12;[w(-7167)]=A[w(-7001)];[w(-6953)]=false;[w(-6467)]=true;[w(-6233)]=1;[w(-6160)]=23})local wi=N(w(-7293),{[w(-7293)]=w(-6559),[w(-7639)]=v,[w(-8048)]=11;[w(-7167)]=A[w(-7001)];[w(-6953)]=false;[w(-6467)]=false;[w(-6233)]=1;[w(-6160)]=23})local ni,Ui,li=236,24,8 local Fi={[w(-7687)]=N(w(-6969),{[w(-7818)]=true,[w(-7167)]=A[w(-7687)];[w(-6233)]=.95;[w(-6160)]=30;[w(-6933)]=6}),[w(-8014)]=N(w(-6969),{[w(-7818)]=false;[w(-7167)]=A[w(-7676)];[w(-6344)]=1;[w(-6233)]=1;[w(-6160)]=31;[w(-6933)]=6});[w(-6484)]=N(w(-6969),{[w(-7818)]=true;[w(-7167)]=A[w(-7038)],[w(-6233)]=1;[w(-6160)]=32}),[w(-6428)]=N(w(-6969),{[w(-7818)]=true;[w(-7167)]=A[w(-7971)],[w(-6233)]=1;[w(-6160)]=32});[w(-6205)]=N(w(-7293),{[w(-7293)]=w(-6099),[w(-7639)]=S;[w(-8048)]=14,[w(-7167)]=A[w(-6105)],[w(-6953)]=false;[w(-6467)]=false;[w(-6233)]=1;[w(-6160)]=33});[w(-6252)]=N(w(-7293),{[w(-7293)]=w(-6099);[w(-7639)]=v,[w(-8048)]=12,[w(-7167)]=A[w(-7038)],[w(-6953)]=false,[w(-6467)]=false,[w(-6233)]=1,[w(-6160)]=33}),[w(-6669)]=N(w(-7293),{[w(-7293)]=w(-6092);[w(-7639)]=v,[w(-8048)]=12;[w(-7167)]=A[w(-7001)],[w(-6953)]=false;[w(-6467)]=false;[w(-6233)]=1;[w(-6160)]=33});[w(-6680)]=N(w(-6969),{[w(-7818)]=true;[w(-7167)]=A[w(-7676)];[w(-6233)]=1,[w(-6160)]=32});[w(-6585)]=N(w(-7293),{[w(-7293)]=w(-6130);[w(-7639)]=v;[w(-8048)]=11,[w(-7167)]=A[w(-7001)],[w(-6953)]=false;[w(-6467)]=false,[w(-6233)]=1;[w(-6160)]=33}),[w(-6209)]={}}for m=1,li,1 do Fi[w(-6209)][m]={[w(-7341)]=N(w(-7503),{[w(-7818)]=true;[w(-6839)]=11,[w(-6327)]=20;[w(-7167)]=A[w(-7676)];[w(-6233)]=1,[w(-6160)]=32}),[w(-7155)]=N(w(-8031),{[w(-6233)]=1,[w(-6160)]=33,[w(-6508)]=9});[w(-7985)]=N(w(-7293),{[w(-7293)]=w(-6099);[w(-7639)]=p,[w(-8048)]=13,[w(-7167)]=A[w(-6580)];[w(-6953)]=false,[w(-6467)]=false,[w(-6233)]=1;[w(-6160)]=33}),[w(-6747)]=N(w(-7293),{[w(-7293)]=w(-6099);[w(-7639)]=v,[w(-8048)]=11;[w(-7167)]=A[w(-7038)],[w(-6953)]=false,[w(-6467)]=false,[w(-6233)]=1,[w(-6160)]=33})}end local Wi=Z(w(-6969),{[w(-7818)]=true;[w(-7167)]=A[w(-7687)],[w(-6233)]=.95,[w(-6160)]=20,[w(-6933)]=10})local Ai=Z(w(-6969),{[w(-7818)]=false,[w(-7167)]=A[w(-7676)];[w(-6344)]=1,[w(-6233)]=1,[w(-6160)]=21;[w(-6933)]=10})local ti=Z(w(-6969),{[w(-7818)]=true;[w(-7167)]=A[w(-7038)];[w(-6233)]=0,[w(-6160)]=21,[w(-6933)]=4})local Ri=Z(w(-6969),{[w(-7818)]=true,[w(-7167)]=A[w(-7971)],[w(-6233)]=0,[w(-6160)]=21,[w(-6933)]=4})local pi=Z(w(-6969),{[w(-7818)]=true;[w(-7167)]=A[w(-7038)],[w(-6233)]=1,[w(-6160)]=22,[w(-6933)]=2})local vi=Z(w(-6969),{[w(-7818)]=true,[w(-7167)]=A[w(-7971)],[w(-6233)]=1;[w(-6160)]=22;[w(-6933)]=2})local Si=Z(w(-7293),{[w(-7293)]=w(-6341),[w(-7639)]=S,[w(-8048)]=24;[w(-7167)]=Color3[w(-6146)](0,0,0),[w(-6953)]=false;[w(-6467)]=true,[w(-6233)]=.55,[w(-6160)]=22})local yi=Z(w(-7293),{[w(-7293)]=w(-6341);[w(-7639)]=S,[w(-8048)]=24,[w(-7167)]=A[w(-6105)],[w(-6953)]=false;[w(-6467)]=true,[w(-6233)]=1;[w(-6160)]=23})local Oi=Z(w(-7293),{[w(-7293)]=w(-6065);[w(-7639)]=S;[w(-8048)]=12,[w(-7167)]=A[w(-7001)],[w(-6953)]=false;[w(-6467)]=true,[w(-6233)]=1,[w(-6160)]=23})local function si(m,n)local U=((m+n))%1.4 local l=0 for m,n in ipairs({0,.18})do local F=U-n if F>=0 and F<.16 then l=math[w(-6932)](l,math[w(-7989)]((F/.16)*math[w(-6461)]))end end return l end local ii={J;K;Y,P,d;X,b,j;a;wi}for m=1,#R,1 do ii[#ii+1]=o[m]end local ei={mi;u,h}for m=1,#R,1 do ei[#ei+1]=T[m]end for m,n in ipairs(H)do for m,w in pairs(n)do ei[#ei+1]=w end end local fi={Fi[w(-7687)],Fi[w(-8014)],Fi[w(-6484)];Fi[w(-6428)];Fi[w(-6205)],Fi[w(-6669)],Fi[w(-6680)]}local Bi={Fi[w(-7687)];Fi[w(-8014)];Fi[w(-6484)];Fi[w(-6428)],Fi[w(-6205)];Fi[w(-6669)],Fi[w(-6680)];Fi[w(-6585)]}for m,n in ipairs(Fi[w(-6209)])do Bi[#Bi+1]=n[w(-7341)]Bi[#Bi+1]=n[w(-7155)]Bi[#Bi+1]=n[w(-7985)]Bi[#Bi+1]=n[w(-6747)]end Bi[#Bi+1]=Fi[w(-6252)]for m,n in ipairs(Bi)do ei[#ei+1]=n end c(ii,true)task[w(-6585)]()task[w(-6585)]()local gi,Di=7,6.5 pcall(function()if o[1][w(-6822)][w(-7186)]>0 then gi=o[1][w(-6822)][w(-7186)]/#o[1][w(-7293)]end end)pcall(function()if wi[w(-6822)][w(-7186)]>0 then Di=wi[w(-6822)][w(-7186)]/#wi[w(-7293)]end end)local ri,Qi,Li={},{},{}local ki,Ii,Ci=0,0,0 local xi,Vi=false,0 local zi,Gi=0,0 local ci={}local Ei={[17]={w(-7512);{[2]=w(-7668);[3]=w(-6651)}},[16]={w(-6134),{[2]=w(-7810);[3]=w(-6651)}};[15]={w(-8221),{[1]=w(-7952);[2]=w(-7952),[3]=w(-7952)}},[14]={w(-7168);{[1]=w(-6266),[2]=w(-6266);[3]=w(-6266)}}}local qi={[1]=w(-6914);[2]=w(-7354);[3]=w(-6916),[4]=w(-6587);[9]=w(-6612);[10]=w(-6544),[11]=w(-6420);[14]=w(-7949),[15]=w(-8221);[16]=w(-6123),[17]=w(-7512)}local Ni=150 local Mi,Zi,Ji={},nil,{}local Ki,Yi={},{}local Pi=game:GetService(w(-8125))local function di(m)local n,U=pcall(M[w(-6214)],w(-7005),function()return game:HttpGet(m)end)if n and type(U)==w(-8193)then return U end local l,F=pcall(httpget,m)if l and type(F)==w(-8193)then return F end return nil end local Xi={[192]=w(-6950);[193]=w(-6950),[194]=w(-6950);[195]=w(-6950);[196]=w(-6950);[197]=w(-6950),[199]=w(-6504),[200]=w(-6242),[201]=w(-6242),[202]=w(-6242);[203]=w(-6242);[204]=w(-6173),[205]=w(-6173);[206]=w(-6173),[207]=w(-6173),[209]=w(-7845),[210]=w(-8119);[211]=w(-8119);[212]=w(-8119),[213]=w(-8119),[214]=w(-8119),[216]=w(-8119);[217]=w(-6923);[218]=w(-6923);[219]=w(-6923);[220]=w(-6923),[221]=w(-7034);[223]=w(-7215),[224]=w(-6168),[225]=w(-6168),[226]=w(-6168),[227]=w(-6168);[228]=w(-6168),[229]=w(-6168),[231]=w(-6861);[232]=w(-8102),[233]=w(-8102);[234]=w(-8102);[235]=w(-8102),[236]=w(-6319);[237]=w(-6319);[238]=w(-6319),[239]=w(-6319);[241]=w(-7241),[242]=w(-6776),[243]=w(-6776),[244]=w(-6776);[245]=w(-6776);[246]=w(-6776);[248]=w(-6776);[249]=w(-6710),[250]=w(-6710),[251]=w(-6710);[252]=w(-6710),[253]=w(-7096),[255]=w(-7096)}local function bi(m,n)local U,l,F={},0,0 for m in string[w(-6394)](m,w(-8073))do local n=string[w(-7409)](m,1)if n<128 then if n>=32 then U[#U+1]=m l=l+1 end else local W if#m==2 then W=((n-192))*64+((string[w(-7409)](m,2)-128))end local A=W and Xi[W]if A then U[#U+1]=A l=l+1 else F=F+1 end end end local W=((((table[w(-7260)](U)):gsub(w(-6622),w(-6099))):gsub(w(-7689),w(-6099))):gsub(w(-6850),w(-7499)))if#W<2 or F>l then return n end return W end local ji={}local function ai(m,n)local U=ji[m]if U and((U[w(-6087)]or Yi[m]or U[w(-7241)]>=5 or tick()<U[w(-7824)]))then return end if not U then U={[w(-7241)]=0;[w(-7824)]=0}ji[m]=U Ki[m]=Ki[m]or n end U[w(-6087)]=true task[w(-8109)](function()if not U[w(-6156)]then local l=di(w(-7847)..m)local F,W=pcall(function()return Pi:JSONDecode(l)end)if F and(type(W)==w(-7093)and(type(W[w(-7053)])==w(-8193)and W[w(-7053)]~=w(-6099)))then Ki[m]=bi(W[w(-7053)],n)U[w(-6156)]=true end end local l=di(w(-6735)..(m..w(-6095)))local F,W=pcall(function()return Pi:JSONDecode(l)end)local A=F and(type(W)==w(-7093)and(type(W[w(-6552)])==w(-7093)and W[w(-6552)][1]))local t=type(A)==w(-7093)and A[w(-7671)]if type(t)==w(-8193)and t~=w(-6099)then local n=di(t)if n and n:sub(2,4)==w(-6437)then Yi[m]=n end end U[w(-7241)]=U[w(-7241)]+1 U[w(-7824)]=tick()+2*U[w(-7241)]U[w(-6087)]=false end)end local function oi(m,w)local n,U=pcall(function()return m:GetAttribute(w)end)return n and U or nil end local Ti={}local function Hi(m)local n=Ti[m]local U=tick()if n then if n[w(-7807)]then local m,U=pcall(function()return n[w(-7807)][w(-6103)]end)if m and U then return n[w(-7807)]end elseif U<n[w(-8004)]then return nil end end local l=M[w(-6214)](w(-7569),function()return workspace:FindFirstChild(m)end)Ti[m]={[w(-7807)]=l,[w(-8004)]=(U+20)+math[w(-7771)]()*20}return l end local ui,hi={},0 local function my()if tick()-hi<30 and next(ui)then return ui end hi=tick()local m=Hi(w(-6659))for n,U in pairs(qi)do local l=m and m:FindFirstChild(U)local F,W=pcall(function()return l[w(-6641)]end)if F and W then ui[n]=W end end return ui end local function wy(m,n)local U=Ei[m]if U and U[2][n]then local m=Hi(U[1])local l=m and tonumber(oi(m,U[2][n]))if l and l>1000000000 then return math[w(-7306)](l)end end return ci[m]end local ny={[1]={w(-7058);w(-7097)},[2]={w(-7112),w(-7097)};[3]={w(-6823)};[4]={w(-6687)};[9]={w(-7404),w(-7097)};[10]={w(-6535);w(-7097)},[14]={w(-6893)};[15]={w(-7195)},[16]={w(-7877)},[17]={w(-6568)}}local Uy={[w(-8160)]=true;[w(-6911)]=true;[w(-6378)]=true,[w(-7800)]=true,[w(-7784)]=true;[w(-6280)]=true}local ly,Fy={},0 local function Wy(m)local n for m in string[w(-6394)](m,w(-6874))do if not n then n=Hi(m)else n=n:FindFirstChild(m)end if not n then return nil end end return n end local function Ay(m)local n,U=pcall(function()return m[w(-8127)]end)local l,F=pcall(function()return m[w(-8048)]end)if not n or not l or not U or not F then return nil end local W={}for m in string[w(-6394)](tostring(U),w(-7023))do W[#W+1]=tonumber(m)end if#W<12 then return nil end return{W[1];W[2],W[3],W[4],W[5];W[6],W[7],W[8];W[9];W[10];W[11];W[12],F[w(-7186)]/2+.5,F[w(-7034)]/2+.5;F[w(-8100)]/2+.5}end local ty,Ry=nil,0 local py={[w(-7028)]=true,[w(-7611)]=true;[w(-6241)]=true}local function vy()Ry=1 task[w(-8109)](function()local m={}local n,U=pcall(function()return workspace:GetChildren()end)local l=0 for n,U in ipairs(n and U or{})do local F,W=pcall(function()return U:GetDescendants()end)if F then for n,U in ipairs(W)do if U[w(-6356)]==w(-7097)and Uy[U[w(-7378)]]then local n,l=pcall(function()return U[w(-6103)][w(-6356)]end)if not((n and py[l]))then m[#m+1]=U end end l=l+1 if l>=500 then l=0 task[w(-6585)]()end end end l=l+25 if l>=500 then l=0 task[w(-6585)]()end end ty=m Fy=0 end)end local function Sy()if tick()-Fy<90 then return ly end Fy=tick()local m=ly ly={}local n={}for m,U in pairs(ny)do local l=Wy(U[1])if l then local F={}local function W(m)if Uy[m[w(-7378)]]and((not U[2]or m[w(-6356)]==U[2]))then local U,l=pcall(function()return m[w(-6103)][w(-6356)]end)if not((U and py[l]))then local w=Ay(m)if w then F[#F+1]=w n[m]=true end end end end W(l)local A,t=pcall(function()return l:GetDescendants()end)if A then for m,n in ipairs(t)do W(n)if m%300==0 then task[w(-6585)]()end end end if#F>0 then ly[m]=F end end end if Ry==0 then vy()end if ty then local m=my()for U in pairs(qi)do local l=m[U]if not ly[U]and l then local m={}for U,F in ipairs(ty)do if not n[F]then local n,U=pcall(function()return F[w(-6641)]end)if n and(U and math[w(-6745)](((U[w(-7186)]-l[w(-7186)]))^2+((U[w(-8100)]-l[w(-8100)]))^2)<=90)then local w=Ay(F)if w then m[#m+1]=w end end end end if#m>0 then ly[U]=m end end end end for m,w in pairs(m)do if not ly[m]then ly[m]=w end end return ly end local function yy(m)local n=m:FindFirstChild(w(-7747))local U=n and n:FindFirstChild(w(-7655))local l=U and U:FindFirstChild(w(-6056))local F,W=pcall(function()return l[w(-7293)]end)if F and(type(W)==w(-8193)and W~=w(-6099))then return W end return nil end local function Oy(m,n,U,l)local F,W,A=n-m[1],U-m[2],l-m[3]return math[w(-6430)]((m[4]*F+m[7]*W)+m[10]*A)<=m[13]and(math[w(-6430)]((m[5]*F+m[8]*W)+m[11]*A)<=m[14]and math[w(-6430)]((m[6]*F+m[9]*W)+m[12]*A)<=m[15])end local sy,iy={},nil local ey=168 local function fy(m)local n,U=pcall(memory_read,w(-7590),m)return n and U or nil end local function By(m)local n,U=fy(m+16),fy(m+24)if not n or not U or n<2 or n>200000 or U<n then return nil end local l=U>15 and fy(m)or m if not l or l<4096 then return nil end local F,W=pcall(memory_read,w(-7409),l)if not F or W~=91 then return nil end local A={}for m=0,n-1,4 do local U,F=pcall(memory_read,w(-6623),l+m)if not U or type(F)~=w(-7154)then return nil end if F<0 then F=F+4294967296 end for U=0,3,1 do if m+U<n then A[#A+1]=string[w(-6968)](math[w(-7306)](F/256^U)%256)end end end return table[w(-7260)](A)end local function gy()local m=l:FindFirstChild(w(-7143))if not m then return nil end local n,U=pcall(function()return tonumber(m[w(-6887)])end)if n and U then if ey then local m=By(U+ey)if m then return m end end for m=64,768,8 do local w=By(U+m)if w then ey=m return w end end end local F,W=pcall(function()return m[w(-7898)]end)if F and type(W)==w(-8193)then return W end return nil end local function Dy()local m=gy()if type(m)~=w(-8193)or m==iy then return end if m:sub(1,1)~=w(-7698)or m:sub(-1)~=w(-6402)then return end iy=m local n,U={},0 for m in string[w(-6394)](m,w(-6903))do local l=tonumber(string[w(-8053)](m,w(-7739)))local F=tonumber(string[w(-8053)](m,w(-6584)))if l and F then n[l]=F U=U+1 end end sy=n end local ry={[w(-7158)]=1;[w(-6100)]=2;[w(-7197)]=3}local Qy={[w(-6100)]=A[w(-7971)],[w(-7158)]=A[w(-6489)],[w(-7197)]=A[w(-8158)]}local function Ly(m)local n,U=pcall(function()return m[w(-7474)][w(-6356)]end)if n and(type(U)==w(-8193)and U~=w(-6099))then return U end local l=m:FindFirstChild(w(-7572))local F,W=pcall(function()return l[w(-7898)]end)return F and(type(W)==w(-8193)and W)or w(-6099)end local function ky(m)local n={}local U=Wy(m)local l,F=pcall(function()return U:GetChildren()end)if l and F then for m,U in ipairs(F)do n[U[w(-6356)]]=true local l,F=pcall(function()return U[w(-7898)]end)if l and typeof(F)==w(-7547)then n[F[w(-6356)]]=true end end end return n end local Iy={}local function Cy()M[w(-6214)](w(-6724),Dy)local m,n,l={},{},{}local F=M[w(-6214)](w(-7084),Sy)local W=M[w(-6214)](w(-6981),my)local A={}for U in pairs(qi)do if F[U]or W[U]then A[#A+1]=U m[U]=0 n[U]={}l[U]=0 end end local t={[16]=ky(w(-6478));[17]=ky(w(-7706))}local R=tick()local p={}for U,v in ipairs(U:GetPlayers())do if U%5==0 then task[w(-6585)]()end local S,y=pcall(function()return v[w(-7991)]end)y=S and y or 0 p[y]=true local O=v[w(-6159)]local s=O and O:FindFirstChild(w(-6447))local i,e=pcall(function()return s[w(-6641)]end)local f if i and e then f={}local m,n,U=e[w(-7186)],e[w(-7034)],e[w(-8100)]for l,A in ipairs(A)do local t=false if F[A]then for w,l in ipairs(F[A])do if Oy(l,m,n,U)then t=true break end end else t=((e-W[A]))[w(-7630)]<=Ni end if t then f[#f+1]=A end end local l=yy(s)Iy[y]={[w(-7778)]=f,[w(-8004)]=R,[w(-7583)]=l or(Iy[y]and Iy[y][w(-7583)])}elseif Iy[y]and R-Iy[y][w(-8004)]<20 then f=Iy[y][w(-7778)]else f={}end for n,U in pairs(t)do if U[v[w(-6356)]]and m[n]then local m=false for w,U in ipairs(f)do if U==n then m=true break end end if not m then f[#f+1]=n end end end local B=sy[y]or 0 local g=Iy[y]and Iy[y][w(-7583)]for U,F in ipairs(f)do if m[F]then m[F]=m[F]+1 l[F]=l[F]+B table[w(-6473)](n[F],{[w(-6725)]=y;[w(-7985)]=v[w(-6356)];[w(-7583)]=g and bi(g,v[w(-6356)])or nil,[w(-6747)]=B;[w(-6714)]=Ly(v)})end end end for m in pairs(Iy)do if not p[m]then Iy[m]=nil end end for m,n in pairs(n)do table[w(-7944)](n,function(m,n)local U,l=ry[m[w(-6714)]]or 4,ry[n[w(-6714)]]or 4 if U~=l then return U<l end if m[w(-6747)]~=n[w(-6747)]then return m[w(-6747)]>n[w(-6747)]end return m[w(-7985)]<n[w(-7985)]end)end Mi=n local v=Hi(w(-6134))local S=v and tonumber(oi(v,w(-7289)))return m,l,S end local function xy(m)if m>=1000000 then return string[w(-7890)](w(-6227),m/1000000)end if m>=10000 then return string[w(-7890)](w(-6469),math[w(-7306)](m/1000))end if m>=1000 then return string[w(-7890)](w(-7089),m/1000)end return w(-7315)..m end local function Vy(m)local n=tostring(math[w(-7306)](m))local U=((n:reverse()):gsub(w(-6224),w(-6196))):reverse()if U:sub(1,1)==w(-7301)then U=U:sub(2)end return w(-7315)..U end local function zy(m)if not m or m<0 then return w(-6261)end local n,U,l=math[w(-7306)](m/3600),math[w(-7306)](m/60)%60,m%60 if n>0 then return string[w(-7890)](w(-6930),n,U,l)end return string[w(-7890)](w(-6811),U,l)end local function Gy()local m=l:FindFirstChild(w(-6509))if not m then return end local n={}local U,F,A=Cy()for m,l in ipairs(m:GetChildren())do local R=tonumber(l[w(-6356)])local p,v=pcall(function()return l[w(-7898)]end)if R and(W[R]and(p and t[v]))then if Qi[R]and Qi[R]~=v then ci[R]=os[w(-6868)]()if v==1 then Vi=tick()+10 if Li[R]then notify(W[R]..w(-6765),w(-6333),4)end end end Qi[R]=v n[#n+1]={[w(-7257)]=R,[w(-7985)]=W[R];[w(-7462)]=v,[w(-6131)]=wy(R,v),[w(-6829)]=U[R],[w(-6747)]=F[R];[w(-8093)]=R==16 and A or nil}end end table[w(-7944)](n,function(m,n)if m[w(-7462)]~=n[w(-7462)]then return m[w(-7462)]<n[w(-7462)]end return m[w(-7985)]<n[w(-7985)]end)ri=n if Zi and Qi[Zi]==3 then Zi=nil end end local function cy(m,w,n,U,l,F)return l>=m and(l<=m+n and(F>=w and F<=w+U))end local Ey=false local function qy(m)if m~=Ey then Ey=m pcall(setrobloxinput,not m)end end local Ny,My,Zy,Jy,Ky=false,nil,nil,nil,nil local Yy,Py=0,tick()_G[w(-6088)]=((_G[w(-6088)]or 0))+1 local dy=_G[w(-6088)]notify(w(-7420),w(-6333),3)task[w(-8109)](function()while _G[w(-6088)]==dy and m()do pcall(M[w(-6214)],w(-7249),Gy)task[w(-6585)](1)end end)local function Xy()local m=tick()local n=math[w(-6444)](m-Py,.1)Py=m local U,l=F[w(-7186)],F[w(-7034)]local p=ismouse1pressed()local v=p and not Ny local S=Ny and not p Ny=p local I={[1]=0;[2]=0,[3]=0}local x={}for m,n in ipairs(ri)do I[n[w(-7462)]]=I[n[w(-7462)]]+1 if ki==0 or n[w(-7462)]==ki or(ki==1 and n[w(-7462)]==2)then x[#x+1]=n end end if xi then local n,F=zi,Gi local W=cy(n,F,g,B,U,l)qy(W or Ky~=nil)if v and W then Ky={U-n,l-F,U;l,false}end if Ky then if math[w(-6430)](U-Ky[3])+math[w(-6430)](l-Ky[4])>4 then Ky[5]=true end if Ky[5]then n=math[w(-7853)](U-Ky[1],0,Q[w(-7186)]-g)F=math[w(-7853)](l-Ky[2],0,Q[w(-7034)]-B)zi,Gi=n,F end if S then if not Ky[5]then xi=false L=math[w(-7853)]((zi+g)-y,0,Q[w(-7186)]-y)k=math[w(-7853)](Gi,0,Q[w(-7034)]-r)end Ky=nil end end if xi then c(ii,false)c(ei,false)c(q,true)local U=m<Vi local l=U and 2.2 or 1 local t=si(m*l,0)local R=si(m*l,.7)local p=U and.35 or.2 V(Wi,w(-6233),W and.97 or.95)z(Wi,n,F)G(Wi,g,B)V(Ai,w(-7167),W and A[w(-7001)]or A[w(-7676)])z(Ai,n,F)G(Ai,g,B)local v=((g-30))/2 local S=(F+B)-13 V(pi,w(-6233),math[w(-7306)](((p+((1-p))*t))*20)/20)V(vi,w(-6233),math[w(-7306)](((p+((1-p))*R))*20)/20)z(pi,n+14,S)G(pi,v,4)z(vi,(n+16)+v,S)G(vi,v,4)local y=U and.45 or.28 V(ti,w(-6233),math[w(-7306)]((y*t)*20)/20)V(Ri,w(-6233),math[w(-7306)]((y*R)*20)/20)z(ti,n+11,S-4)G(ti,v+6,12)z(Ri,(n+13)+v,S-4)G(Ri,v+6,12)local O,s=pcall(function()return yi[w(-6822)][w(-7034)]end)local i,e=pcall(function()return Oi[w(-6822)][w(-7034)]end)s=((O and(s and s>0)))and s or 20 e=((i and(e and e>0)))and e or 12 local f=B-18 local D=(F+4)+math[w(-7306)](((f-(((s+e)+2))))/2)z(Si,(n+g/2)+1,D+2)z(yi,n+g/2,D)z(Oi,n+g/2,(D+s)+2)V(Oi,w(-7167),W and A[w(-6580)]or A[w(-7001)])end end if not xi then c(q,false)c(ii,true)local F=math[w(-6932)](0,#x*i-D)local B=(k+O)+s local E,N=(L+y)-8,D-8 local Z=#x*i>D and math[w(-6932)](24,(N*D)/((#x*i)))or N local Wi=(B+4)+((F>0 and((N-Z))*((Ii/F))or 0))local Ai=Zi and(Mi[Zi]and((34+math[w(-6932)](math[w(-6444)](#Mi[Zi],li),1)*Ui)+8))or 0 local ti=(L-ni)-8 if ti<0 then ti=(L+y)+8 end local Ri=Ai>0 and cy(ti,math[w(-7853)](k,0,Q[w(-7034)]-Ai),ni,Ai,U,l)qy(cy(L,k,y,r,U,l)or Ri or My~=nil or Zy~=nil or Jy~=nil)if v then if cy((L+y)-24,k+8,18,20,U,l)then xi=true zi,Gi=(L+y)-g,k Ci,Jy,Zy=0,nil,nil elseif cy(L,k,y,O,U,l)then My={U-L;l-k}elseif F>0 and cy(E-4,Wi,11,Z,U,l)then Zy=l-Wi elseif F>0 and cy(E-4,B,11,D,U,l)then Ci=math[w(-7853)]((((l-B)-Z/2))/((N-Z)),0,1)*F elseif cy(L,k+O,y,s,U,l)then local m=L+12 for n,l in ipairs(R)do local F=l[2]..(w(-7499)..((l[1]==0 and#ri or(l[1]==1 and I[1]+I[2]or I[l[1]]))))local W=#F*gi if U>=m-4 and U<=(m+W)+4 then ki=l[1]Ci=0 break end m=(m+W)+14 end elseif cy(L,B,y-14,D,U,l)then Jy={[w(-6092)]=U;[w(-7096)]=l,[w(-8187)]=Ci;[w(-7347)]=false}end end if Jy then if math[w(-6430)](l-Jy[w(-7096)])>4 then Jy[w(-7347)]=true end if Jy[w(-7347)]then Ci=Jy[w(-8187)]-((l-Jy[w(-7096)]))end if S then if not Jy[w(-7347)]then local m=x[math[w(-7306)]((((Jy[w(-7096)]-B)+Ii))/i)+1]local n=m and Ji[m[w(-7257)]]if n and(Jy[w(-6092)]>=n[1]-4 and Jy[w(-6092)]<=(n[1]+n[2])+4)then Zi=Zi~=m[w(-7257)]and m[w(-7257)]or nil elseif m then Li[m[w(-7257)]]=not Li[m[w(-7257)]]end end Jy=nil end end if not p then My,Zy=nil,nil end if cy(L,k,y,r,U,l)then local m=((iskeypressed(40)and 1 or 0))-((iskeypressed(38)and 1 or 0))if m~=0 then Ci=Ci+(m*320)*n end end if My then L=math[w(-7853)](U-My[1],0,Q[w(-7186)]-y)k=math[w(-7853)](l-My[2],0,Q[w(-7034)]-r)end if Zy and F>0 then Ci=math[w(-7853)](((((l-Zy)-B)-4))/((N-Z)),0,1)*F end Ci=math[w(-7853)](Ci,0,F)Ii=Ii+((Ci-Ii))*math[w(-6444)](1,n*14)if math[w(-6430)](Ci-Ii)<.5 then Ii=Ci end B=(k+O)+s E=(L+y)-8 Wi=(B+4)+((F>0 and((N-Z))*((Ii/F))or 0))z(J,L,k)G(J,y,r)z(K,L,k)G(K,y,r)z(Y,L+6,k)G(Y,y/2-6,2)z(P,L+y/2,k)G(P,y/2-6,2)z(d,L+14,k+10)V(X,w(-7293),(I[1]+I[2])..w(-7806))z(X,((L+y)-36)-#X[w(-7293)]*gi,k+13)V(b,w(-7167),cy((L+y)-24,k+8,18,20,U,l)and A[w(-6105)]or A[w(-7001)])z(b,(L+y)-19,k+11)z(j,L+10,k+O)G(j,y-20,1)z(a,L+10,((k+O)+s)-1)G(a,y-20,1)local pi=L+12 for m,n in ipairs(R)do local F=n[2]..(w(-7499)..((n[1]==0 and#ri or(n[1]==1 and I[1]+I[2]or I[n[1]]))))local W=#F*gi local t=ki==n[1]local R=cy(pi-4,k+O,W+8,s,U,l)V(o[m],w(-7293),F)V(o[m],w(-7167),t and A[w(-6105)]or(R and A[w(-6580)]or A[w(-7001)]))z(o[m],pi,(k+O)+8)V(T[m],w(-7381),t)z(T[m],pi,((k+O)+s)-3)G(T[m],W,2)pi=(pi+W)+14 end local vi=math[w(-7306)](Ii/i)local Si=Ii-vi*i for n=1,e+1,1 do local F,W=H[n],x[vi+n]local R=(B+((n-1))*i)-Si local p=0 if W then p=1 if R<B then p=1-((B-R))/i end if R+i>B+D then p=1-((((R+i)-B)-D))/i end p=math[w(-7853)](p,0,1)end local v=p>.02 for m,n in pairs(F)do if m~=w(-7883)and(m~=w(-7738)and m~=w(-6747))then V(n,w(-7381),v)end end local S,O=false,w(-6099)if v then local n=t[W[w(-7462)]]local v=not My and(not Zy and(cy(L,math[w(-6932)](R,B),y-14,i,U,l)and cy(L,B,y,D,U,l)))V(F[w(-7972)],w(-6233),v and.06*p or 0)z(F[w(-7972)],L+6,R+2)G(F[w(-7972)],y-22,i-4)V(F[w(-6465)],w(-7818),Li[W[w(-7257)]]and true or false)V(F[w(-6465)],w(-7167),Li[W[w(-7257)]]and A[w(-7971)]or A[w(-7001)])V(F[w(-6465)],w(-6233),((Li[W[w(-7257)]]and 1 or.5))*p)z(F[w(-6465)],L+14,R+i/2)local s=W[w(-7462)]~=3 local e=W[w(-7462)]==2 and 1.6 or.8 local f=((m*e))%1 local g=s and(.5+.5*math[w(-7989)](((m*e)*math[w(-6461)])*2))or 0 V(F[w(-6766)],w(-7167),n[2])V(F[w(-6766)],w(-6233),((s and 1 or.55))*p)V(F[w(-6766)],w(-6839),math[w(-7306)](((((v and 5 or 4))+((W[w(-7462)]==2 and g*.8 or 0))))*2+.5)/2)z(F[w(-6766)],L+28,R+i/2)V(F[w(-8012)],w(-7167),n[2])V(F[w(-8012)],w(-6839),math[w(-7306)](((4+f*((v and 8 or 6))))*2)/2)V(F[w(-8012)],w(-6233),s and math[w(-7306)](((((1-f))*((v and.55 or.4)))*p)*20)/20 or 0)z(F[w(-8012)],L+28,R+i/2)V(F[w(-7985)],w(-7293),W[w(-7985)])V(F[w(-7985)],w(-7167),v and A[w(-6105)]or A[w(-6580)])V(F[w(-7985)],w(-6233),p)z(F[w(-7985)],L+40,R+6)local r,Q,k=54,48,50 local I=((L+y)-22)-r local C=(I-8)-Q local x=(C-8)-k local c=(x-6)-Q V(F[w(-7592)],w(-7167),n[2])V(F[w(-7592)],w(-6233),.16*p)z(F[w(-7592)],I,R+5)G(F[w(-7592)],r,i-10)V(F[w(-8011)],w(-7293),n[1])V(F[w(-8011)],w(-7167),n[2])V(F[w(-8011)],w(-6233),p)z(F[w(-8011)],I+r/2,R+i/2)local E=zy(W[w(-6131)]and(os[w(-6868)]()-W[w(-6131)])or nil)V(F[w(-6868)],w(-7293),E)V(F[w(-6868)],w(-6233),p)z(F[w(-6868)],C+Q/2,R+i/2)local q,N=w(-6099),A[w(-8158)]if W[w(-7257)]==16 and W[w(-7462)]==1 then do local m=math[w(-7853)](W[w(-8093)]or 0,0,3)q=m..w(-6175)N=m==0 and A[w(-7001)]or(m==3 and A[w(-6489)]or A[w(-8158)])end elseif W[w(-7462)]~=3 and(W[w(-6829)]and W[w(-6829)]>0)then q=W[w(-6829)]..w(-6954)S=true end local M=Zi==W[w(-7257)]local Z=S and(not My and(not Zy and(cy(x,R+4,k,i-8,U,l)and cy(L,B,y,D,U,l))))if S then N=((M or Z))and A[w(-8075)]or A[w(-6580)]V(F[w(-7883)],w(-6233),((M and.4 or(Z and.28 or.14)))*p)V(F[w(-7738)],w(-6233),((M and 1 or(Z and.9 or.55)))*p)z(F[w(-7883)],x,R+5)G(F[w(-7883)],k,i-10)z(F[w(-7738)],x,R+5)G(F[w(-7738)],k,i-10)end V(F[w(-7145)],w(-7293),q)V(F[w(-7145)],w(-7167),N)V(F[w(-7145)],w(-6233),p)z(F[w(-7145)],x+k/2,R+i/2)Ji[W[w(-7257)]]=S and{x+4;k-8}or nil if S and(W[w(-6747)]and W[w(-6747)]>0)then O=xy(W[w(-6747)])V(F[w(-6747)],w(-7293),O)V(F[w(-6747)],w(-6233),p)z(F[w(-6747)],c+Q/2,R+i/2)end end V(F[w(-6747)],w(-7381),O~=w(-6099))V(F[w(-7883)],w(-7381),S)V(F[w(-7738)],w(-7381),S)end V(mi,w(-7381),#x==0)z(mi,L+y/2,(B+D/2)-6)V(u,w(-7381),F>0)z(u,E,B+4)G(u,3,N)V(h,w(-7381),F>0)V(h,w(-7167),((Zy or cy(E-4,Wi,11,Z,U,l)))and A[w(-7971)]or A[w(-7001)])z(h,E,Wi)G(h,3,Z)z(wi,L+14,((k+r)-f)+5)local yi=Zi and Mi[Zi]if yi then local m=math[w(-6444)](#yi,li)local n=(34+math[w(-6932)](m,1)*Ui)+8 local F=(L-ni)-8 if F<0 then F=(L+y)+8 end local t=math[w(-7853)](k,0,Q[w(-7034)]-n)c(fi,true)z(Fi[w(-7687)],F,t)G(Fi[w(-7687)],ni,n)z(Fi[w(-8014)],F,t)G(Fi[w(-8014)],ni,n)z(Fi[w(-6484)],F+6,t)G(Fi[w(-6484)],ni/2-6,2)z(Fi[w(-6428)],F+ni/2,t)G(Fi[w(-6428)],ni/2-6,2)V(Fi[w(-6205)],w(-7293),string[w(-7789)](W[Zi]or w(-7398))..(w(-7868)..#yi))z(Fi[w(-6205)],F+12,t+9)local R=0 for m,n in ipairs(yi)do R=R+((n[w(-6747)]or 0))end local p=R>0 and Vy(R)or w(-6099)V(Fi[w(-6252)],w(-7381),R>0)V(Fi[w(-6252)],w(-7293),p)z(Fi[w(-6252)],math[w(-7306)](((F+ni)-26)-#p*Di),t+10)local S=cy((F+ni)-20,t+6,14,18,U,l)V(Fi[w(-6669)],w(-7167),S and A[w(-6105)]or A[w(-7001)])z(Fi[w(-6669)],(F+ni)-16,t+9)if v and S then Zi=nil end z(Fi[w(-6680)],F+10,t+30)G(Fi[w(-6680)],ni-20,1)V(Fi[w(-6585)],w(-7381),m==0)z(Fi[w(-6585)],F+12,t+40)for m=1,li,1 do local n,U=Fi[w(-6209)][m],yi[m]local l=U~=nil V(n[w(-7341)],w(-7381),l)V(n[w(-7985)],w(-7381),l)V(n[w(-6747)],w(-7381),l and((U[w(-6747)]or 0))>0)if l then ai(U[w(-6725)],U[w(-7985)])local l=(t+36)+((m-1))*Ui local W=Qy[U[w(-6714)]]or A[w(-6580)]V(n[w(-7341)],w(-7167),W)z(n[w(-7341)],F+22,l+Ui/2)V(n[w(-7985)],w(-7167),W)local R=Yi[U[w(-6725)]]if R and C[n[w(-7155)]][w(-6725)]~=U[w(-6725)]then C[n[w(-7155)]][w(-6725)]=U[w(-6725)]pcall(M[w(-6214)],w(-7522),function()n[w(-7155)][w(-7086)]=R end)end V(n[w(-7155)],w(-7381),R and C[n[w(-7155)]][w(-6725)]==U[w(-6725)]or false)z(n[w(-7155)],F+13,(l+Ui/2)-9)G(n[w(-7155)],18,18)local p=((U[w(-6747)]or 0))>0 and Vy(U[w(-6747)])or w(-6099)local v=math[w(-7306)]((((ni-50)-((#p>0 and#p*Di+8 or 0))))/7)local S=U[w(-7583)]or Ki[U[w(-6725)]]or U[w(-7985)]if#S>v then S=S:sub(1,math[w(-6932)](v-2,3))..w(-6072)end V(n[w(-7985)],w(-7293),S)z(n[w(-7985)],F+38,l+5)V(n[w(-6747)],w(-7293),p)z(n[w(-6747)],math[w(-7306)](((F+ni)-12)-#p*Di),l+7)else V(n[w(-7155)],w(-7381),false)end end else c(Bi,false)end end end local by=0 while _G[w(-6088)]==dy and m()do if M[w(-7943)](w(-6884),Xy)then by=0 else by=by+1 end task[w(-6585)](M[w(-8228)])end qy(false)return by<300 end task[w(-8109)](function()local function m()return _G[w(-7444)]==A and(UI[w(-7489)](R(w(-6884)))and true)or false end while _G[w(-7444)]==A do if m()then local n,U=pcall(M[w(-6884)],m)for m,n in ipairs(M[w(-7804)]or{})do pcall(function()n:Remove()end)end M[w(-7804)]=nil pcall(setrobloxinput,true)task[w(-6585)](((n and U~=false))and.5 or 5)else task[w(-6585)](.25)end end end)task[w(-8109)](function()local m,n=nil,0 local U,l,F={},{},{}while _G[w(-7444)]==A do local W=((UI[w(-7489)](R(w(-7744)))or UI[w(-7489)](R(w(-6272)))or UI[w(-7489)](R(w(-7808)))or((tonumber(UI[w(-7489)](R(w(-6989))))or 0))~=0))and true or false local A=UI[w(-7489)](R(w(-7954)))and true or false local t=UI[w(-7489)](R(w(-6059)))and true or false if not W and(not A and not t)then m=nil M[w(-6466)]=false task[w(-6585)](.5)else if not m and tick()>=((M[w(-6250)]or 0))then local W,A=pcall(function()return workspace:GetChildren()end)m,n=W and A or{},0 U,l,F={},{},{}end local R=m and((not M[w(-6466)]and M[w(-7820)]or(W and M[w(-7815)]or M[w(-6325)])))or 0 while R>0 do n=n+1 local p=m[n]if p==nil then M[w(-7232)],M[w(-6758)],M[w(-7455)]=U,l,F M[w(-6466)]=true M[w(-6250)]=tick()+2 m=nil break end R=R-1 pcall(function()if W then local m=p:FindFirstChild(w(-6334))local n=p:FindFirstChild(w(-7588))if m then U[#U+1]=m end if n then U[#U+1]=n end end if A and(p[w(-6356)]==w(-7072)and p:FindFirstChild(w(-8069)))then l[#l+1]=p end if t and p:FindFirstChild(w(-7151))then F[#F+1]=p end end)end task[w(-6585)](M[w(-8228)])end end end)task[w(-8109)](function()local m={w(-7445);w(-6700);w(-6565);w(-6236);w(-7368);w(-7951)}local n,U,l,F={},0,{},false while _G[w(-7444)]==A do local W=false for m,n in ipairs(m)do if UI[w(-7489)](R(n))then W=true break end end if W then M[w(-7943)](w(-8136),function()local m=(game:GetService(w(-6427)))[w(-7686)]:FindFirstChild(w(-7938))if not m then return end local W=m:GetChildren()for m,n in ipairs(W)do local U=n[w(-6356)]if not l[U]then l[U]=true if F then M[w(-7878)]=M[w(-7878)]+1 end end end F=true if#W==0 then return end U=U%#W+1 local A=W[U]local t=tostring(A[w(-6887)])local R=A:GetAttribute(w(-8157))if n[t]~=nil and n[t]~=R then M[w(-6624)]=M[w(-6624)]+1 local m=A[w(-6356)]if not M[w(-6746)][m]then M[w(-6746)][m]=true M[w(-7878)]=M[w(-7878)]+1 end end n[t]=R end)task[w(-6585)](M[w(-7463)])else n,U,l,F={},0,{},false task[w(-6585)](.5)end end end)task[w(-8109)](function()local m=game:GetService(w(-6427))local n=m[w(-7686)]local U=Vector3[w(-6146)](0,0,0)local l,F=M[w(-7723)],M[w(-6199)]local W={[w(-8223)]=false;[w(-7346)]=l[w(-6482)],[w(-6495)]=.035;[w(-6354)]=.5,[w(-7319)]=.25;[w(-7870)]=120,[w(-6419)]=.6;[w(-7262)]=.15,[w(-6330)]=.45;[w(-6138)]=.6;[w(-7353)]=.6,[w(-6180)]=.6,[w(-6125)]=2,[w(-7586)]=.1;[w(-6071)]=1,[w(-6709)]=2,[w(-6611)]=7;[w(-7573)]=.3,[w(-7759)]=.2;[w(-7200)]=1;[w(-7788)]=.9995,[w(-7126)]=6;[w(-7246)]=4,[w(-6392)]=3,[w(-7740)]=F[w(-6439)];[w(-7726)]=32;[w(-7325)]=F[w(-8038)],[w(-7403)]=F[w(-6807)];[w(-8207)]=F[w(-8207)];[w(-6337)]=F[w(-6337)];[w(-7203)]=F[w(-7203)],[w(-7433)]=F[w(-7433)],[w(-7854)]=.5,[w(-6153)]=1;[w(-7117)]=4;[w(-7599)]=F[w(-7599)];[w(-6203)]=30,[w(-7984)]=3,[w(-7515)]=10,[w(-8019)]=.15;[w(-7296)]=.2,[w(-7910)]=.6;[w(-6672)]=20,[w(-7071)]=.25,[w(-7786)]=5,[w(-7050)]=2.5}local t={[w(-7150)]=true,[w(-7075)]=true}local p={[w(-7704)]=true;[w(-7539)]=true,[w(-6787)]=true,[w(-7869)]=true}local v={[w(-8158)]=false;[w(-7042)]=0,[w(-6406)]=0;[w(-7855)]=0;[w(-6331)]=0,[w(-6144)]=0;[w(-7523)]=false,[w(-6246)]={};[w(-7748)]={};[w(-7384)]={},[w(-6069)]={},[w(-7826)]={},[w(-7322)]=0,[w(-6287)]={};[w(-6638)]={},[w(-8092)]={},[w(-7553)]={},[w(-7827)]={},[w(-7016)]=nil,[w(-6957)]=nil,[w(-7770)]=nil,[w(-7812)]=false,[w(-8197)]=0;[w(-8169)]=0;[w(-7881)]=0;[w(-7893)]={[w(-6408)]=U},[w(-7834)]=nil;[w(-6338)]=nil,[w(-7135)]=nil,[w(-6723)]=nil;[w(-8080)]=nil,[w(-7696)]=nil;[w(-7780)]=0,[w(-7778)]=0,[w(-8203)]=0;[w(-7465)]=0}local S={}local function y(m,n)if not W[w(-8223)]or S[m]==n then return end S[m]=n print(string[w(-7890)](w(-6534),tick()%1000,n))end local function O(m)if W[w(-8223)]then print(string[w(-7890)](w(-6534),tick()%1000,m))end end local function s(m)local n,U=pcall(function()return m[w(-6887)]end)return n and tostring(U)or nil end local function i(m)local U=n:FindFirstChild(w(-7938))return U and U:FindFirstChild(m)end local function e(m)local n=m[w(-6356)]local U=tick()local l=v[w(-7827)][n]if not l or U-l[w(-6131)]>.5 then l={[w(-6131)]=U,[w(-6714)]=tostring(m[w(-7474)])}v[w(-7827)][n]=l end return l[w(-6714)]end local function f(m,n,U)local l=tick()if l>=((v[w(-6638)][m]or 0))then O(string[w(-7890)](w(-7351),m,n,U))end v[w(-6638)][m]=math[w(-6932)](v[w(-6638)][m]or 0,l+n)v[w(-8092)][m]=nil end local function B(m)local n=m and m:GetAttribute(w(-8157))return type(n)==w(-7154)and n%2==1 end local function g()local m={}local U=n:FindFirstChild(w(-7938))if U then for w,n in ipairs(U:GetChildren())do if B(n)then m[#m+1]=n end end end return m end local function D()local m=g()local n=#m==1 and m[1][w(-6356)]or(#m>1 and w(-6774)or nil)if n~=v[w(-7016)]then v[w(-7016)]=n O(w(-6102)..tostring(n))if v[w(-6957)]and(not v[w(-7812)]and n~=v[w(-6957)])then O(w(-8086))v[w(-6957)],v[w(-7770)]=nil,nil end end return m end local function r(m)local n=D()return m~=nil and(#n==1 and n[1][w(-6356)]==m[w(-6356)])end local function Q(m,n,U)local l=tick()while tick()-l<U do if B(m)==n then return true end task[w(-6585)](.03)end return false end local function L(m,n)pcall(function()m[w(-6061)]:FireServer(n)end)end local function k(m)local n=tick()L(m,false)local U=Q(m,false,W[w(-7353)])O(string[w(-7890)](w(-7838),m[w(-6356)],U and w(-7705)or w(-6310),tick()-n))return U end local function I(m)local n=tick()L(m,true)if Q(m,true,W[w(-6180)])then O(string[w(-7890)](w(-6167),m[w(-6356)],tick()-n))return true end L(m,false)task[w(-6585)](W[w(-7586)])L(m,true)local U=Q(m,true,W[w(-6180)])O(string[w(-7890)](w(-6491),m[w(-6356)],U and w(-7705)or w(-6310),tick()-n))return U end local function C(m)if r(m)then return true,false end for n,U in ipairs(g())do if U[w(-6356)]~=m[w(-6356)]and not k(U)then return false,false end end if not B(m)and not I(m)then return false,false end D()return true,true end local function x(m)D()if r(m)then if v[w(-6957)]==nil then v[w(-6957)],v[w(-7770)]=m[w(-6356)],nil end return true,false end if tick()<v[w(-6331)]then return false,false end if v[w(-6957)]==nil then local m=v[w(-7016)]v[w(-7770)]=((m and(m~=w(-6774)and not t[m])))and m or nil end v[w(-7812)]=true local n,U=C(m)v[w(-7812)]=false if n then v[w(-6957)]=m[w(-6356)]if U then v[w(-8197)]=tick()end else v[w(-6331)]=tick()+W[w(-6125)]O(string[w(-7890)](w(-7769),m[w(-6356)],W[w(-6125)]))end return n,U end local function V(m)if not v[w(-6957)]then return end local n,U=v[w(-6957)],v[w(-7770)]local l=U and i(U)local F=i(n)v[w(-7812)]=true if l then C(l)elseif F and B(F)then k(F)end v[w(-7812)]=false v[w(-6957)],v[w(-7770)]=nil,nil D()O(string[w(-7890)](w(-7447),n,tostring(U or w(-6443)),m))end local function z()local m=n:FindFirstChild(w(-7694))local U=m and m:FindFirstChild(w(-6165))local l=U and U:FindFirstChild(w(-6165))local F=l and l:FindFirstChild(w(-6376))local W,A=pcall(function()return F and F[w(-7293)]end)return W and A or nil end local function G(m)return type(m)==w(-8193)and string[w(-7482)](string[w(-6532)](m),w(-6244),1,true)~=nil end local function c(m,n)local U=tick()local l=v[w(-7748)][m]if l and U-l[w(-8004)]<W[w(-8019)]then return l[w(-7448)]end local F,A=pcall(function()return n:FindFirstChild(w(-6688),true)end)local t=F and A~=nil v[w(-7748)][m]={[w(-7448)]=t,[w(-8004)]=U}return t end local function E()local m=tick()if m-v[w(-7322)]<W[w(-7071)]then return v[w(-7826)]end local n={}local U=M[w(-6154)](w(-8094))if U then for m,U in ipairs(U:GetChildren())do local l=U:FindFirstChild(w(-6076))or U:FindFirstChild(w(-7704))local F,W=pcall(function()return l[w(-6641)]end)if F and W then n[#n+1]={[w(-6900)]=U;[w(-6136)]=W;[w(-6905)]=s(U)}end end end v[w(-7826)],v[w(-7322)]=n,m return n end local function q(m)local n=tick()local U=v[w(-6069)][m[w(-6905)]]if U and n-U[w(-8004)]<W[w(-7786)]then return U[w(-6239)]end local l={}pcall(function()for m,n in ipairs(m[w(-6900)]:GetDescendants())do local U=n[w(-7378)]if U==w(-7704)or U==w(-7869)or(p[n[w(-6356)]]and((U==w(-8160)or U==w(-6911))))then l[#l+1]=n end end end)v[w(-6069)][m[w(-6905)]]={[w(-8004)]=n;[w(-6239)]=l}return l end local function N(m)local n=false pcall(function()local U=m[w(-6641)]local l=s(m)for m,F in ipairs(E())do if((F[w(-6136)]-U))[w(-7630)]<=W[w(-6672)]then for m,F in ipairs(q(F))do local A=F:FindFirstChild(w(-7033))local t,R=pcall(function()return A and A[w(-6726)]end)if t and(R and s(R)==l)then n=true break end local p,v=pcall(function()return F[w(-6641)]end)if p and(v and((v-U))[w(-7630)]<=W[w(-7050)])then n=true break end end end if n then break end end end)return n end local function Z(m,n,U)local l=tick()local F=v[w(-7384)][m]if not U and(F and l-F[w(-8004)]<W[w(-7296)])then return F[w(-7448)]end local A=N(n)local t=A if not A and(not U and(F and(F[w(-7448)]and l-((F[w(-6295)]or 0))<W[w(-7910)])))then t=true end v[w(-7384)][m]={[w(-7448)]=t;[w(-8004)]=l;[w(-6295)]=A and l or(F and F[w(-6295)])}return t end local function J(m,n,l)local F=m[w(-6658)]if not F then F={}m[w(-6658)]=F end local A=F[#F]if A and((n-A[w(-6136)]))[w(-7630)]>60 then F={}m[w(-6658)]=F A=nil end if not A or((n-A[w(-6136)]))[w(-7630)]>.001 or l-A[w(-6131)]>.1 then F[#F+1]={[w(-6131)]=l;[w(-6136)]=n}end while#F>2 and l-F[1][w(-6131)]>W[w(-7319)]do table[w(-7007)](F,1)end local t,R=F[1],F[#F]if t and(R~=t and R[w(-6131)]-t[w(-6131)]>=.05)then m[w(-6408)]=((R[w(-6136)]-t[w(-6136)]))*((1/((R[w(-6131)]-t[w(-6131)]))))else m[w(-6408)]=U end end task[w(-8109)](function()while _G[w(-7444)]==A do if not v[w(-8158)]then v[w(-6246)]={}task[w(-6585)](.25)else pcall(function()local l=tick()local F=n[w(-6356)]local W=n[w(-6159)]and n[w(-6159)]:FindFirstChild(w(-6447))if W then J(v[w(-7893)],W[w(-6641)],l)end local A={}for m,n in ipairs(m:GetPlayers())do local W=n[w(-6356)]if W~=F then local m=n[w(-6159)]local F=m and m:FindFirstChild(w(-6447))if F and string[w(-7482)](e(n),w(-7158),1,true)then A[W]=true local n=s(F)local t=v[w(-6246)][W]if not t or t[w(-7219)]~=n then t={[w(-7985)]=W,[w(-6408)]=U,[w(-7219)]=n}v[w(-6246)][W]=t end t[w(-6968)],t[w(-7941)]=m,F J(t,F[w(-6641)],l)end end end for m in pairs(v[w(-6246)])do if not A[m]then v[w(-6246)][m]=nil v[w(-7748)][m]=nil v[w(-7384)][m]=nil v[w(-7553)][m]=nil v[w(-8092)][m]=nil end end end)task[w(-6585)](M[w(-8228)])end end end)local function K(m)local n={}local U=m[w(-6641)]local l=tick()for m,F in pairs(v[w(-6246)])do local A,t=pcall(function()local n,A=F[w(-6968)],F[w(-7941)]local t=n:FindFirstChild(w(-6538))if not t or t[w(-7867)]<=0 or A[w(-6103)]==nil then return false end local R=A[w(-6641)]-U F[w(-8156)]=math[w(-6745)](R[w(-7186)]*R[w(-7186)]+R[w(-8100)]*R[w(-8100)])F[w(-7448)]=math[w(-6430)](R[w(-7034)])F[w(-6396)]=R[w(-7630)]if n:GetAttribute(w(-8142))==true then f(m,W[w(-6203)],w(-8142))end F[w(-6372)]=l<((v[w(-6638)][m]or 0))local p=not F[w(-6372)]and F[w(-6396)]<=W[w(-7346)]+5 F[w(-7748)]=p and c(m,n)or false F[w(-7841)]=p and Z(m,A)or false return true end)if A and t then n[#n+1]=F end end table[w(-7944)](n,function(m,n)return m[w(-6396)]<n[w(-6396)]end)return n end local function Y(m,n)if n~=w(-7252)then return end for m,n in ipairs(m)do if not n[w(-6372)]and(n[w(-8156)]<=W[w(-7325)]and n[w(-7448)]<=W[w(-7403)])then f(n[w(-7985)],W[w(-6203)],w(-6385))n[w(-6372)]=true return end end end local function P(m)local n=v[w(-7553)][m[w(-7985)]]if not n then return false end if tick()>=n[w(-7919)]or((m[w(-7941)][w(-6641)]-n[w(-6136)]))[w(-7630)]>=W[w(-7246)]then v[w(-7553)][m[w(-7985)]]=nil return false end return true end local function d(m)local n=v[w(-7834)]if n and(n[w(-6103)]and((n[w(-6641)]-m[w(-6641)]))[w(-7630)]<8)then return n end v[w(-7834)]=nil local U=M[w(-6154)](w(-7141))if not U then return nil end local l,F for n,U in ipairs(U:GetChildren())do if U[w(-6356)]==w(-7150)then local n=U:FindFirstChild(w(-7105))local W=n and n:FindFirstChild(w(-6965))if W then local n=((W[w(-6641)]-m[w(-6641)]))[w(-7630)]if n<8 and((not F or n<F))then l,F=W,n end end end end v[w(-7834)]=l return l end local function X()local m,n=pcall(GetPingValue)n=m and tonumber(n)or 0 return W[w(-6495)]+(n/1000)*W[w(-6354)]end local function b(m,n,U,l,F)local W=d(n)local A=W and W[w(-6641)]if not A then local m=U:FindFirstChild(w(-6311))A=m and m[w(-6641)]end if not A then return nil,w(-6318)end local t=m[w(-7941)][w(-6641)]+m[w(-6408)]*F if((t-A))[w(-7630)]>l then return nil,w(-7248)end local R,p=WorldToScreen(t-v[w(-7893)][w(-6408)]*F)if not p then return nil,w(-6821)end return R end local function j()local m,n,U={},{},nil for l,F in ipairs(Sy({w(-6297),w(-7470),w(-6975),w(-7643)}))do local W=tostring(F[w(-6905)])if W==w(-7470)or W==w(-6975)then m[#m+1]=tonumber(F[w(-7419)])or 0 elseif W==w(-6297)and F[w(-7998)]==w(-7519)then n[#n+1]=F elseif W==w(-7643)and(F[w(-7998)]==w(-7519)and not U)then U=F end end local l,F for n,U in ipairs(n)do local W=tonumber(U[w(-7419)])or 0 for m,n in ipairs(m)do local A=math[w(-6430)](W-n)if not F or A<F then l,F=U,A end end end if not((l and F<=4096))then l=nil end return l,U end local function a(m)if not m then return nil end local n,U=pcall(memory_read,w(-6623),tonumber(m[w(-7419)]))if not n or type(U)~=w(-7154)then return nil end return U~=0 end local function o()return a(v[w(-6338)])end local function T(m)local n=v[w(-6338)]if not n then return false end local U,l=pcall(applygc,{n},w(-6297),m)return U and((tonumber(l)or 0))>0 end local function H()if not v[w(-6338)]then return end if o()==true then T(false)v[w(-6144)]=tick()end end local function u()if not v[w(-6338)]then return nil end local m=a(v[w(-7135)])if m==nil then m=v[w(-6723)]end if m~=nil then T(m)end v[w(-6723)]=nil return m end local function h(m,n)local U,l=pcall(function()return m[w(-6497)]:Dot(n[w(-6497)])end)return U and l<W[w(-7788)]end local function mi(m,n,U,l,F)if tick()<v[w(-7855)]then return false end local A,t=pcall(ismouse2pressed)if A and t then return false end H()local R=(v[w(-6144)]+W[w(-7759)])-tick()if R>0 then task[w(-6585)](R)end if o()==true then return false end local p=X()local S,s=b(n,U,l,F,p)if not S then y(w(-7103)..n[w(-7985)],n[w(-7985)]..(w(-7871)..tostring(s)))return false end local i=workspace[w(-6994)]local e=i[w(-8127)]mousemoveabs(math[w(-7306)](S[w(-7186)]+.5),math[w(-7306)](S[w(-7034)]+.5))task[w(-6585)](M[w(-8228)])if h(e,i[w(-8127)])then v[w(-7855)]=tick()+W[w(-7200)]O(w(-6683))return false end p=X()S=b(n,U,l,F,p)if not S then return false end mousemoveabs(math[w(-7306)](S[w(-7186)]+.5),math[w(-7306)](S[w(-7034)]+.5))local f=m:GetAttribute(w(-7264))mouse1click()local B=tick()while tick()-B<.5 do local U=m:GetAttribute(w(-7264))if U~=f then local l=((m:GetAttribute(w(-7194))or 0))-U v[w(-7042)]=tick()+math[w(-6932)](l,0)v[w(-7780)]=v[w(-7780)]+1 local F=l>=W[w(-6611)]if F then v[w(-7778)]=v[w(-7778)]+1 v[w(-7553)][n[w(-7985)]]=nil elseif n[w(-6408)][w(-7630)]<W[w(-6392)]then v[w(-7553)][n[w(-7985)]]={[w(-6136)]=n[w(-7941)][w(-6641)],[w(-7919)]=tick()+W[w(-7126)]}end O(string[w(-7890)](w(-7011),F and w(-6162)or w(-7240),n[w(-7985)],n[w(-6396)],n[w(-6408)][w(-7630)],v[w(-7778)],v[w(-7780)]))return true end task[w(-6585)](M[w(-8228)])end v[w(-7042)]=tick()+.3 return true end local function wi()local m={}for n,U in ipairs(Sy({w(-7336);w(-6171);w(-6649),w(-7946)}))do local l=tonumber(tostring(U[w(-6545)]))local F=tonumber(U[w(-7419)])if l and F then m[#m+1]={[w(-6905)]=tostring(U[w(-6905)]);[w(-6545)]=l;[w(-7419)]=F;[w(-7405)]=U}end end for n,U in ipairs(m)do if U[w(-6905)]==w(-7336)and U[w(-6545)]==10 then local n,l,F={},{},false for F,W in ipairs({w(-6171);w(-6649)})do local A,t for m,n in ipairs(m)do local l=math[w(-6430)](n[w(-7419)]-U[w(-7419)])if n[w(-6905)]==W and(l<=512 and((not t or l<t)))then A,t=n,l end end if A then n[#n+1]=A[w(-7405)]l[W]=A[w(-6545)]end end for m,n in ipairs(m)do if n[w(-6905)]==w(-7946)and math[w(-6430)](n[w(-7419)]-U[w(-7419)])<=512 then F=true end end if#n>0 and F then return n,l end end end return nil end local function ni() end local function Ui()if not v[w(-8080)]then return end local m=v[w(-7696)]pcall(applygc,v[w(-8080)],{[w(-6171)]=((m[w(-6171)]and m[w(-6171)]~=0))and m[w(-6171)]or.5,[w(-6649)]=((m[w(-6649)]and m[w(-6649)]~=0))and m[w(-6649)]or 1})v[w(-8080)],v[w(-7696)]=nil,nil end local function li(m)v[w(-8203)]=v[w(-8203)]+1 local n=v[w(-8080)]~=nil local U=tick()keypress(W[w(-8207)])if n then task[w(-6585)](W[w(-6337)])keyrelease(W[w(-8207)])end local l=false local t=n and W[w(-7203)]or W[w(-7433)]while tick()-U<t do task[w(-6585)](M[w(-8228)])if _G[w(-7444)]~=A then break end if m[w(-6968)]:GetAttribute(w(-8142))==true or z()==w(-7252)then l=true break end end if not n then keyrelease(W[w(-8207)])end v[w(-6287)][m[w(-7985)]]=tick()+W[w(-7599)]if l then v[w(-7465)]=v[w(-7465)]+1 m[w(-6372)]=true f(m[w(-7985)],W[w(-6203)],w(-6638))notify(m[w(-7985)]..w(-6936),F[w(-8215)],2)else local n=((v[w(-8092)][m[w(-7985)]]or 0))+1 v[w(-8092)][m[w(-7985)]]=n if n>=W[w(-7984)]then f(m[w(-7985)],W[w(-7515)],n..w(-6582))end end end local function Fi(m,n)local U={}for m,l in ipairs(m)do if l[w(-6396)]<=n+5 and(not l[w(-7748)]and(not l[w(-6372)]and(not l[w(-7841)]and(l[w(-6408)][w(-7630)]<=W[w(-7870)]and not P(l)))))then U[#U+1]=l end end return U end local function Wi(m,n,U,l,F)local A=tick()local t={}if U then for m,n in ipairs(m)do if n[w(-8156)]<=W[w(-7325)]and(n[w(-7448)]<=W[w(-7403)]and not n[w(-6372)])then t[#t+1]=n end end if G(F)then for m,n in ipairs(t)do if A>=((v[w(-6287)][n[w(-7985)]]or 0))then return w(-6244),n,false end end end end local R=n and Fi(m,l)or{}local p=#R>0 if p and(A>=v[w(-7042)]and A>=v[w(-6406)])then return w(-6128),R,true end local S for m,n in ipairs(t)do if A>=((v[w(-6287)][n[w(-7985)]]or 0))and not n[w(-7841)]then return w(-7635),n,p end S=S or n end if p and v[w(-7042)]-A<=W[w(-6138)]then return w(-7288),R[1],true end if S then return w(-6351),S,p end if U then for m,n in ipairs(m)do if n[w(-8156)]<=W[w(-7740)]and(n[w(-7448)]<=W[w(-7740)]and not n[w(-6372)])then return w(-7107),n,p end end end return w(-6880),nil,p end local function Ai(m,n)local U=i(w(-7075))if not U then return end if not x(U)then return end local l=(v[w(-8197)]+W[w(-7262)])-tick()if l>0 then task[w(-6585)](l)end local F=tick()+((n or W[w(-7854)]))while z()~=w(-7548)and tick()<F do task[w(-6585)](.03)end local A=z()if A==w(-7252)then f(m[w(-7985)],W[w(-6203)],w(-6385))return end if A~=w(-7548)then return end if m[w(-6968)]:GetAttribute(w(-8142))==true then f(m[w(-7985)],W[w(-6203)],w(-8142))return end li(m)end local function ti(m)local n=i(w(-7075))if not n then return end if not x(n)then return end local U=(v[w(-8197)]+W[w(-7262)])-tick()if U>0 then task[w(-6585)](U)end if not G(z())then return end local l=Z(m[w(-7985)],m[w(-7941)],true)local F=false local t=tick()keypress(W[w(-8207)])while tick()-t<W[w(-7117)]do task[w(-6585)](M[w(-8228)])if _G[w(-7444)]~=A then break end local n=z()if n==w(-7548)or(l and not Z(m[w(-7985)],m[w(-7941)],true))then F=true break end if tick()-t>.3 and not G(n)then break end end keyrelease(W[w(-8207)])O(string[w(-7890)](w(-8043),F and w(-7705)or w(-6892),m[w(-7985)],tick()-t))if not F then v[w(-6287)][m[w(-7985)]]=tick()+W[w(-7599)]return end m[w(-7841)]=false Ai(m,W[w(-6153)])end local function Ri()local m=i(w(-7150))if not m then return nil end local n,U=x(m)if not n then return nil end if U then v[w(-7834)]=nil end return m end local function pi(m,n,U,l)local F=Ri()if not F then return false end if tick()<v[w(-8197)]+W[w(-6330)]then local m=tick()while not d(n)and tick()-m<W[w(-6419)]do task[w(-6585)](.03)end local U=(v[w(-8197)]+W[w(-6330)])-tick()if U>0 then task[w(-6585)](U)end end for m,W in ipairs(m)do if not W[w(-6372)]and mi(F,W,n,U,l)then return true end end return false end local function vi(m,n)for m,U in ipairs(m)do if not U[w(-6372)]and(U[w(-8156)]<=n and U[w(-7448)]<=n)then return true end end return false end local function Si(m)local n=m and m:FindFirstChild(w(-6538))if not n then return true end local U,l=pcall(function()return n[w(-7867)]end)return not U or type(l)~=w(-7154)or l<=0 end local yi,Oi=false,false local si,ii,ei=false,false,false while _G[w(-7444)]==A do local m=.05 M[w(-7943)](w(-7012),function()local U=UI[w(-7489)](R(w(-7290)))and true or false local A=UI[w(-7489)](R(w(-7965)))and true or false if U~=yi then yi=U notify(U and w(-6842)or w(-6079),l[w(-8215)],3)end if A~=Oi then Oi=A notify(A and w(-6842)or w(-6079),F[w(-8215)],3)end local t=U and fy(M[w(-6184)])local p=A and fy(M[w(-8110)])v[w(-8158)]=t or p if t~=si then si=t if t then v[w(-7042)],v[w(-6406)],v[w(-7855)],v[w(-7780)],v[w(-7778)]=0,0,0,0,0 v[w(-6338)],v[w(-7135)]=j()v[w(-6723)]=o()if v[w(-6338)]then T(false)v[w(-6144)]=tick()end notify(w(-7360),l[w(-8215)],2)else if v[w(-6957)]==w(-7150)then V(w(-7032))end local m=u()v[w(-6338)],v[w(-7135)]=nil,nil notify(string[w(-7890)](w(-6791),v[w(-7778)],v[w(-7780)],m==true and w(-6938)or w(-6099)),l[w(-8215)],2)end end if p~=ii then ii=p if p then v[w(-6287)],v[w(-8092)],v[w(-8203)],v[w(-7465)]={},{},0,0 ni()notify(w(-7095)..((v[w(-8080)]and w(-7363)or w(-6099))),F[w(-8215)],2)else if v[w(-6957)]==w(-7075)then V(w(-7872))end pcall(keyrelease,W[w(-8207)])Ui()notify(string[w(-7890)](w(-7275),v[w(-7465)],v[w(-8203)]),F[w(-8215)],2)end end if not t and not p then m=.25 return end if not M[w(-8219)]()then if not v[w(-7523)]then v[w(-7523)]=true notify(w(-6389),l[w(-8215)],4)end m=.5 return end v[w(-7523)]=false if M[w(-7449)]then m=.2 return end if t then H()end local S=n[w(-6159)]local O=S and S:FindFirstChild(w(-6447))local s=not O or Si(S)if s~=ei then ei=s if s then v[w(-6957)],v[w(-7770)],v[w(-7016)],v[w(-7834)]=nil,nil,nil,nil v[w(-8197)],v[w(-6331)]=0,0 pcall(keyrelease,W[w(-8207)])end end if s then m=.25 return end D()if not isrbxactive()or not string[w(-7482)](tostring(n[w(-7474)]),w(-6100),1,true)then m=.2 return end if Z(w(-7494),O)then m=.2 return end local e=z()local f=tonumber(UI[w(-7489)](R(w(-7287))))or W[w(-7346)]local B=K(O)Y(B,e)local g,Q,L=Wi(B,t,p,f,e)y(w(-7915),w(-6959)..g)local k=tick()if g==w(-7635)or g==w(-6351)or g==w(-7107)or g==w(-6244)then v[w(-8169)]=k end if v[w(-6957)]==w(-7075)and(p and(vi(B,W[w(-7726)])and(g~=w(-6128)and g~=w(-7288))))then v[w(-8169)]=k end if L then v[w(-7881)]=k end if g==w(-6128)then if not pi(Q,O,S,f)then v[w(-6406)]=tick()+W[w(-7573)]end m=.03 elseif g==w(-7635)then Ai(Q)m=.03 elseif g==w(-6244)then ti(Q)m=.03 elseif g==w(-7288)then local m=i(w(-7150))if m and not r(m)then Ri()end elseif g==w(-7107)or g==w(-6351)then local m=i(w(-7075))if m and not r(m)then x(m)end end k=tick()if v[w(-6957)]==w(-7075)and((not p or k-v[w(-8169)]>=W[w(-6071)]))then V(w(-7303))elseif v[w(-6957)]==w(-7150)and((not t or k-v[w(-7881)]>=W[w(-6709)]))then V(w(-8024))end end)task[w(-6585)](m)end v[w(-8158)]=false pcall(keyrelease,F[w(-8207)])pcall(V,w(-7236))pcall(u)pcall(Ui)end)task[w(-8109)](function()local m={}while _G[w(-7444)]==A do M[w(-7943)](w(-6819),function()for n,U in ipairs(M[w(-6228)])do local l=UI[w(-7489)](R(U))and true or false if l and(not m[U]and not M[w(-6972)](w(-6670)..U))then pcall(function()UI[w(-6769)](R(U),false)end)l=false end m[U]=l end end)task[w(-6585)](.1)end end)task[w(-8109)](function()local m={{w(-7615),function()return M[w(-6802)][w(-6613)]end};{w(-6373);function()return M[w(-6802)][w(-7204)]end};{w(-6691),function()return M[w(-6802)][w(-6475)]end};{w(-6487);function()return M[w(-6802)][w(-8065)]end};{w(-6707);function()return M[w(-6802)][w(-7940)]end};{w(-6283);function()return M[w(-7819)]end},{w(-8148),function()return M[w(-7836)]end};{w(-6081),function()return q[w(-7439)]end};{w(-7144);function()return q[w(-6291)]end},{w(-6815);function()return q[w(-7551)]end},{w(-6524),function()return M[w(-8110)]end},{w(-7933),function()return M[w(-6184)]end}}local n,U={},false while _G[w(-7444)]==A do M[w(-7943)](w(-6514),function()local l={}for m,n in ipairs(m)do local U=n[2]()local F,W=pcall(function()return U:GetKey()end)l[m]={[w(-7822)]=U;[w(-6905)]=((F and type(W)==w(-7154)))and W or nil}end for F,W in ipairs(l)do if U and(W[w(-6905)]and(W[w(-6905)]~=0 and W[w(-6905)]~=n[F]))then for U,l in ipairs(l)do if U~=F and l[w(-6905)]==W[w(-6905)]then local l,A=pcall(function()return W[w(-7822)]:GetKeyName()end)local t=n[F]or 0 pcall(function()W[w(-7822)]:SetKey(t)end)W[w(-6905)]=t notify(w(-6913)..(string[w(-7789)](l and tostring(A)or w(-7398))..(w(-6704)..m[U][1])),w(-6670)..m[F][1],4)break end end end n[F]=W[w(-6905)]end U=true end)task[w(-6585)](.3)end end)task[w(-8109)](function()if not M[w(-6067)]then return end M[w(-6498)]()local m=M[w(-8185)]local n=os[w(-6432)]()local U,l=n,n local F,W,t=0,0,w(-6099)local R,p,v=0,0,0 local S,y local function O()local m,n=pcall(gcinfo)if m and type(n)==w(-7154)then return n end local U,l=pcall(collectgarbage,w(-6365))return U and(type(l)==w(-7154)and l)or nil end local function s(m,n,U)local l={}for m,n in pairs(m)do l[#l+1]={m,n}end table[w(-7944)](l,function(m,n)return m[2]>n[2]end)local F={}for m=1,math[w(-6444)](n,#l),1 do F[#F+1]=string[w(-7890)](w(-7478),l[m][1],U==w(-6762)and string[w(-7890)](w(-7190),l[m][2]*1000)or tostring(l[m][2]),U or w(-6099))end return#F>0 and table[w(-7260)](F,w(-8088))or w(-6826)end S=O()while _G[w(-7444)]==A and not _jQv7[w(-6170)]do task[w(-6585)](.1)end task[w(-6585)](.2)S=O()y=S n,U,l=os[w(-6432)](),os[w(-6432)](),os[w(-6432)]()M[w(-7286)]({string[w(-7890)](w(-6377),os[w(-6931)]and os[w(-6931)](w(-7165))or w(-6099),M[w(-7181)])})while _G[w(-7444)]==A do task[w(-6585)](M[w(-8228)])local A=os[w(-6432)]()local i=A-n n=A F=F+1 M[w(-7660)]=M[w(-7660)]+1 if i>.033 then R=R+1 end if i>.1 then p=p+1 end if i>.25 then v=v+1 end if i>W then W=i t=s(M[w(-7192)],3,w(-6762))end M[w(-7192)]={}if A-U>=M[w(-7181)]then local n=A-U U=A local i=O()local e={}e[#e+1]=string[w(-7890)](w(-7665),A-l,F/n,W*1000,t,R,p,v)e[#e+1]=string[w(-7890)](w(-7300),i and string[w(-7890)](w(-7190),i)or w(-7398),((i and y))and string[w(-7890)](w(-8132),i-y)or w(-7398),((i and S))and string[w(-7890)](w(-8132),i-S)or w(-7398),m[w(-6795)],m[w(-6661)],m[w(-7331)])e[#e+1]=string[w(-7890)](w(-7864),m[w(-8190)],m[w(-6846)]*1000,m[w(-7396)]*1000,math[w(-7306)](m[w(-6360)]/n),math[w(-7306)](m[w(-6470)]/n),s(m[w(-6399)],5))if m[w(-6795)]>0 then e[#e+1]=w(-8114)..s(m[w(-6577)],6)end if m[w(-7331)]>0 then e[#e+1]=w(-6367)..s(m[w(-7355)],6)end local f={}for m,n in pairs(M[w(-6084)])do f[#f+1]={[w(-7985)]=m;[w(-7621)]=n}end table[w(-7944)](f,function(m,n)return m[w(-7621)][w(-6252)]>n[w(-7621)][w(-6252)]end)for m=1,math[w(-6444)](#f,12),1 do local U=f[m][w(-7621)]e[#e+1]=string[w(-7890)](w(-6665),f[m][w(-7985)],(U[w(-6252)]/n)*1000,U[w(-7171)],(U[w(-6252)]/math[w(-6932)](U[w(-7171)]-U[w(-7606)],1))*1000,U[w(-6932)]*1000,U[w(-7545)],U[w(-7606)],U[w(-8072)])end for m,n in ipairs(f)do for m,U in pairs(n[w(-7621)][w(-7717)])do e[#e+1]=string[w(-7890)](w(-7612),n[w(-7985)],U,m)end end M[w(-7286)](e)M[w(-6084)],W,t,F,R,p,v={},0,w(-6099),0,0,0,0 m[w(-6360)],m[w(-6470)],m[w(-8190)],m[w(-6846)],m[w(-7396)],m[w(-6795)],m[w(-7331)]=0,0,0,0,0,0,0 m[w(-6577)],m[w(-7355)],m[w(-6399)]={},{},{}y=i end end end)_jQv7[w(-7943)]()print(w(-6289)..(_jQv7[w(-6642)]()..w(-8155)))notify(w(-6341),w(-7132)..(_jQv7[w(-6642)]()..w(-8155)),4)end)(...)
+function SPLASH.ease(t)
+    t = math.clamp(t, 0, 1)
+    return 1 - (1 - t) ^ 3
+end
+
+function SPLASH.strobe(t, phase)
+    local c = (t + phase) % 1.4
+    local a = 0
+    for _, s in ipairs({ 0, 0.18 }) do
+        local d = c - s
+        if d >= 0 and d < 0.16 then a = math.max(a, math.sin(d / 0.16 * math.pi)) end
+    end
+    return a
+end
+
+function SPLASH.new(kind, props)
+    local d = Drawing.new(kind)
+    for k, v in pairs(props) do d[k] = v end
+    SPLASH.objects[#SPLASH.objects + 1] = d
+    return d
+end
+
+function SPLASH.download()
+    local data, pending = {}, #SPLASH.FILES + 1
+    for _, f in ipairs(SPLASH.FILES) do
+        task.spawn(function()
+            local ok, raw = pcall(function() return game:HttpGet(SPLASH.BASE .. f) end)
+            if ok and type(raw) == "string" and raw:sub(2, 4) == "PNG" then data[f] = raw end
+            pending = pending - 1
+        end)
+    end
+    task.spawn(function()
+        pcall(function()
+            local id = game:GetService("Players").LocalPlayer.UserId
+            local info = game:GetService("HttpService"):JSONDecode(game:HttpGet("https://users.roblox.com/v1/users/" .. tostring(id)))
+            if type(info) == "table" then SPLASH.account = info end
+        end)
+        pending = pending - 1
+    end)
+    local t0 = tick()
+    while pending > 0 and tick() - t0 < SPLASH.DOWNLOAD_TIMEOUT do task.wait(0.05) end
+    return data
+end
+
+function SPLASH.userName()
+    local a = SPLASH.account
+    local name = type(a) == "table" and a.name or nil
+    local display = type(a) == "table" and a.displayName or nil
+    if not name then
+        local lp = game:GetService("Players").LocalPlayer
+        name = lp and lp.Name or "player"
+    end
+    if type(display) == "string" and #display > 0 and display ~= name then return display .. " (" .. name .. ")" end
+    return name
+end
+
+function SPLASH.start()
+    if _G.JB_SPLASH then
+        for _, o in ipairs(_G.JB_SPLASH) do pcall(function() o:Remove() end) end
+    end
+    local data = SPLASH.download()
+    if not data["logo.png"] then return end
+    _G.JB_SPLASH = SPLASH.objects
+    local vp = workspace.CurrentCamera.ViewportSize
+    local s = vp.Y / 1080
+    local new = SPLASH.new
+    local o = {}
+    local soft = Drawing.Fonts.ProximaSoftBold or 0
+    local mono = Drawing.Fonts.Monospace or soft
+    if data["vignette.png"] then
+        o.vignette = new("Image", { Data = data["vignette.png"], Position = Vector2.new(0, 0), Size = vp, Transparency = 0, ZIndex = 1, Visible = true })
+    else
+        o.vignette = new("Square", { Position = Vector2.new(0, 0), Size = vp, Color = Color3.fromRGB(4, 6, 10), Filled = true, Transparency = 0, ZIndex = 1, Visible = true })
+    end
+    local g = 1000 * s
+    if data["glow_red.png"] then
+        o.red = new("Image", { Data = data["glow_red.png"], Position = Vector2.new(-g * 0.5, -g * 0.4), Size = Vector2.new(g, g), Transparency = 0, ZIndex = 2, Visible = true })
+    end
+    if data["glow_blue.png"] then
+        o.blue = new("Image", { Data = data["glow_blue.png"], Position = Vector2.new(vp.X - g * 0.5, -g * 0.4), Size = Vector2.new(g, g), Transparency = 0, ZIndex = 2, Visible = true })
+    end
+    o.logo = new("Image", { Data = data["logo.png"], Position = Vector2.new(0, 0), Size = Vector2.new(1, 1), Transparency = 0, ZIndex = 5, Visible = true })
+    o.welcome = new("Text", { Text = "", Font = soft, Size = 20, Center = true, Outline = false, Color = Color3.fromRGB(225, 229, 238), Transparency = 0, ZIndex = 6, Visible = true })
+    local bw, bh = 440 * s, 3
+    local bx, by = (vp.X - bw) / 2, vp.Y / 2 + 95 * s
+    o.track = new("Square", { Position = Vector2.new(bx, by), Size = Vector2.new(bw, bh), Color = Color3.fromRGB(34, 38, 48), Filled = true, Transparency = 0, ZIndex = 6, Visible = true })
+    if data["bar.png"] then
+        o.fill = new("Image", { Data = data["bar.png"], Position = Vector2.new(bx, by), Size = Vector2.new(1, bh), Transparency = 0, ZIndex = 7, Visible = true })
+    else
+        o.fill = new("Square", { Position = Vector2.new(bx, by), Size = Vector2.new(1, bh), Color = Color3.fromRGB(30, 110, 255), Filled = true, Transparency = 0, ZIndex = 7, Visible = true })
+    end
+    o.pct = new("Text", { Text = "0%", Font = mono, Size = 14, Center = false, Outline = false, Color = Color3.fromRGB(120, 128, 142), Position = Vector2.new(bx + bw + 10, by - 5), Transparency = 0, ZIndex = 7, Visible = true })
+    o.rows = {}
+    for r = 1, SPLASH.ROWS do
+        o.rows[r] = {
+            tag = new("Text", { Text = "", Font = mono, Size = 14, Center = false, Outline = false, Color = Color3.fromRGB(90, 220, 130), Transparency = 0, ZIndex = 7, Visible = true }),
+            msg = new("Text", { Text = "", Font = mono, Size = 14, Center = false, Outline = false, Color = Color3.fromRGB(200, 205, 215), Transparency = 0, ZIndex = 7, Visible = true }),
+        }
+    end
+    local measure = new("Text", { Text = "[ WARN ]", Font = mono, Size = 14, Center = false, Outline = false, Transparency = 0, ZIndex = 1, Visible = true })
+    task.wait()
+    task.wait()
+    SPLASH.tagW = measure.TextBounds.X > 0 and measure.TextBounds.X or 64
+    measure.Text = string.rep("0", 40)
+    task.wait()
+    task.wait()
+    SPLASH.charW = measure.TextBounds.X > 0 and measure.TextBounds.X / 40 or SPLASH.tagW / 8
+    measure.Visible = false
+    o.left = new("Text", { Text = "JB HUB  " .. SPLASH.VERSION, Font = mono, Size = 14, Center = false, Outline = false, Color = Color3.fromRGB(110, 118, 132), Position = Vector2.new(28 * s, vp.Y - 40 * s), Transparency = 0, ZIndex = 7, Visible = true })
+    o.right = new("Text", { Text = "", Font = mono, Size = 14, Center = false, Outline = false, Color = Color3.fromRGB(110, 118, 132), Position = Vector2.new(vp.X - 300, vp.Y - 40 * s), Transparency = 0, ZIndex = 7, Visible = true })
+    SPLASH.o, SPLASH.vp, SPLASH.s = o, vp, s
+    SPLASH.bx, SPLASH.by, SPLASH.bw, SPLASH.bh = bx, by, bw, bh
+    SPLASH.info.user = SPLASH.userName()
+    SPLASH.info.exec = "Matcha"
+    pcall(function() SPLASH.info.exec = identifyexecutor() end)
+    SPLASH.info.hybrid = "Hybrid --"
+    SPLASH.started = true
+end
+
+function SPLASH.step(label, pct, state)
+    local line = "[JB] " .. label
+    if state == "fail" or state == "warn" then
+        if not pcall(warn, line) then print(line) end
+    else
+        print(line)
+    end
+    if SPLASH.done then return end
+    SPLASH.queue[#SPLASH.queue + 1] = { label = label, pct = pct, state = state or "ok" }
+end
+
+function SPLASH.reportInterface()
+    if SPLASH.uiOk then
+        SPLASH.step("Interface ready", 100)
+    else
+        SPLASH.step("Interface failed to build", 100, "fail")
+    end
+    SPLASH.finishing = true
+end
+
+function SPLASH.run()
+    if not SPLASH.started then
+        local t0 = tick()
+        while not SPLASH.uiDone and tick() - t0 < 5 do task.wait(0.05) end
+        SPLASH.done = true
+        SPLASH.reportInterface()
+        return
+    end
+    SPLASH.t0 = tick()
+    local ok, err = pcall(SPLASH.loop)
+    if not ok then print("[JB Splash] error: " .. tostring(err)) end
+    SPLASH.clear()
+end
+
+function SPLASH.loop()
+    local o, vp, s = SPLASH.o, SPLASH.vp, SPLASH.s
+    local ease, strobe = SPLASH.ease, SPLASH.strobe
+    local last, outAt = tick(), nil
+    local logoW, ratio = 560 * s, 222 / 640
+    local welcome = "Welcome back, " .. SPLASH.info.user
+    while true do
+        local now = tick()
+        local dt = math.min(now - last, 0.1)
+        last = now
+        local t = now - SPLASH.t0
+        if not SPLASH.finishing and (SPLASH.uiDone or t > 6) then
+            SPLASH.reportInterface()
+        end
+        if #SPLASH.queue > 0 and t > 0.7 and now - SPLASH.labelAt >= SPLASH.STEP_TIME then
+            local q = table.remove(SPLASH.queue, 1)
+            q.at = now
+            table.insert(SPLASH.log, 1, q)
+            SPLASH.log[SPLASH.ROWS + 1] = nil
+            SPLASH.labelAt = now
+            SPLASH.target = math.max(SPLASH.target, q.pct)
+        end
+        SPLASH.shown = SPLASH.shown + (SPLASH.target - SPLASH.shown) * math.min(1, dt * 5)
+        if SPLASH.target - SPLASH.shown < 0.3 then SPLASH.shown = SPLASH.target end
+        if SPLASH.finishing and not outAt and #SPLASH.queue == 0 and SPLASH.shown >= 99.9 and t >= SPLASH.MIN_TIME then
+            outAt = now + 0.5
+        end
+        local fadeOut = outAt and (1 - ease((now - outAt) / 0.45)) or 1
+        local a = ease(t / 0.5) * fadeOut
+        local lift = outAt and ease((now - outAt) / 0.45) * 30 * s or 0
+
+        o.vignette.Transparency = a
+        if o.red then o.red.Transparency = a * (0.12 + 0.55 * strobe(t, 0)) end
+        if o.blue then o.blue.Transparency = a * (0.12 + 0.55 * strobe(t, 0.7)) end
+
+        local lw = logoW * (1.06 - 0.06 * ease(t / 1.1))
+        local lh = lw * ratio
+        local cx, cy = vp.X / 2, vp.Y / 2 - 70 * s - lift
+        o.logo.Size = Vector2.new(lw, lh)
+        o.logo.Position = Vector2.new(cx - lw / 2, cy - lh / 2)
+        o.logo.Transparency = ease((t - 0.05) / 0.8) * fadeOut
+
+        local wa = ease((t - 0.5) / 0.6) * fadeOut
+        local typed = math.clamp(math.floor((t - 0.5) * 38), 0, #welcome)
+        o.welcome.Text = welcome:sub(1, typed)
+        o.welcome.Position = Vector2.new(cx, cy + lh / 2 + 6 * s)
+        o.welcome.Transparency = wa
+
+        local ta = ease((t - 0.6) / 0.5) * fadeOut
+        local by = SPLASH.by - lift
+        o.track.Position = Vector2.new(SPLASH.bx, by)
+        o.track.Transparency = ta * 0.9
+        o.fill.Position = Vector2.new(SPLASH.bx, by)
+        o.fill.Size = Vector2.new(math.max(1, SPLASH.bw * SPLASH.shown / 100), SPLASH.bh)
+        o.fill.Transparency = ta
+        o.pct.Text = math.floor(SPLASH.shown + 0.5) .. "%"
+        o.pct.Position = Vector2.new(SPLASH.bx + SPLASH.bw + 10 * s, by - 5)
+        o.pct.Transparency = ta
+
+        local rowY = by + 18 * s
+        for r = 1, SPLASH.ROWS do
+            local row, e = o.rows[r], SPLASH.log[r]
+            if e then
+                local tag = SPLASH.TAGS[e.state] or SPLASH.TAGS.ok
+                local enter = ease((now - e.at) / 0.25)
+                local dim = ({ 1, 0.55, 0.32, 0.18 })[r] or 0.15
+                local y = rowY + (r - 1) * 18 * s + (r == 1 and (1 - enter) * 6 or 0)
+                row.tag.Text = tag[1]
+                row.tag.Color = tag[2]
+                row.tag.Position = Vector2.new(SPLASH.bx, y)
+                row.tag.Transparency = ta * dim * (r == 1 and enter or 1)
+                row.msg.Text = e.label
+                row.msg.Position = Vector2.new(SPLASH.bx + SPLASH.tagW + 10, y)
+                row.msg.Transparency = ta * dim * (r == 1 and enter or 1)
+            else
+                row.tag.Transparency, row.msg.Transparency = 0, 0
+            end
+        end
+
+        o.left.Transparency = ta
+        local rightText = SPLASH.info.exec .. "  /  " .. SPLASH.info.hybrid .. (SPLASH.info.online and ("  /  " .. SPLASH.info.online .. " online") or "")
+        if rightText ~= SPLASH.rightText then
+            SPLASH.rightText = rightText
+            o.right.Text = rightText
+        end
+        local charW = SPLASH.charW or (SPLASH.tagW or 64) / 8
+        o.right.Position = Vector2.new(vp.X - 36 * s - #rightText * charW, vp.Y - 40 * s)
+        o.right.Transparency = ta
+
+        if outAt and now - outAt >= 0.45 then break end
+        if t > SPLASH.TIMEOUT then break end
+        task.wait(1 / 60)
+    end
+end
+
+SPLASH.start()
+SPLASH.step("Jailbreak detected", 10)
+
+local HUM_HEALTH = 0x184 -- update
+local SIT_OFFSET = 0x1D7 -- update
+local NFD_NAME   = "NoRagdollNoFallDamage"
+local NFD_METHODS = { "Zone Follow", "Pulse" }
+local NFD_ZONE_SIZE = Vector3.new(2048, 2048, 2048)
+local NFD_FOLLOW_TICK = 0.1
+local NFD_PULSE_TICK = 0.01
+local NFD_RESET_EVERY = 15
+local NFD_PULSE_TIME = 0.04
+local NFD_FALLING_SPEED = -2
+local PLATFORM_STAND_OFFSET = 0x1D6  -- update (Humanoid)
+local PRIMITIVE_OFFSET = 0x178 -- update (BasePart)
+local VELOCITY_Y_OFFSET = 0xE4 -- update
+local NITRO_KEYS = { "Nitro", "NitroMax" }
+local NITRO_VALUES = { Nitro = 999999, NitroMax = 999999 }
+local NITRO_APPLY_TICK = 0.5
+local NITRO_RESCAN_EVERY = 600
+local NITRO_SEAT_DELAY = 1
+local NITRO_EMPTY_RETRY = 180
+local CASINO_KEY = 0x64
+local CASINO_OPEN_KEY = 0x65
+local VAULT_KEY = 0x66
+local VAULT = {
+    TITLE = "[JB Hub] Auto Vault",
+    START_RANGE = 20,
+    START_DELAY = 2,
+    TICK = 0.01,
+    PRESS_GAP = 0.3,
+    RESTART_AFTER = 6,
+    MAX_RESTARTS = 5,
+    WHITES_NEEDED = 3,
+}
+local LOOT = {
+    TITLE = "[JB Hub] Auto Collect Loot",
+    RANGE = 40,
+    TICK = 0.25,
+    PER_GAP = 1,
+    RESCAN = 2,
+    IDLE = 0.5,
+    BAG_SCAN = 1,
+    BAG_LABEL = { "RobberyMoneyGui", "Frame", "Container", "Bottom", "Progress", "Amount" },
+}
+local VEHICLE = {
+    FLY_TITLE = "[JB Hub] Vehicle Fly",
+    FLY_KEY = 0x61,
+    FLY_DEFAULT_SPEED = 300,
+    FLY_VERTICAL_SPEED = 80,
+    FLY_ACCEL = 6,
+    FLY_TURN_GAIN = 4,
+    FLY_KEYS = { fwd = 0x57, back = 0x53, left = 0x51, right = 0x44, up = 0x10, down = 0x11 },
+    BOOST_TITLE = "[JB Hub] Engine Boost",
+    BOOST_KEY = 0x62,
+    BOOST_DEFAULT = 1.05,
+    BOOST_MAX = 2,
+    BOOST_PAIR_RANGE = 0x1000,
+    BOOST_RESCAN = 3,
+    ROOT_PARTS = { "Weight", "Engine" },
+    FLY_LOST_GRACE = 1.5,
+    FIND_RADIUS = 40,
+    TIRE_TITLE = "[JB Hub] Anti Tires Pop",
+    TIRE_SPIKE_SCAN = 0.5,
+    TIRE_MIN_WIDTH = 5,
+    BRAKE_TITLE = "[JB Hub] Instant Brake",
+    BRAKE_KEY = 0x63,
+    BRAKE_KEYS = { 0x53, 0x28 },
+    BRAKE_MIN_SPEED = 2,
+    FLIP_TITLE = "[JB Hub] Anti Flip",
+    FLIP_ANG = 0xEC, -- update 
+    FLIP_TRIGGER = 0.5,
+    FLIP_DONE = 0.9,
+    FLIP_GAIN = 5,
+    FLIP_LIFT = 8,
+    FLIP_TICK = 0.03,
+}
+local GLASS = {
+    TITLE = "[JB Hub] Auto Glass",
+    RANGE = 40,
+    TICK = 0.25,
+    PER_GAP = 1,
+    RESCAN = 2,
+    IDLE = 0.5,
+}
+local PERF = {
+    SIGNS = { -1, 1 },
+    ESP_SCAN_CHUNK = 60,
+    ESP_PARENT_CHECK = 0.2,
+    LASER_YIELD_EVERY = 100,
+    PLASMA_TARGET_REFRESH = 0.3,
+    PLASMA_CACHE_TIME = 1,
+    LASER_ANCHOR_EVERY = 15,
+    LASER_NEAR_RANGE = 400,
+    LASER_NEAR_CHECK = 1,
+    TURRET_RECHECK = 3,
+    FLY_RECHECK = 1,
+    flying = false,
+    NFD_ZONE_CHECK = 2,
+    TOMB_TICK = 0.5,
+    TOMB_SPIKE_REFRESH = 10,
+    TOMB_RECHECK = 10,
+    NFD_ZONE_MARGIN = 200,
+    LASER_NEAR_REFRESH = 3,
+    LASER_ROTATE_REFRESH = 8,
+    LASER_FULL_EVERY = 6,
+    LASER_EXTRA_EVERY = 1,
+    LASER_RECHECK_EVERY = 10,
+    MIL_RESCAN_MAX = 300,
+    solving = false,
+    JOB_SAFETY_RESCAN = 1e9,
+    NEAR_MILITARY = 1500,
+    NEAR_CARGO = 800,
+    KILL_NPC_KEY = 0x68,
+	RESET_KEY = 0x52,
+    ceoGuards = {},
+    bountyColor = Color3.fromRGB(255, 60, 60),
+    SLOT_TITLE = "[JB Hub] Unlock Weapons Slots",
+    SLOT_ATTR = "InventoryItemLocked",
+    SLOT_TICK = 0.25,	
+    SLOT_WATCH = 5,
+    SKY_TITLE = "[JB Hub] Sky Color",
+    WORLD_TICK = 0.25,
+    WORLD_REAPPLY = 1,
+    ATMOS = { Color = 0xA0, Decay = 0xAC, Density = 0xB8, Glare = 0xBC, Haze = 0xC0, Offset = 0xC4 }, -- update
+    SKY_NAMES = { "Purple", "Pink", "Sunset", "Blood Red", "Night Blue", "Toxic Green", "Ocean" },
+    SKY_PRESETS = {
+        { Color = { 0.8, 0.3, 1.0 }, Decay = { 0.5, 0.1, 0.9 }, Density = 0.3, Glare = 4, Haze = 6, Offset = 0.6 },
+        { Color = { 1.0, 0.55, 0.85 }, Decay = { 1.0, 0.3, 0.65 }, Density = 0.3, Glare = 4, Haze = 6, Offset = 0.6 },
+        { Color = { 1.0, 0.6, 0.3 }, Decay = { 0.9, 0.3, 0.15 }, Density = 0.3, Glare = 6, Haze = 5, Offset = 0.5 },
+        { Color = { 0.9, 0.15, 0.1 }, Decay = { 0.5, 0.0, 0.0 }, Density = 0.35, Glare = 3, Haze = 7, Offset = 0.6 },
+        { Color = { 0.25, 0.35, 0.85 }, Decay = { 0.05, 0.1, 0.4 }, Density = 0.35, Glare = 1, Haze = 7, Offset = 0.6 },
+        { Color = { 0.4, 1.0, 0.45 }, Decay = { 0.1, 0.55, 0.25 }, Density = 0.3, Glare = 3, Haze = 6, Offset = 0.6 },
+        { Color = { 0.3, 0.85, 1.0 }, Decay = { 0.05, 0.4, 0.7 }, Density = 0.3, Glare = 3, Haze = 6, Offset = 0.6 },
+    },
+    TASER_TITLE = "[JB Hub] Anti Taser",
+    TASER_STUN_KEY = "brr13yas", -- update 
+    TASER_DECOY_KEY = "Stunned",
+    TASER_KEY_PTR = 0x10,
+    TASER_CHECK = 2,
+    NERF_TITLE = "[JB Hub] Nerf Skins",
+    NERF_TICK = 0.25,
+    NERF_HELD_RANGE = 25,
+    NERF_UNLOAD_WAIT = 15,
+    NERF_NAME = 0x68, -- update
+    NERF_DATA = 0x0,  -- update
+    NERF_SIZE = 0x10, -- update
+    NERF_CAP = 0x18,  -- update
+    NERF_REF = 0x28,  -- update
+    NERF_ICON_ATTR = "HotbarImageSrc",
+    NERF_SWAPS = { Revolver = "NerfRevolver", Pistol = "NerfPistol" },
+    NERF_BACK = { NerfRevolver = "Revolver", NerfPistol = "Pistol" },
+    NERF_ICONS = {
+        Revolver = "rbxassetid://16647917031",
+        Pistol = "rbxassetid://16647913398",
+        NerfRevolver = "rbxassetid://6930017845",
+        NerfPistol = "rbxassetid://6930018123",
+    },
+    WORLD_CHUNK_NPC = 60,
+    WORLD_CHUNK_SPIKE = 50,
+    npcFolders = {},
+    spikeModels = {},
+    homeModels = {},
+    guardFlag = {},
+    ownerCache = {},
+    ceoNext = {},
+    GUARD_RECHECK = 2,
+    GUARD_PER_TICK = 3,
+    CEO_RECHECK = 0.6,
+    BOUNTY_EVERY = 1,
+    NPC_TICK = 0.05,
+    GUARD_NEW_PER_TICK = 4,
+    GUARD_MAINTAIN = 0.5,
+    WORLD_CHUNK_FIRST = 80,
+    worldReady = false,
+    FRAME = 1 / 60,
+    profile = false, -- debug
+    offsetDebug = false, -- debug
+    PROFILE_EVERY = 5,
+    equipVersion = 0,
+    equipSeen = {},
+    equipRaw = 0,
+    JOB_BATCH_DELAY = 1.5,
+    EQUIP_WATCH_TICK = 0.15,
+    stats = {},
+    SHOOT_TITLE = "[JB Hub] Auto Shoot",
+    SHOOT_TRIES = 1,
+    SHOOT_REAPPLY = 2,
+    SHOOT_BOOL_TAG = 1,	
+}
+local COSMETICS = {
+    TITLE = "[JB Hub] Cosmetics",
+    KEY = 0x46,
+    requested = false,
+    lastFlip = 0,
+    bindActive = false,
+    bindNotify = false,
+    leftAt = nil,
+    EXIT_GRACE = 0.1,
+    PLATE = { id = "cosPlate", props = { "LicensePlate" } },
+    PLATE_TEXT = "JB Hub",
+    SLOTS = {
+        {
+            id = "cosColor",
+            label = "Color",
+            props = { "BodyColor", "SecondBodyColor", "WheelColor", "SpoilerColor" },
+            list = { "None", "Black", "HyperShift", "HyperBlueLvl5", "HyperDiamondLvl5", "HyperPinkLvl5", "HyperPurpleLvl5", "HyperOrangeLvl5", "HyperYellowLvl5", "HyperRedLvl5", "HyperGreenLvl5", "Vantablack" },
+        },
+        {
+            id = "cosTexture",
+            label = "Texture",
+            props = { "Texture", "SecondTexture" },
+            list = { "None", "Checker", "Drip", "Snowstorm", "GalacticCarbon", "Earthquake", "BlackIce", "BluePixel", "Fire", "Manga", "Tiger", "OrangePixel", "Pixel", "Armor" },
+        },
+        {
+            id = "cosHorn",
+            label = "Horn",
+            props = { "Horn" },
+            list = { "None", "Original", "Cucaracha", "ChampionTrumpets", "Winner", "Injan" },
+        },
+        {
+            id = "cosRim",
+            label = "Rim",
+            props = { "Rim" },
+            list = { "None", "Void", "LaserCannon", "RTX", "Radar", "Storm", "BluePortal", "Retrowave", "Live2024", "Live2026", "Pixeltary", "INF1N1TY" },
+        },
+        {
+            id = "cosSpoiler",
+            label = "Spoiler",
+            props = { "Spoiler" },
+            list = { "None", "Thrusters", "CashSpitter", "OG Rocket Thrusters", "DualRockets", "Ghost Catcher", "Afterburner" },
+        },
+        {
+            id = "cosTire",
+            label = "Tire Style",
+            props = { "TireMesh" },
+            list = { "None", "Brickset", "Spiked", "SnowTrail", "Snowchain", "Voltline", "Glacier" },
+        },
+        {
+            id = "cosTireSticker",
+            label = "Tire Sticker",
+            props = { "TireSticker" },
+            list = { "None", "Blue50", "JailbreakArmy", "Red50", "Japanese", "3Billion", "Lightning" },
+        },
+    },
+}
+local KILLAURA_KEY = 0x47
+local GUARD_TAG  = "GuardNPC"
+local LASER_TINY = Vector3.new(0.001, 0.001, 0.001)
+local LASER_REFRESH = 2
+local LASER_TICK = 0.25
+local LASER_CONTAINERS = {
+    { "Banks", sub = "Lasers" },
+    { "MansionRobbery", "LaserTraps" },
+	{ "MansionDetails", only = "BarbedWire" },
+    { "Museum", "CaseLasers" },
+	{ "Museum", "Lights", only = "Light" },
+    { "OilRig", "MovingLasers" },
+    { "Casino", "VaultLaserControl" },
+    { "Casino", "LasersMoving" },
+    { "Casino", "LaserCarousel" },
+    { "Casino", "Lasers" },
+	{ "Casino", "CamerasMoving" },
+    { "MilitaryIsland", "MilitaryLasers" },
+	{ "Interior_MaxSecurity", only = "BarbedWire" },
+	{ "TombRocks1", only = "BarbedWire" },
+    { "TombRocks2", only = "BarbedWire" },
+--	{ "RobberyTomb", "Cart", only = "Wood" },
+--  { "RobberyTomb", "Kill" },
+    { "Jewelrys" },
+    { "Jewelry" },
+}
+local LASER_SKIP_NAMES = { TouchToEnter = true, HatchTouch = true, TriggerDoor = true }
+local TURRET_CONTAINERS = {
+    { "OilRig", "Turrets" },
+}
+local TURRET_MODELS = {
+    { "CargoShip", "TurretFront" },
+    { "CargoShip", "TurretBack" },
+}
+local TURRET_TICK = 1
+local TURRET_TITLE = "[JB Hub] No Turret Damage"
+local TURRET_DEFAULT_HZ = 6
+local CARGO = {
+    FREEZE = 1e15,
+    RESCAN = 15,
+    PAIR_RANGE = 0x400,
+    RESCAN_SLOW = 120,
+    HOME_RESCAN = 5,
+}
+local MIL_TURRET_KEYS = { "TURRET_DAMAGE", "FIRE_RATE" }
+local MIL_TURRET_VALUES = { TURRET_DAMAGE = 0, FIRE_RATE = 1e9 }
+local MIL_TURRET_DEFAULTS = { TURRET_DAMAGE = 6, FIRE_RATE = 0.1 }
+local MIL_TURRET_RESCAN = 5
+local DART_AWAY_Y = -10000
+local BRIDGE_FLAT_ANGLE = 0.0001
+local BRIDGE_FROZEN_DURATION = 1e9
+local BRIDGE_SETTLE_TIME = 3
+
+local PLASMA_BURST = 4
+local PLASMA_ITEM_NAME = "PlasmaPistol"
+local PLASMA_MAX_AMMO = 20
+local PLASMA_MAX_DISTANCE = 190
+local PLASMA_TICK = 0.05
+local PLASMA_EQUIP_INTERVAL = 0.5
+local PLASMA_RELOAD_WAIT = 0.6
+local PLASMA_IDLE_TIME = 0.4
+local PLASMA_SHOOT_TO_DAMAGE = 0.02
+local INSTANT_PLASMA_SCAN_KEYS = { "FireFreq", "ReloadTime", "MagSize", "Range", "Damage" }
+local INSTANT_PLASMA_TARGETS = { FireFreq = 60, ReloadTime = 0.1 }
+local INSTANT_PLASMA_WINDOW = 512
+local INSTANT_PLASMA_SCAN_TRIES = 6
+local INSTANT_PLASMA_TICK = 0.25
+
+local FLOW_KEY = 0x67
+local FLOW_START_DELAY = 2
+local FLOW_SCALE = 1.25
+local FLOW_SETTLE_WAIT = 0.06
+local FLOW_PRESS_WAIT = 0.06
+local FLOW_STEP_COUNT = 4
+local FLOW_STEP_WAIT = 0.015
+local FLOW_CELL_WAIT = 0.03
+local FLOW_RELEASE_WAIT = 0.08
+local FLOW_SOLVED_TIMEOUT = 3
+local FLOW_PATH_THICKNESS = 6
+local FLOW_PATH_REFRESH = 0.25
+local FLOW_BASE_COLORS = {
+    Color3.fromRGB(255, 0, 0),
+    Color3.fromRGB(0, 120, 255),
+    Color3.fromRGB(189, 0, 255),
+    Color3.fromRGB(255, 154, 0),
+    Color3.fromRGB(1, 255, 31),
+}
+
+local ESP_TARGETS = {
+    Key = { id = "keycardEsp", label = "KEYCARD", title = "[JB Hub] Keycard ESP", color = Color3.fromRGB(0, 140, 255), parts = { "Handle" } },
+    CrimeKey = { id = "crimekeyEsp", label = "CRIMEKEY", title = "[JB Hub] Crimekey ESP", color = Color3.fromRGB(255, 210, 0), parts = { "Handle" } },
+    Drop = { id = "airdropEsp", label = "AIRDROP", title = "[JB Hub] Airdrop ESP", color = Color3.fromRGB(148, 96, 69), parts = { "Particles", "Root", "Handle" }, colorFrom = "Top", box = { "Bottom", "Top", "Root" }, textMin = 12, boxMin = 12 },    
+	Cash = { id = "cashEsp", label = "CASH", title = "[JB Hub] Cash Dropped ESP", color = Color3.fromRGB(0, 220, 90), parts = { "BoundingBox", "Part" }, container = "DroppedCash", amountFrom = "Amount" },
+    Bounty = {
+        id = "bountyEsp",
+        label = "BOUNTY",
+        title = "[JB Hub] Bounty ESP",
+        color = Color3.fromRGB(255, 60, 60),
+        parts = {},
+        container = "__players",
+        modes = { "Color Based", "Custom Color" },
+        gameColor = Color3.fromRGB(255, 0, 0),
+        gameOutline = Color3.fromRGB(47, 0, 0),
+        up = Vector3.new(0, 3, 0),
+        down = Vector3.new(0, -3.2, 0),
+        textMax = 13,
+    },
+}
+
+local ESP_SEARCH_EVERY = 3
+local PISTON_REFRESH = 10
+local KILLAURA_KEY_CONFIRM = 0.15
+local ESP_BOX_PADDING = 3
+local ESP_BOX_MIN = 8
+local ESP_TEXT_SIZE = 16
+local ESP_TEXT_MIN = 10
+PERF.ESP_MAX_PART_SIZE = 25
+PERF.ESP_MAX_PARTS = 24
+PERF.ESP_SKIP_PARTS = { Particles = true, Countdown = true }
+PERF.ESP_PART_CLASS = { Part = true, MeshPart = true, UnionOperation = true, WedgePart = true, CornerWedgePart = true, TrussPart = true }
+local ESP_TEXT_NEAR = 30
+local ESP_TEXT_FAR = 500
+local ESP_SCREEN_HEIGHT = 1080
+
+local ALL_IDS = { "puzzleSolve", "puzzlePath", "nofall", "nolaser", "noturret", "noForcefield", "antiTaser", "nosit", "casino", "casinoOpen", "autoVault", "autoGlass", "autoLoot", "autoHack", "keycardEsp", "crimekeyEsp", "airdropEsp", "cashEsp", "bountyEsp", "killNpcs", "guards", "attackCeo", "npcHitbox", "swordNoCd", "swordLunge", "punchNoCd", "rocketLock", "instant", "plasma", "norecoil", "nospread", "autoShoot", "nitro", "jetpack", "unlockSlots", "nerfSkins", "plasmaKillaura", "cosmeticsBind", "cosmeticsLoop", "cosPlate", "carFly", "engineBoost", "instantBrake", "antiTirePop", "antiFlip", "tombDarts", "tombSpikes", "tombBridge", "tombCart", "ppWire", "ppPistons", "skyColor", "skinChanger", "hitSound", "autoTaser", "autoCuff", "waterCustom", "timeChanger", "timeCycle", "matrixMode", "robHud", "hitMarker", "hitKill", "resetBind", "elevLoop", "hubRoles", "antiAfk" }
+
+PERF.SKIN_IDS = { "Drip", "Aurora", "BlackIce", "CircuitBoard", "WhiteMarble" }
+PERF.SKIN_WEAPONS = { "AK47", "Rifle", "Pistol", "Revolver", "PlasmaPistol", "PlasmaShotgun", "RocketLauncher", "Sniper" }
+PERF.SKIN_LABELS = {}
+PERF.SKIN_TARGETS = { "All Weapons" }
+for i, n in ipairs(PERF.SKIN_IDS) do PERF.SKIN_LABELS[i] = (n:gsub("(%l)(%u)", "%1 %2")) end
+for _, n in ipairs(PERF.SKIN_WEAPONS) do PERF.SKIN_TARGETS[#PERF.SKIN_TARGETS + 1] = (n:gsub("(%l)(%u)", "%1 %2")) end
+PERF.WATER_NAMES = { "Original", "Clear", "Turquoise", "Dark", "Blood" }
+PERF.WATER_PRESETS = {
+    false,
+    { color = { 0.16, 0.47, 0.5 }, transparency = 0.85, reflectance = 0.35 },
+    { color = { 0.05, 0.55, 0.58 }, transparency = 0.65, reflectance = 0.5 },
+    { color = { 0.02, 0.05, 0.08 }, transparency = 0.08, reflectance = 0.85 },
+    { color = { 0.42, 0.02, 0.03 }, transparency = 0.22, reflectance = 0.45 },
+}
+PERF.MATRIX = {
+    TITLE = "[JB Hub] Matrix Mode",
+    COLOR = 0x11C, -- update
+    CC_OFF = { Tint = 0xA0, Brightness = 0xAC, Contrast = 0xB0, Saturation = 0xB4 }, -- update
+    ATMOS = { Color = { 0.0, 0.35, 0.12 }, Decay = { 0.0, 0.08, 0.02 }, Density = 0.45, Glare = 0, Haze = 2.5, Offset = 0.05 },
+    CC = { Tint = { 0.4, 1.0, 0.5 }, Brightness = -0.12, Contrast = 0.55, Saturation = -0.5 },
+    WATER = { Color = { 0.0, 0.85, 0.3 }, Reflectance = 0.25, Transparency = 0.35 },
+    PARTS = { Part = true, MeshPart = true, UnionOperation = true, WedgePart = true, CornerWedgePart = true, TrussPart = true },
+    CHUNK = 1500,
+    RESCAN = 15,
+}
+PERF.TIME = {
+    TITLE = "[JB Hub] Time Changer",
+    LIGHT = 0x150, -- update
+    SUN = 0x160, -- update
+    MOON = 0x16C, -- update
+    SOURCE = 0x15C, -- update
+    CS_TOP = 0xC4, -- update
+    CS_BOT = 0xD0, -- update
+    NOON_TINT = { 0.978, 0.978, 0.989 },
+    DUSK_TINT = { 0.0625, 0.0558, 0.105 },
+    TILT = 0.35,
+    PRESETS = { "Custom", "Dawn", "Morning", "Noon", "Sunset", "Dusk", "Night", "Midnight" },
+    HOURS = { false, 6, 9, 12, 18, 19.5, 22, 0 },
+    KEYS = {
+        { h = 0, bright = -0.28, tint = { 0.55, 0.65, 1.0 }, color = { 0.08, 0.1, 0.22 }, decay = { 0.02, 0.03, 0.08 }, density = 0.36, haze = 1.2 },
+        { h = 5, bright = -0.22, tint = { 0.6, 0.65, 0.95 }, color = { 0.15, 0.15, 0.3 }, decay = { 0.05, 0.05, 0.12 }, density = 0.34, haze = 1.5 },
+        { h = 6.5, bright = -0.06, tint = { 1.0, 0.82, 0.72 }, color = { 1.0, 0.62, 0.45 }, decay = { 0.6, 0.3, 0.2 }, density = 0.32, haze = 2.2 },
+        { h = 9, bright = 0.02, tint = { 1.0, 0.97, 0.92 }, color = { 0.85, 0.85, 0.9 }, decay = { 0.85, 0.85, 0.9 }, density = 0.27, haze = 1 },
+        { h = 12, bright = 0.06, tint = { 1.0, 1.0, 1.0 }, color = { 0.78, 0.86, 1.0 }, decay = { 0.9, 0.95, 1.0 }, density = 0.24, haze = 0.5 },
+        { h = 16, bright = 0.03, tint = { 1.0, 0.96, 0.9 }, color = { 0.9, 0.85, 0.8 }, decay = { 0.85, 0.75, 0.65 }, density = 0.27, haze = 1 },
+        { h = 18, bright = -0.03, tint = { 1.0, 0.75, 0.6 }, color = { 1.0, 0.55, 0.35 }, decay = { 0.7, 0.3, 0.15 }, density = 0.32, haze = 2.4 },
+        { h = 19.5, bright = -0.14, tint = { 0.85, 0.65, 0.8 }, color = { 0.5, 0.3, 0.45 }, decay = { 0.25, 0.1, 0.2 }, density = 0.34, haze = 2 },
+        { h = 21, bright = -0.26, tint = { 0.58, 0.66, 1.0 }, color = { 0.1, 0.12, 0.25 }, decay = { 0.03, 0.04, 0.1 }, density = 0.36, haze = 1.3 },
+        { h = 24, bright = -0.28, tint = { 0.55, 0.65, 1.0 }, color = { 0.08, 0.1, 0.22 }, decay = { 0.02, 0.03, 0.08 }, density = 0.36, haze = 1.2 },
+    },
+}
+PERF.WATER_OFF = { Color = 0x1C8, Reflectance = 0x1E0, Transparency = 0x1E4, WaveSize = 0x1E8, WaveSpeed = 0x1EC } -- update
+pcall(function()
+    local data = game:GetService("HttpService"):JSONDecode(game:HttpGet("https://offsets.imtheo.lol/Offsets.json"))
+    PERF.offsetsOk = type(data) == "table" and type(data.Offsets) == "table"
+    PERF.robloxVersion = data and data["Roblox Version"]
+    PERF.dump = data and data.Offsets
+    local t = data and data.Offsets and data.Offsets.Terrain
+    if type(t) ~= "table" then return end
+    local map = { Color = "WaterColor", Reflectance = "WaterReflectance", Transparency = "WaterTransparency", WaveSize = "WaterWaveSize", WaveSpeed = "WaterWaveSpeed" }
+    PERF.dumpWater = {}
+    for key, field in pairs(map) do
+        local v = tonumber(t[field])
+        if v and v > 0 and v < 0x4000 then PERF.dumpWater[key] = v end
+    end
+end)
+if PERF.offsetsOk then
+    SPLASH.step("Offset dump downloaded  " .. tostring(PERF.robloxVersion or "?"), 25)
+else
+    SPLASH.step("Offset dump unreachable, using built-in values", 25, "warn")
+end
+PERF.HIT_SOUNDS = { { "Rust", 1255040462 }, { "Bonk", 5766898159 } }
+PERF.HIT_LABELS = {}
+for i, s in ipairs(PERF.HIT_SOUNDS) do PERF.HIT_LABELS[i] = s[1] end
+PERF.HITFX_MARKERS = { "Cross", "Rust" }
+PERF.HB = {
+    TITLE = "[JB Hub] NPC's Hitbox Expander",
+    TR_OFF = 0x118, -- update
+    TICK = 0.03,
+    VERIFY = 1,
+    YOUNG = 3,
+    YOUNG_VERIFY = 0.2,
+    REFRESH_DELAY = 0.6,
+    REFRESH_PER_TICK = 4,
+    REFRESH_CAP = 3,
+    REFRESH_WINDOW = 10,
+    SLIDER_DELAY = 0.4,
+    MANSION_EVERY = 3,
+    ALPHA = 0.5,
+    COLOR = { 255, 40, 40 },
+}
+PERF.TASE = {
+    TITLE = "[JB Hub] Auto Taser",
+    KEY = 0x72,
+    RANGE = 85,
+    GAME_RANGE = 85,
+    SAFETY = 2.2,
+    LATENCY = 0.035,
+    ITERATIONS = 4,
+    EQUIP_TIME = 0.6,
+    DEBUG = false,
+    active = false,
+    me = { vel = Vector3.new(0, 0, 0) },
+    tracks = {},
+    charSet = {},
+    teamCache = {},
+}
+PERF.CUFF = {
+    TITLE = "[JB Hub] Instant Auto Cuff",
+    KEY = 0x71,
+    KEY_E = 0x45,
+    EQUIP_RANGE = 25,
+    MAX_H = 9.9,
+    MAX_V = 13.9,
+    TAP = 0.05,
+    RESULT_TIMEOUT = 0.6,
+    HOLD_TIMEOUT = 1.6,
+    RETRY = 0.6,
+    CONFIG_RESCAN = 5,
+    engaged = false,
+}
+
+local defs = {
+    swordNoCd  = { label = "Sword No Cooldown",   keys = { "ReloadTime" }, vals = { ReloadTime = 0 } },
+    swordLunge = { label = "Sword Always Lunge",  keys = { "SwingLunge" }, vals = { SwingLunge = -1 } },
+    instant    = { label = "Instant Interaction", keys = { "Duration" },   vals = { Duration = 0 } },
+    norecoil   = {
+        label = "No Recoil",
+        keys  = { "CamShakeMagnitude" },
+        vals  = { CamShakeMagnitude = 0 },
+    },
+    nospread   = {
+        label = "No Spread",
+        keys  = { "BulletSpread" },
+        vals  = { BulletSpread = 0 },
+    },
+    jetpack    = { label = "Infinity Jetpack", keys = { "LocalFuel", "LocalMaxFuel", "ThrustingBornAt" }, vals = { LocalFuel = 999999, LocalMaxFuel = 999999, ThrustingBornAt = 0 }, every = 20 },
+}
+
+local notified = {}
+local REAPPLY_EVERY = 180
+local SPRING_RESCAN_EVERY = 30
+local HEAVY_COOLDOWN = 1.5  
+local SIT_PRIORITY = 2    
+local lastSitAt = 0 
+local casinoRequested = false
+local lastCasinoShown = 0
+local casinoOpenRequested = false
+local vaultRequested = false
+local lastCasinoOpen = 0
+local flowRequested = false
+local JOB_ORDER = { "swordNoCd", "swordLunge", "instant", "norecoil", "nospread", "springs" }
+local nextApply = {}
+local springTargets = {}
+local resetting = false
+local gcBusy = false
+local function lockedGetgc(keys)
+    if keys == true then
+        while gcBusy or PERF.solving or PERF.flying do task.wait(0.05) end
+        gcBusy = true
+        local ok, result = pcall(getgc, true)
+        gcBusy = false
+        return ok and result or {}
+    end
+    local batch = PERF.gcBatch
+    if not batch then
+        batch = { keys = {}, done = false, result = {}, lastAdd = tick(), born = tick() }
+        PERF.gcBatch = batch
+        task.spawn(function()
+            repeat task.wait(0.1) until tick() - batch.lastAdd >= 1.5 or tick() - batch.born >= 6
+            while gcBusy or PERF.solving or PERF.flying do task.wait(0.05) end
+            PERF.gcBatch = nil
+            local list = {}
+            for k in pairs(batch.keys) do list[#list + 1] = k end
+            gcBusy = true
+            local ok, result = pcall(getgc, list)
+            gcBusy = false
+            batch.result = ok and result or {}
+            batch.done = true
+        end)
+    end
+    local want = {}
+    for _, k in ipairs(keys) do
+        if not batch.keys[k] then batch.lastAdd = tick() end
+        batch.keys[k] = true
+        want[k] = true
+    end
+    while not batch.done do task.wait(0.03) end
+    local out = {}
+    for _, e in ipairs(batch.result) do
+        if want[tostring(e.key)] then out[#out + 1] = e end
+    end
+    return PERF.gcTrack(out)
+end
+
+PERF.holdKb = {}
+function PERF.keyDown(name, default)
+    local kb = PERF.holdKb[name]
+    if kb then
+        local ok, k = pcall(function() return kb:GetKey() end)
+        if ok and type(k) == "number" then
+            if k == 0 then return false end
+            local okP, d = pcall(iskeypressed, k)
+            return okP and d == true
+        end
+        local okE, on = pcall(function() return kb:IsEnabled() end)
+        if okE and type(on) == "boolean" then return on end
+    end
+    local okP, d = pcall(iskeypressed, default)
+    return okP and d == true
+end
+
+PERF.wsCache = {}
+function PERF.ws(name)
+    local e = PERF.wsCache[name]
+    local now = tick()
+    if e then
+        if e.inst then
+            local ok, parent = pcall(function() return e.inst.Parent end)
+            if ok and parent then return e.inst end
+        elseif now - e.at < 5 then
+            return nil
+        end
+    end
+    local inst = workspace:FindFirstChild(name)
+    PERF.wsCache[name] = { inst = inst, at = now }
+    return inst
+end
+
+function PERF.gcTrack(list)
+    for _, e in ipairs(list) do
+        local a = tonumber(e.addr)
+        if a and e.kp == nil then
+            local okK, kp = pcall(memory_read, "uintptr_t", a + 0x10)
+            local okT, tg = pcall(memory_read, "int", a + 12)
+            e.kp = okK and kp or 0
+            e.tg = okT and tg or -1
+        end
+    end
+    return list
+end
+
+function PERF.applyChunked(list, vals)
+    local n = #list
+    if n <= 200 then
+        pcall(applygc, list, vals)
+        return
+    end
+    for i = 1, n, 200 do
+        local part = {}
+        for j = i, math.min(i + 199, n) do part[#part + 1] = list[j] end
+        pcall(applygc, part, vals)
+        task.wait()
+    end
+end
+
+function PERF.gcAlive(list)
+    local out = {}
+    for _, e in ipairs(list or {}) do
+        local a = tonumber(e.addr)
+        if a and e.kp and e.kp > 4096 then
+            local okK, kp = pcall(memory_read, "uintptr_t", a + 0x10)
+            local okT, tg = pcall(memory_read, "int", a + 12)
+            if okK and okT and kp == e.kp and tg == e.tg then out[#out + 1] = e end
+        end
+    end
+    return out
+end
+
+function PERF.numericOnly(list)
+    local out = {}
+    for _, e in ipairs(list or {}) do
+        if e.tg == 3 then out[#out + 1] = e end
+    end
+    return out
+end
+
+function PERF.primValid(part, p)
+    if not p or not part then return false end
+    local okP, parent = pcall(function() return part.Parent end)
+    if not okP or not parent then return false end
+    local base = tonumber(part.Address)
+    if not base or base <= 4096 then return false end
+    local ok, cur = pcall(memory_read, "uintptr_t", base + PRIMITIVE_OFFSET)
+    return ok and cur == p
+end
+local lastZoneScan = 0
+
+local function count(t)
+    local n = 0
+    pcall(function() for _ in ipairs(t) do n = n + 1 end end)
+    return n
+end
+
+local function isOn(base)
+    return UI.GetValue(uid(base))
+end
+
+local function getHumanoid()
+    local char = game:GetService("Players").LocalPlayer.Character
+    return char and (char:FindFirstChild("Humanoid") or char:FindFirstChildOfClass("Humanoid"))
+end
+
+local function getHRP()
+    local char = game:GetService("Players").LocalPlayer.Character
+    return char and (char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso"))
+end
+
+local function keybindActive(kb)
+    if not kb then return false end
+    local ok, v = pcall(function() return kb:IsEnabled() end)
+    if ok and type(v) == "boolean" then return v end
+    ok, v = pcall(function() return kb.value end)
+    return ok and v == true
+end
+
+local function destroySeatWeld()
+    pcall(function()
+        local hrp = getHRP()
+        if not hrp then return end
+        for _, d in ipairs(game:GetService("Workspace"):GetDescendants()) do
+            local ok, cls = pcall(function() return d.ClassName end)
+            if ok and (cls == "Weld" or cls == "WeldConstraint") then
+                local p0, p1
+                pcall(function() p0 = d.Part0 end)
+                pcall(function() p1 = d.Part1 end)
+                if p0 == hrp or p1 == hrp then
+                    local other = (p0 == hrp) and p1 or p0
+                    local ocls
+                    pcall(function() ocls = other and other.ClassName end)
+                    if d.Name == "SeatWeld" or ocls == "Seat" or ocls == "VehicleSeat" then
+                        pcall(function() d:Destroy() end)
+                    end
+                end
+            end
+        end
+    end)
+end
+
+local function killSit()
+    pcall(function()
+        local hum = getHumanoid()
+        if not hum then return end
+        local addr = tonumber(hum.Address)
+        if not addr or addr <= 4096 then return end
+        local sit = 0
+        pcall(function() sit = memory_read("byte", addr + SIT_OFFSET) end)
+        if sit == 1 then
+            lastSitAt = tick()
+            destroySeatWeld()
+            pcall(function() memory_write("byte", addr + SIT_OFFSET, 0) end)
+        end
+    end)
+end
+
+function PERF.run(name, fn)
+    if not PERF.profile then return pcall(fn) end
+    local prev = PERF.runCur
+    PERF.runCur = name
+    local f0 = PERF.frameNo
+    local t0 = os.clock()
+    local ok, err = pcall(fn)
+    local dt = os.clock() - t0
+    PERF.runCur = prev
+    local st = PERF.stats[name]
+    if not st then
+        st = { total = 0, max = 0, calls = 0, slow = 0, waits = 0, errors = 0, errs = {} }
+        PERF.stats[name] = st
+    end
+    st.calls = st.calls + 1
+    if PERF.frameNo ~= f0 then
+        st.waits = st.waits + 1
+    else
+        st.total = st.total + dt
+        if dt > st.max then st.max = dt end
+        if dt > 0.008 then st.slow = st.slow + 1 end
+        PERF.frameWork[name] = (PERF.frameWork[name] or 0) + dt
+    end
+    if not ok then
+        st.errors = st.errors + 1
+        local msg = tostring(err):sub(1, 160)
+        st.errs[msg] = (st.errs[msg] or 0) + 1
+    end
+    return ok, err
+end
+ 
+PERF.frameWork = {}
+PERF.frameNo = 0
+function PERF.timed(name, fn, ...)
+    if not PERF.profile then return fn(...) end
+    local f0, t0 = PERF.frameNo, os.clock()
+    local r = table.pack(fn(...))
+    local dt = os.clock() - t0
+    if PERF.frameNo == f0 then
+        local st = PERF.stats[name]
+        if not st then
+            st = { total = 0, max = 0, calls = 0, slow = 0, waits = 0, errors = 0, errs = {} }
+            PERF.stats[name] = st
+        end
+        st.total, st.calls = st.total + dt, st.calls + 1
+        if dt > st.max then st.max = dt end
+        if dt > 0.008 then st.slow = st.slow + 1 end
+        PERF.frameWork[name] = (PERF.frameWork[name] or 0) + dt
+    end
+    return table.unpack(r, 1, r.n)
+end
+function PERF.profileHooks()
+    if PERF.hooked then return end
+    PERF.hooked = true
+    local c = { memr = 0, memw = 0, gc = 0, gcTime = 0, gcMax = 0, draw = 0, drawTotal = 0, drawBy = {}, notify = 0, notifyBy = {}, memBy = {} }
+    PERF.cnt = c
+    local function who() return PERF.runCur or "other" end
+    local mr, mw, gg, nt = memory_read, memory_write, getgc, notify
+    if mr then memory_read = function(...) c.memr = c.memr + 1 local w = who() c.memBy[w] = (c.memBy[w] or 0) + 1 return mr(...) end end
+    if mw then memory_write = function(...) c.memw = c.memw + 1 local w = who() c.memBy[w] = (c.memBy[w] or 0) + 1 return mw(...) end end
+    if gg then
+        getgc = function(...)
+            local t0 = os.clock()
+            local r = { gg(...) }
+            local dt = os.clock() - t0
+            c.gc, c.gcTime = c.gc + 1, c.gcTime + dt
+            if dt > c.gcMax then c.gcMax = dt end
+            return table.unpack and table.unpack(r) or unpack(r)
+        end
+    end
+    if nt then
+        notify = function(text, title, ...)
+            c.notify = c.notify + 1
+            local k = tostring(title)
+            c.notifyBy[k] = (c.notifyBy[k] or 0) + 1
+            return nt(text, title, ...)
+        end
+    end
+    pcall(function()
+        local dn = Drawing.new
+        Drawing.new = function(...)
+            c.draw, c.drawTotal = c.draw + 1, c.drawTotal + 1
+            local w = who()
+            c.drawBy[w] = (c.drawBy[w] or 0) + 1
+            return dn(...)
+        end
+    end)
+end
+ 
+function PERF.profileLog(lines)
+    for _, l in ipairs(lines) do print(l) end
+    PERF.profileBuf = PERF.profileBuf or {}
+    for _, l in ipairs(lines) do PERF.profileBuf[#PERF.profileBuf + 1] = l end
+    while #PERF.profileBuf > 3000 do table.remove(PERF.profileBuf, 1) end
+    pcall(makefolder, "JB Hub")
+    pcall(writefile, "JB Hub/profile.log", table.concat(PERF.profileBuf, "\n"))
+end
+
+PERF.HYBRID_IDS = { "casinoOpen", "autoVault", "autoGlass", "autoLoot", "autoHack", "plasmaKillaura", "cosmeticsBind", "cosmeticsLoop", "autoTaser", "autoCuff", "elevLoop" }
+PERF.HYBRID_OK_CACHE = 10
+PERF.HYBRID_FAIL_CACHE = 2
+
+function PERF.probeHybrid()
+    local remote = game:GetService("ReplicatedStorage"):FindFirstChild("PostieReceived")
+    if not remote then return nil end
+    for _ = 1, 2 do
+        local id = string.format("%08x%08x", math.random(0, 0x7FFFFFFF), math.random(0, 0x7FFFFFFF))
+        local t0 = os.clock()
+        local ok, ret = pcall(function() return remote:FireServer(id, false) end)
+        local dt = os.clock() - t0
+        if not ok then return nil end
+        if ret == true then return true end
+        if dt >= 0.02 then return true end
+        if dt < 0.001 then return false end
+    end
+    return nil
+end
+
+function PERF.isHybrid()
+    local now = tick()
+    local cache = PERF.hybridState and PERF.HYBRID_OK_CACHE or PERF.HYBRID_FAIL_CACHE
+    if PERF.hybridAt and now - PERF.hybridAt < cache then return PERF.hybridState end
+    if PERF.hybridChecking then
+        while PERF.hybridChecking do task.wait(0.03) end
+        return PERF.hybridState
+    end
+    PERF.hybridChecking = true
+    local r = PERF.probeHybrid()
+    if r == nil then r = PERF.hybridState or false end
+    PERF.hybridState, PERF.hybridAt, PERF.hybridChecking = r, tick(), false
+    return r
+end
+
+function PERF.requireHybrid(title)
+    if PERF.isHybrid() then return true end
+    notify("Hybrid Mode required - enable it in Matcha first", title or "[JB Hub]", 4)
+    return false
+end
+
+function PERF.gcValueMatches(e, target)
+    local text = tostring(e.value)
+    local kind = type(target)
+    if kind == "number" then return tonumber(text) ~= nil end
+    if kind == "boolean" then return text == "true" or text == "false" end
+    return true
+end
+
+function PERF.inGame()
+    local ok, res = pcall(function()
+        local lp = game:GetService("Players").LocalPlayer
+        return lp ~= nil and lp.Parent ~= nil and lp.Character ~= nil and workspace.Parent ~= nil
+    end)
+    return ok and res == true
+end
+
+PERF.rawNotify = notify
+notify = function(...)
+    if PERF.muteNotifyUntil and tick() < PERF.muteNotifyUntil then return end
+    return PERF.rawNotify(...)
+end
+
+function PERF.notifySafe(text, title, duration)
+    task.spawn(function()
+        task.wait(1.5)
+        if _G.JB_gen == myGen and PERF.inGame() then
+            notify(text, title, duration)
+        end
+    end)
+end
+
+PERF.PROTECTED = { instant = { 5.6, 10 } }
+PERF.protectedExtra, PERF.protectedAt = {}, 0
+
+function PERF.briefcaseTimings(force)
+    if not force and tick() - PERF.protectedAt < 10 then return PERF.protectedExtra end
+    PERF.protectedAt = tick()
+    local list = {}
+    for i, c in ipairs(workspace:GetChildren()) do
+        if i % 300 == 0 then task.wait() end
+        if c.ClassName == "Model" and c:FindFirstChild("Walls") and c:FindFirstChild("Particles") then
+            local ok, v = pcall(function() return c:GetAttribute("BriefcaseOpenTiming") end)
+            if ok and type(v) == "number" and v > 0 then list[#list + 1] = v end
+        end
+    end
+    PERF.protectedExtra = list
+    return list
+end
+
+function PERF.cuffAnchors()
+    if PERF.cuffAnchorList then return PERF.cuffAnchorList end
+    local list = {}
+    for _, e in ipairs(lockedGetgc({ "ArrestDistance" })) do
+        local v, a = tonumber(tostring(e.value)), tonumber(e.addr)
+        if v == 10 and a then list[#list + 1] = a end
+    end
+    if #list > 0 then PERF.cuffAnchorList = list end
+    return list
+end
+
+function PERF.filterProtected(id, list, force)
+    local protected = PERF.PROTECTED[id]
+    if not protected then return list end
+    local extra = id == "instant" and PERF.briefcaseTimings(force) or {}
+    local anchors = id == "instant" and PERF.cuffAnchors() or {}
+    local out = {}
+    for _, e in ipairs(list) do
+        local ok, v = pcall(memory_read, "double", tonumber(e.addr))
+        local skip = false
+        if ok and type(v) == "number" then
+            for _, p in ipairs(protected) do
+                if math.abs(v - p) < 1e-4 then skip = true break end
+            end
+            if not skip then
+                for _, p in ipairs(extra) do
+                    if math.abs(v - p) < 1e-4 then skip = true break end
+                end
+            end
+        end
+        if not skip then
+            local a = tonumber(e.addr)
+            for _, c in ipairs(anchors) do
+                if a and math.abs(a - c) <= 512 then
+                    skip = true
+                    if ok and v == 0 then pcall(memory_write, "double", a, 0.5) end
+                    break
+                end
+            end
+        end
+        if not skip then out[#out + 1] = e end
+    end
+    return out
+end
+
+function PERF.isGuard(m)
+    local key = m.Address
+    local v = PERF.guardFlag[key]
+    if v == true then return true end
+    local now = tick()
+    if type(v) == "number" and now < v then return false end
+    if m:GetAttribute("GuardTriggerPressFreq") ~= nil then
+        PERF.guardFlag[key] = true
+        return true
+    end
+    PERF.guardFlag[key] = now + 0.25
+    return false
+end
+
+function PERF.ownerOf(g)
+    local key = g.Address
+    local now = tick()
+    local c = PERF.ownerCache[key]
+    if c and now < c.at then return c.id end
+    local id = tonumber(g:GetAttribute("NPCNetworkOwnerId"))
+    PERF.ownerCache[key] = { id = id, at = now + PERF.GUARD_RECHECK + math.random() }
+    return id
+end
+
+local function getGuards(folders)
+    local guards = {}
+    for _, folder in ipairs(folders) do
+        pcall(function()
+            for _, m in ipairs(folder:GetChildren()) do
+                if PERF.isGuard(m) then
+                    guards[#guards + 1] = m
+                end
+            end
+        end)
+    end
+    return guards
+end
+
+local function getNpcRange()
+    local range = tonumber(UI.GetValue(uid("npcRange"))) or 150
+    local myPos = nil
+    pcall(function()
+        local char = game:GetService("Players").LocalPlayer.Character
+        myPos = char:FindFirstChild("HumanoidRootPart").Position
+    end)
+    return myPos, range
+end
+
+local function npcInRange(g, myPos, range)
+    if not myPos then return true end
+    local ok, dist = pcall(function()
+        return (g:FindFirstChild("HumanoidRootPart").Position - myPos).Magnitude
+    end)
+    return not ok or dist <= range
+end
+
+local function disableGuard(g, originals)
+    local key = g.Address
+    local o = originals[key]
+    if not o then
+        o = { guard = g }
+        originals[key] = o
+    end
+    local dist = g:GetAttribute("MaxShootDist")
+    if dist ~= 0 then
+        o.dist = dist
+        g:SetAttribute("MaxShootDist", 0)
+    end
+    local freq = g:GetAttribute("GuardTriggerPressFreq")
+    if freq ~= 0 then
+        o.freq = freq
+        g:SetAttribute("GuardTriggerPressFreq", 0)
+    end
+    if g:GetAttribute("NPCDestType") ~= 3 then
+        local home = g:GetAttribute("NPCHomePosition")
+        if home then pcall(function() g:SetAttribute("NPCDestPos", home) end) end
+        g:SetAttribute("NPCDestType", 3)
+    end
+end
+
+local function forceReset()
+    resetting = true   
+    task.spawn(function()
+        local wrote = false
+        pcall(function()
+            for i = 1, 8 do
+                local hum = getHumanoid()
+                if hum then
+                    local addr = tonumber(hum.Address)
+                    if addr and addr > 4096 then
+                        if pcall(function() memory_write("float", addr + HUM_HEALTH, 0) end) then wrote = true end
+                    end
+                end
+                task.wait()
+            end
+        end)
+        resetting = false
+        notify(wrote and "Character reset" or "Reset failed", "[JB Hub] Force Reset", 3)
+    end)
+end
+
+local function findZone()
+    local ws = game:GetService("Workspace")
+    local z = PERF.ws(NFD_NAME)
+    if z then return z end
+    if tick() - lastZoneScan < (PERF.zoneScanGap or 10) then return nil end
+    PERF.zoneScanGap = math.min((PERF.zoneScanGap or 10) * 2, 120)
+    local ok, all = pcall(function() return ws:GetDescendants() end)
+    for i, d in ipairs(ok and all or {}) do
+        if d.Name == NFD_NAME then
+            PERF.zoneScanGap = 10
+            lastZoneScan = tick()
+            return d
+        end
+        if i % 3000 == 0 then task.wait() end
+    end
+    lastZoneScan = tick()
+end
+
+local function resolveLaserRoot(pathList)
+    local cur = PERF.ws(pathList[1])
+    for i = 2, #pathList do
+        if not cur then return nil end
+        cur = cur:FindFirstChild(pathList[i])
+    end
+    return cur
+end
+
+local function collectLaserParts(root, pathList, list, anchors)
+    local parts = 0
+    for i, d in ipairs(root:GetDescendants()) do
+        if i % PERF.LASER_YIELD_EVERY == 0 then task.wait() end
+        local cls = d.ClassName
+        if cls == "TouchTransmitter" then
+            local part = d.Parent
+            if part then
+                local name = part.Name
+                if (not pathList.only or name == pathList.only) and not LASER_SKIP_NAMES[name] then
+                    list[#list + 1] = part
+                end
+            end
+        elseif anchors and (cls == "Part" or cls == "MeshPart") then
+            parts = parts + 1
+            if parts % PERF.LASER_ANCHOR_EVERY == 1 then
+                pcall(function()
+                    local p = d.Position
+                    anchors[#anchors + 1] = p.X
+                    anchors[#anchors + 1] = p.Z
+                end)
+            end
+        end
+    end
+end
+
+local function collectLaserPartsSafe(root, pathList, list)
+    for i, d in ipairs(root:GetDescendants()) do
+        if i % PERF.LASER_YIELD_EVERY == 0 then task.wait() end
+        local isTouch = false
+        pcall(function() isTouch = d.ClassName == "TouchTransmitter" end)
+        if isTouch then
+            local part
+            pcall(function() part = d.Parent end)
+            if part then
+                local name
+                pcall(function() name = part.Name end)
+                if (not pathList.only or name == pathList.only) and not LASER_SKIP_NAMES[name] then
+                    list[#list + 1] = part
+                end
+            end
+        end
+    end
+end
+
+local function getLaserBeams()
+    local list = {}
+    for _, pathList in ipairs(LASER_CONTAINERS) do
+        local root = resolveLaserRoot(pathList)
+        if root then
+            local partial = {}
+            if pcall(collectLaserParts, root, pathList, partial) then
+                for _, part in ipairs(partial) do list[#list + 1] = part end
+            else
+                pcall(collectLaserPartsSafe, root, pathList, list)
+            end
+        end
+    end
+    return list
+end
+
+local function getPistonOrigins()
+    local list = {}
+    pcall(function()
+        for _, model in ipairs(game:GetService("CollectionService"):GetTagged("Piston")) do
+            local origin = model:FindFirstChild("PistonOrigin")
+            if origin then list[#list + 1] = origin end
+        end
+    end)
+    if #list == 0 then
+        local plant = PERF.ws("PowerPlant")
+        if plant then
+            for _, d in ipairs(plant:GetDescendants()) do
+                if d.Name == "PistonOrigin" then list[#list + 1] = d end
+            end
+        end
+    end
+    return list
+end
+
+local function vec(inst)
+    local pos
+    local ok = pcall(function() pos = inst.Position end)
+    if ok and pos then
+        local isVec = pcall(function() return pos.X + 0 end)
+        if isVec then return pos end
+    end
+end
+
+local cachedDoor = nil
+local function getDoor()
+    if cachedDoor then
+        local ok, parent = pcall(function() return cachedDoor.Parent end)
+        if ok and parent then return cachedDoor end
+        cachedDoor = nil
+    end
+    local casino = PERF.ws("Casino")
+    local door = casino and casino:FindFirstChild("RobberyDoor")
+    if door then cachedDoor = door end
+    return door
+end
+
+local function readCasinoCode()
+    local casino = PERF.ws("Casino")
+    if not casino then return nil, "Get closer to the casino" end
+    local okOpen, isOpen = pcall(function() return casino:GetAttribute("CasinoRobberyOpen") end)
+    if okOpen and isOpen == false then return nil, "Casino is closed" end
+    local door = getDoor()
+    local codesFolder = door and door:FindFirstChild("Codes")
+    if not codesFolder then return nil, "Get closer to the casino" end
+
+    local digits = {}
+    local axis
+    for _, v in ipairs(codesFolder:GetDescendants()) do
+        if v:IsA("TextLabel") then
+            local ok, t = pcall(function() return v.Text end)
+            if ok and type(t) == "string" and t:match("^%d$") then
+                local part, pos
+                pcall(function()
+                    part = v.Parent.Parent
+                    pos = part.Position
+                end)
+                if pos then
+                    if not axis then
+                        pcall(function()
+                            local r = part.CFrame.RightVector
+                            if pcall(function() return r.X + 0 end) then
+                                axis = Vector3.new(-r.X, -r.Y, -r.Z)
+                            end
+                        end)
+                    end
+                    table.insert(digits, { d = t, pos = pos })
+                end
+            end
+        end
+    end
+
+    if #digits < 4 then return nil, "Code not loaded yet, get closer to the casino" end
+
+    for _, e in ipairs(digits) do
+        if axis then
+            e.key = e.pos.X * axis.X + e.pos.Y * axis.Y + e.pos.Z * axis.Z
+        else
+            e.key = e.pos.X
+        end
+    end
+    table.sort(digits, function(a, b) return a.key < b.key end)
+
+    local code = ""
+    for _, e in ipairs(digits) do
+        code = code .. e.d
+    end
+    return code
+end
+
+local function showCasinoCode()
+    local code, err = readCasinoCode()
+    if code then
+        notify(code, "[JB Hub] Casino Code", 5)
+        pcall(function() setclipboard(code) end)
+    else
+        notify(err or "?", "[JB Hub] Casino Code", 3)
+    end
+end
+
+local function requestCasinoCode()
+    if tick() - lastCasinoShown < 0.6 then return end  
+    if not UI.GetValue(uid("casino")) then return end
+    lastCasinoShown = tick()
+    showCasinoCode()
+end
+
+local cachedCasinoRemote = nil
+local function getCasinoRemote()
+    if cachedCasinoRemote then
+        local ok, parent = pcall(function() return cachedCasinoRemote.Parent end)
+        if ok and parent then return cachedCasinoRemote end
+        cachedCasinoRemote = nil
+    end
+    local door = getDoor()
+    local keypad = door and door:FindFirstChild("Keypad")
+    local pad = keypad and keypad:FindFirstChild("Pad")
+    local remote = pad and pad:FindFirstChild("CasinoKeypadSubmit")
+    if remote then cachedCasinoRemote = remote end
+    return remote
+end
+
+local function openCasinoDoor()
+    local title = "[JB Hub] Open Casino Door"
+    local casino = PERF.ws("Casino")
+    local okOpen, isOpen = pcall(function() return casino and casino:GetAttribute("CasinoRobberyOpen") end)
+    if not (okOpen and isOpen == true) then
+        notify("Casino is closed", title, 3)
+        return
+    end
+    local okTeam, team = pcall(function() return LocalPlayer.Team and LocalPlayer.Team.Name end)
+    if okTeam and team ~= "Criminal" then
+        notify("You must be a criminal", title, 3)
+        return
+    end
+    local remote = getCasinoRemote()
+    if not remote then
+        notify("Casino keypad not found", title, 3)
+        return
+    end
+    local code, err = readCasinoCode()
+    if not code then
+        notify(err or "Code not found", title, 3)
+        return
+    end
+    pcall(function() setclipboard(code) end)
+    local door = getDoor()
+    local doorModel = door and door:FindFirstChild("Door")
+    if doorModel and doorModel:GetAttribute("DoorOpen") == true then
+        notify("The door is already open", title, 3)
+        return
+    end
+    if not pcall(function() remote:FireServer(code) end) then
+        notify("Failed to send the code", title, 3)
+        return
+    end
+    local t0 = tick()
+    while tick() - t0 < 2 do
+        if doorModel and doorModel:GetAttribute("DoorOpen") == true then
+            notify("Door opened with code " .. code, title, 4)
+            return
+        end
+        task.wait(0.1)
+    end
+    local okD, dist = pcall(function() return (remote.Parent.Position - getHRP().Position).Magnitude end)
+    if okD and type(dist) == "number" and dist > 12 then
+        notify("Door stayed closed, get closer to the keypad and retry", title, 4)
+    else
+        notify("Code " .. code .. " sent but the door stayed closed", title, 4)
+    end
+end
+
+local function requestCasinoOpen()
+    if tick() - lastCasinoOpen < 0.6 then return end
+    if not UI.GetValue(uid("casinoOpen")) then return end
+    lastCasinoOpen = tick() + 2
+    task.spawn(openCasinoDoor)
+end
+
+local function getPlasmaItem()
+    local folder = game:GetService("Players").LocalPlayer:FindFirstChild("Folder")
+    return folder and folder:FindFirstChild(PLASMA_ITEM_NAME)
+end
+
+local function getPlasmaRemote(name)
+    local item = getPlasmaItem()
+    return item and item:FindFirstChild(name)
+end
+
+local function getPlasmaAmmo()
+    local item = getPlasmaItem()
+    if not item then return nil end
+    return item:GetAttribute("AmmoCurrent")
+end
+
+local function isPlasmaReloading()
+    local item = getPlasmaItem()
+    if not item then return false end
+    return item:GetAttribute("IsReloading") == true
+end
+
+local PLASMA_TARGET_MODES = { "Police", "Criminal", "NPC Guards", "Mansion Boss" }
+
+PERF.GUARD = { MODES = { "Off", "Bodyguard" }, TEAMS = { "All", "Police", "Criminal", "None" } }
+
+local function getPlasmaTargetMode()
+    local idx = tonumber(UI.GetValue(uid("plasmaKillauraTarget"))) or 0
+    return PLASMA_TARGET_MODES[idx + 1] or "Police"
+end
+
+local plasmaDropMissAt = 0
+
+local function getPlasmaDropFolder()
+    local direct = PERF.ws("Drop")
+    if direct then return direct end
+    if tick() - plasmaDropMissAt < 2 then return nil end
+    for _, root in ipairs({ game, workspace }) do
+        for _, child in ipairs(root:GetChildren()) do
+            local drop = child:FindFirstChild("Drop")
+            if drop then return drop end
+        end
+    end
+    plasmaDropMissAt = tick()
+    return nil
+end
+
+local function getPlasmaTargetFromModel(model)
+    if not model or not model:IsA("Model") then return nil end
+    local hum = model:FindFirstChildOfClass("Humanoid")
+    if not hum or hum.Health <= 0 then return nil end
+    local hrp = model:FindFirstChild("HumanoidRootPart") or model.PrimaryPart or model:FindFirstChild("Head") or model:FindFirstChildWhichIsA("BasePart")
+    if not hrp then return nil end
+    return { humanoid = hum, hrp = hrp }
+end
+
+local function addPlasmaTargetsFromFolder(folder, list)
+    if not folder then return end
+    for _, npc in ipairs(folder:GetChildren()) do
+        local target = getPlasmaTargetFromModel(npc)
+        if target then
+            table.insert(list, target)
+        end
+    end
+end
+
+local plasmaContainerMissAt = {}
+
+local function findPlasmaContainer(name)
+    local direct = PERF.ws(name)
+    if direct then return direct end
+    if tick() - (plasmaContainerMissAt[name] or 0) < 2 then return nil end
+    for _, root in ipairs({ game, workspace }) do
+        for _, child in ipairs(root:GetChildren()) do
+            local found = child:FindFirstChild(name)
+            if found then return found end
+        end
+    end
+    plasmaContainerMissAt[name] = tick()
+    return nil
+end
+
+local function getPlasmaTargets()
+    local list = {}
+    local mode = getPlasmaTargetMode()
+    if mode == "NPC Guards" then
+        local drop = getPlasmaDropFolder()
+        addPlasmaTargetsFromFolder(drop and drop:FindFirstChild("NPCs"), list)
+        local mansion = findPlasmaContainer("MansionRobbery")
+        addPlasmaTargetsFromFolder(mansion and mansion:FindFirstChild("GuardsFolder"), list)
+        local oilRig = findPlasmaContainer("OilRig")
+        addPlasmaTargetsFromFolder(oilRig and oilRig:FindFirstChild("GuardsFolder"), list)
+        return list
+    end
+    if mode == "Mansion Boss" then
+        local mansion = findPlasmaContainer("MansionRobbery")
+        local target = getPlasmaTargetFromModel(mansion and mansion:FindFirstChild("ActiveBoss"))
+        if target then
+            table.insert(list, target)
+        end
+        return list
+    end
+    local lp = game:GetService("Players").LocalPlayer
+    for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
+        if player ~= lp and player.Team and player.Team.Name == mode then
+            local target = getPlasmaTargetFromModel(player.Character)
+            if target then
+                table.insert(list, target)
+            end
+        end
+    end
+    return list
+end
+
+local function isPlasmaTargetValid(target)
+    local ok, valid = pcall(function()
+        return target.humanoid.Parent ~= nil and target.hrp.Parent ~= nil and target.humanoid.Health > 0
+    end)
+    return ok and valid
+end
+
+local function isPlasmaEquipped()
+    local equipped = false
+    pcall(function()
+        local item = getPlasmaItem()
+        local counter = item and item:GetAttribute("InventoryItemLocalEquipped")
+        equipped = type(counter) == "number" and counter % 2 == 1
+    end)
+    return equipped
+end
+
+local function findInstantPlasmaEntries(raw)
+    local entries = {}
+    for _, e in ipairs(raw) do
+        local value = tonumber(tostring(e.value))
+        local addr = tonumber(e.addr)
+        if value and addr then
+            entries[#entries + 1] = { key = tostring(e.key), value = value, addr = addr }
+        end
+    end
+    for _, anchor in ipairs(entries) do
+        if anchor.key == "MagSize" and anchor.value == 20 then
+            local hasRange = false
+            for _, e in ipairs(entries) do
+                if e.key == "Range" and e.value == 200 and math.abs(e.addr - anchor.addr) <= INSTANT_PLASMA_WINDOW then
+                    hasRange = true
+                    break
+                end
+            end
+            if hasRange then
+                local picked = {}
+                for key in pairs(INSTANT_PLASMA_TARGETS) do
+                    local best, bestDist
+                    for _, e in ipairs(entries) do
+                        if e.key == key then
+                            local dist = math.abs(e.addr - anchor.addr)
+                            if dist <= INSTANT_PLASMA_WINDOW and (not bestDist or dist < bestDist) then
+                                best, bestDist = e, dist
+                            end
+                        end
+                    end
+                    if best then
+                        local ok, read = pcall(function() return memory_read("double", best.addr) end)
+                        if ok and type(read) == "number" and math.abs(read - best.value) < 0.0001 then
+                            picked[#picked + 1] = best
+                        end
+                    end
+                end
+                if #picked > 0 then return picked end
+            end
+        end
+    end
+    return nil
+end
+
+local function writePlasmaTargets(targets)
+    for _, e in ipairs(targets) do
+        local ok, cur = pcall(memory_read, "double", e.addr)
+        if not ok or type(cur) ~= "number" then return false end
+        local target = INSTANT_PLASMA_TARGETS[e.key]
+        if math.abs(cur - e.value) > 0.0001 and math.abs(cur - target) > 0.0001 then
+            return false
+        end
+    end
+    for _, e in ipairs(targets) do
+        pcall(function() memory_write("double", e.addr, INSTANT_PLASMA_TARGETS[e.key]) end)
+    end
+    return true
+end
+
+local function scanInstantPlasma()
+    for _ = 1, INSTANT_PLASMA_SCAN_TRIES do
+        local picked = findInstantPlasmaEntries(lockedGetgc(INSTANT_PLASMA_SCAN_KEYS))
+        if picked then return picked end
+        task.wait(1)
+    end
+    return nil
+end
+
+local function solveFlow(grid, requireFull, pause)
+    local H, W = #grid, #grid[1]
+    local N = H * W
+    local cell, ends, colors = {}, {}, {}
+    for r = 1, H do
+        for c = 1, W do
+            local v = grid[r][c]
+            local i = (r - 1) * W + c
+            cell[i] = v
+            if v >= 0 then
+                if not ends[v] then ends[v] = {} colors[#colors + 1] = v end
+                ends[v][#ends[v] + 1] = i
+            end
+        end
+    end
+    table.sort(colors)
+    for _, col in ipairs(colors) do
+        if #ends[col] ~= 2 then return nil end
+    end
+    local nb = {}
+    for i = 1, N do
+        local r, c = math.floor((i - 1) / W) + 1, (i - 1) % W + 1
+        local t = {}
+        if r > 1 then t[#t + 1] = i - W end
+        if r < H then t[#t + 1] = i + W end
+        if c > 1 then t[#t + 1] = i - 1 end
+        if c < W then t[#t + 1] = i + 1 end
+        nb[i] = t
+    end
+    local head, goal, done = {}, {}, {}
+    local isHead, isGoal = {}, {}
+    for _, col in ipairs(colors) do
+        head[col], goal[col] = ends[col][1], ends[col][2]
+        done[col] = false
+    end
+    local remaining = #colors
+    local steps, budget = 0, 2000000
+    local mark, stamp = {}, 0
+
+    local function rebuildTips()
+        for k in pairs(isHead) do isHead[k] = nil end
+        for k in pairs(isGoal) do isGoal[k] = nil end
+        for _, col in ipairs(colors) do
+            if not done[col] then
+                isHead[head[col]] = col
+                isGoal[goal[col]] = col
+            end
+        end
+    end
+
+    local function reachable(col)
+        stamp = stamp + 1
+        local s, e = head[col], goal[col]
+        local q, qh = { s }, 1
+        mark[s] = stamp
+        while q[qh] do
+            local cur = q[qh]
+            qh = qh + 1
+            local t = nb[cur]
+            for k = 1, #t do
+                local n = t[k]
+                if n == e then return true end
+                if mark[n] ~= stamp and cell[n] == -1 then
+                    mark[n] = stamp
+                    q[#q + 1] = n
+                end
+            end
+        end
+        return false
+    end
+
+    local function deadEnds()
+        for i = 1, N do
+            if cell[i] == -1 then
+                local free = 0
+                local t = nb[i]
+                for k = 1, #t do
+                    local n = t[k]
+                    if cell[n] == -1 or isHead[n] or isGoal[n] then free = free + 1 end
+                end
+                if free < 2 then return true end
+            end
+        end
+        return false
+    end
+
+    local function strandedRegion()
+        stamp = stamp + 1
+        local regionStamp = stamp
+        for i = 1, N do
+            if cell[i] == -1 and mark[i] ~= regionStamp then
+                local q, qh = { i }, 1
+                mark[i] = regionStamp
+                local heads, goals = {}, {}
+                while q[qh] do
+                    local cur = q[qh]
+                    qh = qh + 1
+                    local t = nb[cur]
+                    for k = 1, #t do
+                        local n = t[k]
+                        if cell[n] == -1 then
+                            if mark[n] ~= regionStamp then
+                                mark[n] = regionStamp
+                                q[#q + 1] = n
+                            end
+                        else
+                            local h, g = isHead[n], isGoal[n]
+                            if h then heads[h] = true end
+                            if g then goals[g] = true end
+                        end
+                    end
+                end
+                local ok = false
+                for col in pairs(heads) do
+                    if goals[col] then ok = true break end
+                end
+                if not ok then return true end
+            end
+        end
+        return false
+    end
+
+    local function valid()
+        rebuildTips()
+        for _, col in ipairs(colors) do
+            if not done[col] and not reachable(col) then return false end
+        end
+        if requireFull then
+            if deadEnds() then return false end
+            if strandedRegion() then return false end
+        end
+        return true
+    end
+
+    local function freeCount(i)
+        local f = 0
+        local t = nb[i]
+        for k = 1, #t do
+            if cell[t[k]] == -1 then f = f + 1 end
+        end
+        return f
+    end
+
+    local function movesFrom(col, tip, target)
+        local list, score = {}, {}
+        local t = nb[tip]
+        for k = 1, #t do
+            local n = t[k]
+            if n == target then
+                table.insert(list, 1, n)
+                score[n] = -1
+            elseif cell[n] == -1 then
+                list[#list + 1] = n
+                score[n] = freeCount(n)
+            end
+        end
+        table.sort(list, function(a, b) return score[a] < score[b] end)
+        return list
+    end
+
+    local function movesOf(col)
+        local a = movesFrom(col, head[col], goal[col])
+        if #a <= 1 then return a, false end
+        local b = movesFrom(col, goal[col], head[col])
+        if #b < #a then return b, true end
+        return a, false
+    end
+
+    local function full()
+        for i = 1, N do
+            if cell[i] == -1 then return false end
+        end
+        return true
+    end
+
+    local search
+    search = function()
+        steps = steps + 1
+        if steps > budget then return false end
+        if pause and steps % 2000 == 0 then pause() end
+        if remaining == 0 then return (not requireFull) or full() end
+        local best, bestMoves, bestSwap
+        for _, col in ipairs(colors) do
+            if not done[col] then
+                local moves, swap = movesOf(col)
+                if #moves == 0 then return false end
+                if not best or #moves < #bestMoves then
+                    best, bestMoves, bestSwap = col, moves, swap
+                    if #moves == 1 then break end
+                end
+            end
+        end
+        local col = best
+        if bestSwap then head[col], goal[col] = goal[col], head[col] end
+        local prev = head[col]
+        for _, n in ipairs(bestMoves) do
+            if n == goal[col] then
+                done[col] = true
+                remaining = remaining - 1
+                if valid() and search() then return true end
+                done[col] = false
+                remaining = remaining + 1
+            else
+                cell[n] = col
+                head[col] = n
+                if valid() and search() then return true end
+                cell[n] = -1
+                head[col] = prev
+            end
+        end
+        if bestSwap then head[col], goal[col] = goal[col], head[col] end
+        return false
+    end
+
+    if not valid() or not search() then return nil, steps end
+    local work, pairsOut = {}, {}
+    for r = 1, H do
+        work[r] = {}
+        for c = 1, W do work[r][c] = cell[(r - 1) * W + c] end
+    end
+    for _, col in ipairs(colors) do
+        local a, b = ends[col][1], ends[col][2]
+        pairsOut[col] = { { math.floor((a - 1) / W) + 1, (a - 1) % W + 1 }, { math.floor((b - 1) / W) + 1, (b - 1) % W + 1 } }
+    end
+    return work, pairsOut, colors, steps
+end
+
+local function traceFlowPath(solved, s, e)
+    local H, W = #solved, #solved[1]
+    local col = solved[s[1]][s[2]]
+    local DR, DC = { -1, 1, 0, 0 }, { 0, 0, -1, 1 }
+    local path, seen, total = {}, {}, 0
+    for r = 1, H do
+        for c = 1, W do
+            if solved[r][c] == col then total = total + 1 end
+        end
+    end
+    local function dfs(r, c)
+        path[#path + 1] = { r, c }
+        seen[r * 100 + c] = true
+        if r == e[1] and c == e[2] then
+            if #path == total then return true end
+            path[#path] = nil
+            seen[r * 100 + c] = nil
+            return false
+        end
+        for d = 1, 4 do
+            local nr, nc = r + DR[d], c + DC[d]
+            if nr >= 1 and nr <= H and nc >= 1 and nc <= W and not seen[nr * 100 + nc] and solved[nr][nc] == col then
+                if dfs(nr, nc) then return true end
+            end
+        end
+        path[#path] = nil
+        seen[r * 100 + c] = nil
+        return false
+    end
+    if not dfs(s[1], s[2]) then
+        path, seen, total = {}, {}, 0
+        local function any(r, c)
+            path[#path + 1] = { r, c }
+            seen[r * 100 + c] = true
+            if r == e[1] and c == e[2] then return true end
+            for d = 1, 4 do
+                local nr, nc = r + DR[d], c + DC[d]
+                if nr >= 1 and nr <= H and nc >= 1 and nc <= W and not seen[nr * 100 + nc] and solved[nr][nc] == col then
+                    if any(nr, nc) then return true end
+                end
+            end
+            path[#path] = nil
+            return false
+        end
+        any(s[1], s[2])
+    end
+    return path
+end
+
+local function readFlowPuzzle()
+    local gui = game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("FlowGui")
+    local inner = gui and gui:FindFirstChild("Board") and gui.Board:FindFirstChild("Inner")
+    if not inner then return nil end
+    local labels, W, H = {}, 0, 0
+    for _, label in ipairs(inner:GetChildren()) do
+        local x, y = string.match(label.Name, "^(%d+)%.(%d+)$")
+        x, y = tonumber(x), tonumber(y)
+        if x and y then
+            labels[y * 100 + x] = label
+            if x > W then W = x end
+            if y > H then H = y end
+        end
+    end
+    if W == 0 or not labels[101] then return nil end
+    local grid, counts = {}, {}
+    for r = 1, H do
+        grid[r] = {}
+        for c = 1, W do
+            local l = labels[r * 100 + c]
+            local v = (l and tonumber(l.Text)) or -1
+            grid[r][c] = v
+            if v >= 0 then counts[v] = (counts[v] or 0) + 1 end
+        end
+    end
+    local id = tostring(labels[101].Address) .. ":" .. W .. "x" .. H
+    local clean = PERF.flowClean
+    local dirty = false
+    if clean and clean.id == id then
+        for r = 1, H do
+            for c = 1, W do
+                if grid[r][c] ~= clean.grid[r][c] then dirty = true end
+            end
+        end
+        grid = clean.grid
+    else
+        for _, n in pairs(counts) do
+            if n ~= 2 then return nil, "dirty" end
+        end
+        local key = {}
+        for r = 1, H do key[r] = table.concat(grid[r], ",") end
+        PERF.flowClean = { id = id, grid = grid, key = table.concat(key, ";") }
+        clean = PERF.flowClean
+    end
+    local p11 = labels[101].AbsolutePosition
+    local pitchX = W > 1 and (labels[100 + W].AbsolutePosition.X - p11.X) / (W - 1) or 0
+    local pitchY = H > 1 and (labels[H * 100 + 1].AbsolutePosition.Y - p11.Y) / (H - 1) or 0
+    local scale = FLOW_SCALE
+    local okV, vpX = pcall(function() return workspace.CurrentCamera.ViewportSize.X end)
+    local boardX = (p11.X + labels[100 + W].AbsolutePosition.X) / 2 + pitchX * 0.25
+    if okV and type(vpX) == "number" and boardX > 0 then
+        local s = (vpX / 2) / boardX
+        if s > 0.5 and s < 4 then scale = s end
+    end
+    local function center(r, c)
+        local p = labels[r * 100 + c].AbsolutePosition
+        return (p.X + pitchX * 0.25) * scale, (p.Y + pitchY * 0.25) * scale
+    end
+    return { labels = labels, grid = grid, W = W, H = H, center = center, key = clean.key, dirty = dirty }
+end
+
+local function isFlowOpen()
+    local gui = game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("FlowGui")
+    local board = gui and gui:FindFirstChild("Board")
+    local inner = board and board:FindFirstChild("Inner")
+    return inner ~= nil and inner:FindFirstChild("1.1") ~= nil
+end
+
+local function solveFlowPuzzle(puzzle)
+    local cached = PERF.flowSolved
+    if cached and cached.key == puzzle.key then return cached.solved, cached.ends, cached.colors end
+    while PERF.flowBusy do task.wait(0.05) end
+    cached = PERF.flowSolved
+    if cached and cached.key == puzzle.key then return cached.solved, cached.ends, cached.colors end
+    PERF.flowBusy = true
+    local pause = function() task.wait() end
+    local ok, solved, ends, colors = pcall(solveFlow, puzzle.grid, true, pause)
+    if not (ok and solved) then ok, solved, ends, colors = pcall(solveFlow, puzzle.grid, false, pause) end
+    PERF.flowBusy = false
+    if not ok then solved, ends, colors = nil, nil, nil end
+    PERF.flowSolved = { key = puzzle.key, solved = solved, ends = ends, colors = colors }
+    return solved, ends, colors
+end
+
+local function readFlowColor(label)
+    local ok, color = pcall(function()
+        local c = label.BackgroundColor3
+        local r, g, b = c.R, c.G, c.B
+        if type(r) ~= "number" or (r + g + b) <= 0 then return nil end
+        if r > 1 or g > 1 or b > 1 then return Color3.fromRGB(r, g, b) end
+        return Color3.new(r, g, b)
+    end)
+    if ok then return color end
+    return nil
+end
+
+local function autoSolveFlow()
+    local title = "[JB Hub] Auto-Solve Puzzle"
+    local puzzle, why = readFlowPuzzle()
+    if not puzzle then
+        notify(why == "dirty" and "Press Reset on the puzzle first" or "Open the puzzle first", title, 3)
+        return
+    end
+    notify("Starting in " .. FLOW_START_DELAY .. "s...", title, FLOW_START_DELAY)
+    local solved, ends, colors = solveFlowPuzzle(puzzle)
+    task.wait(FLOW_START_DELAY)
+    puzzle = readFlowPuzzle()
+    if not puzzle then
+        notify("Open the puzzle first", title, 3)
+        return
+    end
+    if not solved then
+        notify("No solution found", title, 3)
+        return
+    end
+    local function cell(r, c)
+        local x, y = puzzle.center(r, c)
+        return math.floor(x + 0.5), math.floor(y + 0.5)
+    end
+    local curX, curY = cell(1, 1)
+    mousemoveabs(curX, curY)
+    task.wait(FLOW_SETTLE_WAIT)
+    local function glideTo(x, y, slow)
+        local sx, sy = curX, curY
+        for i = 1, FLOW_STEP_COUNT do
+            local t = i / FLOW_STEP_COUNT
+            mousemoveabs(math.floor(sx + (x - sx) * t + 0.5), math.floor(sy + (y - sy) * t + 0.5))
+            task.wait(FLOW_STEP_WAIT * slow)
+        end
+        curX, curY = x, y
+    end
+    local function settle(slow)
+        task.wait(FLOW_SETTLE_WAIT * slow)
+        mousemoverel(1, 0)
+        task.wait(FLOW_STEP_WAIT * 2)
+        mousemoverel(-1, 0)
+        task.wait(FLOW_SETTLE_WAIT * slow)
+    end
+    local function textOf(r, c)
+        local ok, v = pcall(function() return tonumber(puzzle.labels[r * 100 + c].Text) end)
+        return ok and v or nil
+    end
+    local function drawn(col, path)
+        local s = path[1]
+        if textOf(s[1], s[2]) ~= col then return true end
+        for i = 2, #path - 1 do
+            if textOf(path[i][1], path[i][2]) ~= col then return false end
+        end
+        return true
+    end
+    local function draw(path, slow)
+        local x, y = cell(path[1][1], path[1][2])
+        glideTo(x, y, slow)
+        settle(slow)
+        mouse1press()
+        task.wait(FLOW_PRESS_WAIT * slow)
+        for i = 2, #path do
+            x, y = cell(path[i][1], path[i][2])
+            glideTo(x, y, slow)
+            task.wait(FLOW_CELL_WAIT * slow)
+        end
+        settle(slow)
+        mouse1release()
+        task.wait(FLOW_RELEASE_WAIT * slow)
+    end
+    if puzzle.dirty then
+        for _, col in ipairs(colors) do
+            local s = ends[col][1]
+            local x, y = cell(s[1], s[2])
+            glideTo(x, y, 1)
+            settle(1)
+            mouse1press()
+            task.wait(FLOW_PRESS_WAIT)
+            mouse1release()
+            task.wait(FLOW_RELEASE_WAIT)
+        end
+    end
+    local failed, adjacent = 0, {}
+    for _, col in ipairs(colors) do
+        if not isFlowOpen() then break end
+        local path = traceFlowPath(solved, ends[col][1], ends[col][2])
+        if #path <= 2 then
+            adjacent[#adjacent + 1] = path
+        else
+            draw(path, 1)
+            if not drawn(col, path) then
+                draw(path, 2.5)
+                if not drawn(col, path) then failed = failed + 1 end
+            end
+        end
+    end
+    if #adjacent > 0 then
+        local t1 = tick()
+        while isFlowOpen() and tick() - t1 < 0.6 do task.wait(0.1) end
+        for _, path in ipairs(adjacent) do
+            if not isFlowOpen() then break end
+            draw(path, 1)
+        end
+    end
+    local t0 = tick()
+    while tick() - t0 < FLOW_SOLVED_TIMEOUT do
+        if not isFlowOpen() then
+            notify("Puzzle solved!", title, 3)
+            return
+        end
+        task.wait(0.1)
+    end
+    notify(failed > 0 and (failed .. " path(s) could not be drawn, press the key again") or "Paths drawn but puzzle still open", title, 4)
+end
+
+local flowLines = {}
+local function clearFlowLines()
+    for _, l in ipairs(flowLines) do pcall(function() l:Remove() end) end
+    flowLines = {}
+end
+
+local function showFlowPath(puzzle)
+    local colorOf, nextIndex = {}, 1
+    for r = 1, puzzle.H do
+        for c = 1, puzzle.W do
+            local v = puzzle.grid[r][c]
+            if v >= 0 and not colorOf[v] then
+                colorOf[v] = FLOW_BASE_COLORS[nextIndex] or readFlowColor(puzzle.labels[r * 100 + c]) or Color3.fromHSV(math.random(), 1, 1)
+                nextIndex = nextIndex + 1
+            end
+        end
+    end
+    local solved, ends, colors = solveFlowPuzzle(puzzle)
+    if not solved or not isFlowOpen() then return false end
+    for _, col in ipairs(colors) do
+        local path = traceFlowPath(solved, ends[col][1], ends[col][2])
+        for i = 1, #path - 1 do
+            local x1, y1 = puzzle.center(path[i][1], path[i][2])
+            local x2, y2 = puzzle.center(path[i + 1][1], path[i + 1][2])
+            local l = Drawing.new("Line")
+            l.From = Vector2.new(x1, y1)
+            l.To = Vector2.new(x2, y2)
+            l.Color = colorOf[col]
+            l.Thickness = FLOW_PATH_THICKNESS
+            l.Transparency = 1
+            l.ZIndex = 10
+            l.Visible = true
+            flowLines[#flowLines + 1] = l
+        end
+    end
+    return true
+end
+
+local function getEspTextSize(dist, scale)
+    local t = math.clamp((dist - ESP_TEXT_NEAR) / (ESP_TEXT_FAR - ESP_TEXT_NEAR), 0, 1)
+    local size = (ESP_TEXT_SIZE - (ESP_TEXT_SIZE - ESP_TEXT_MIN) * t) * scale
+    return math.max(ESP_TEXT_MIN, math.floor(size + 0.5))
+end
+
+local function newEspDrawing(info)
+    local box = Drawing.new("Square")
+    box.Filled = false
+    box.Color = info.color
+    box.Visible = false
+    pcall(function() box.Thickness = 1.5 end)
+    local label = Drawing.new("Text")
+    label.Color = info.color
+    label.Visible = false
+    pcall(function() label.Center = true end)
+    pcall(function() label.Outline = true end)
+    pcall(function() label.Font = Drawing.Fonts.Fortnite or Drawing.Fonts.System end)
+    return { box = box, label = label, color = nil, shown = false }
+end
+
+local function newBountyDrawing(color)
+    local function text()
+        local t = Drawing.new("Text")
+        t.Color = color
+        t.Visible = false
+        pcall(function() t.Center = true end)
+        pcall(function() t.Outline = true end)
+        pcall(function() t.OutlineColor = ESP_TARGETS.Bounty.gameOutline end)
+        pcall(function() t.Font = Drawing.Fonts.Fortnite or Drawing.Fonts.System end)
+        return t
+    end
+    return { label = text(), foot = text(), color = color, shown = false }
+end
+
+local function removeEspDrawing(d)
+    if d.box then pcall(function() d.box:Remove() end) end
+    if d.label then pcall(function() d.label:Remove() end) end
+    if d.foot then pcall(function() d.foot:Remove() end) end
+end
+
+local function setEspVisible(d, show)
+    if d.shown == show then return end
+    d.shown = show
+    if d.box then pcall(function() d.box.Visible = show end) end
+    if d.label then pcall(function() d.label.Visible = show end) end
+    if d.foot then pcall(function() d.foot.Visible = show end) end
+end
+
+PERF.PART_COLOR = 0x11C -- update
+
+local function readEspColor(part)
+    local base = tonumber(part.Address)
+    if base and base > 4096 then
+        local okR, r = pcall(memory_read, "byte", base + PERF.PART_COLOR)
+        local okG, g = pcall(memory_read, "byte", base + PERF.PART_COLOR + 1)
+        local okB, b = pcall(memory_read, "byte", base + PERF.PART_COLOR + 2)
+        if okR and okG and okB and type(r) == "number" and type(g) == "number" and type(b) == "number" and (r + g + b) > 0 then
+            return Color3.fromRGB(r, g, b)
+        end
+    end
+    local ok, color = pcall(function()
+        local c = part.Color
+        local r, g, b = c.R, c.G, c.B
+        if type(r) ~= "number" or (r + g + b) <= 0 then return nil end
+        if r > 1 or g > 1 or b > 1 then return Color3.fromRGB(r, g, b) end
+        return Color3.new(r, g, b)
+    end)
+    if ok then return color end
+    return nil
+end
+
+function PERF.espRel(t)
+    local ok0, p0 = pcall(function() return t.part.Position end)
+    if not ok0 or not p0 then return false end
+    local x0, y0, z0, x1, y1, z1 = math.huge, math.huge, math.huge, -math.huge, -math.huge, -math.huge
+    for _, bp in ipairs(t.boxParts) do
+        local ok, p = pcall(function() return bp.part.Position end)
+        if ok and p then
+            local h = bp.half
+            if p.X - h.X < x0 then x0 = p.X - h.X end
+            if p.Y - h.Y < y0 then y0 = p.Y - h.Y end
+            if p.Z - h.Z < z0 then z0 = p.Z - h.Z end
+            if p.X + h.X > x1 then x1 = p.X + h.X end
+            if p.Y + h.Y > y1 then y1 = p.Y + h.Y end
+            if p.Z + h.Z > z1 then z1 = p.Z + h.Z end
+        end
+    end
+    if x0 == math.huge then return false end
+    t.lo = Vector3.new(x0 - p0.X, y0 - p0.Y, z0 - p0.Z)
+    t.hi = Vector3.new(x1 - p0.X, y1 - p0.Y, z1 - p0.Z)
+    return true
+end
+
+local function readEspTarget(child, container, name)
+    name = name or child.Name
+    local info = ESP_TARGETS[name]
+    if not info or info.container ~= container then return nil end
+    if name == "Drop" and child:GetAttribute("BriefcaseCollected") == true then return nil end
+    local part
+    for _, partName in ipairs(info.parts) do
+        part = child:FindFirstChild(partName)
+        if part then break end
+    end
+    if not part then return nil end
+    local color = info.color
+    if info.colorFrom then
+        local colorSrc = child:FindFirstChild(info.colorFrom)
+        color = (colorSrc and readEspColor(colorSrc)) or info.color
+    end
+    local amount = nil
+    if info.amountFrom then
+        local value = child:FindFirstChild(info.amountFrom)
+        pcall(function() amount = value and value.Value end)
+    end
+    local boxParts = {}
+    local function addPart(d)
+        if #boxParts >= PERF.ESP_MAX_PARTS then return end
+        local okC, cls = pcall(function() return d.ClassName end)
+        if not okC or not PERF.ESP_PART_CLASS[cls] then return end
+        local okN, n = pcall(function() return d.Name end)
+        if okN and PERF.ESP_SKIP_PARTS[n] then return end
+        local okS, s = pcall(function() return d.Size end)
+        if okS and s and s.X <= PERF.ESP_MAX_PART_SIZE and s.Y <= PERF.ESP_MAX_PART_SIZE and s.Z <= PERF.ESP_MAX_PART_SIZE then
+            boxParts[#boxParts + 1] = { part = d, half = Vector3.new(s.X / 2, s.Y / 2, s.Z / 2) }
+        end
+    end
+    if info.box then
+        for _, n in ipairs(info.box) do addPart(child:FindFirstChild(n)) end
+    else
+        addPart(child)
+    end
+    local okK, kids = false, nil
+    if not info.box then okK, kids = pcall(function() return child:GetChildren() end) end
+    if okK then
+        for _, c in ipairs(kids) do
+            local okC, cls = pcall(function() return c.ClassName end)
+            if okC and cls == "Model" then
+                local okM, sub = pcall(function() return c:GetChildren() end)
+                if okM then
+                    for _, cc in ipairs(sub) do addPart(cc) end
+                end
+            else
+                addPart(c)
+            end
+        end
+    end
+    if #boxParts == 0 then
+        local s = part.Size
+        boxParts[1] = { part = part, half = Vector3.new(s.X / 2, s.Y / 2, s.Z / 2) }
+    end
+    local t = {
+        id = part.Address,
+        part = part,
+        model = child,
+        boxParts = boxParts,
+        name = name,
+        info = info,
+        color = color,
+        title = amount and (info.label .. " $" .. tostring(amount)) or info.label,
+        checkAt = 0,
+        relAt = 0,
+        gone = false,
+    }
+    PERF.espRel(t)
+    return t
+end
+
+local function readEspCFrame(part)
+    return part.CFrame
+end
+
+function PERF.toColor(a, g, b)
+    if typeof(a) == "Color3" then return a end
+    local r
+    if type(a) == "table" then
+        r, g, b = a.R or a.r or a[1], a.G or a.g or a[2], a.B or a.b or a[3]
+    else
+        r = a
+    end
+    r, g, b = tonumber(r), tonumber(g), tonumber(b)
+    if not (r and g and b) then return nil end
+    if r > 1 or g > 1 or b > 1 then return Color3.fromRGB(r, g, b) end
+    return Color3.new(r, g, b)
+end
+
+local function getBountyColor(amount)
+    local mode = tonumber(UI.GetValue(uid("bountyColorMode"))) or 0
+    if mode == 1 then
+        local ok, c = pcall(function() return PERF.toColor(UI.GetValue(uid("bountyColor"))) end)
+        return (ok and c) or PERF.bountyColor
+    end
+    return ESP_TARGETS.Bounty.gameColor
+end
+
+function PERF.readBountyRaw()
+    local data = game:GetService("ReplicatedStorage"):FindFirstChild("BountyData")
+    if not data then return nil end
+    local base = tonumber(data.Address)
+    if not base then return nil end
+    PERF.bountyOff = PERF.bountyOff or 0xA8 -- update
+    local function rd(a)
+        local ok, x = pcall(memory_read, "uintptr_t", a)
+        return ok and x or nil
+    end
+    local function str(a)
+        local size, cap = rd(a + 16), rd(a + 24)
+        if not size or not cap or size < 2 or size > 200000 or cap < size then return nil end
+        local p = cap > 15 and rd(a) or a
+        if not p or p < 4096 then return nil end
+        local okF, first = pcall(memory_read, "byte", p)
+        if not okF or first ~= 91 then return nil end
+        local parts = {}
+        for i = 0, size - 1, 4 do
+            local okI, w = pcall(memory_read, "int", p + i)
+            if not okI or type(w) ~= "number" then return nil end
+            if w < 0 then w = w + 4294967296 end
+            for b = 0, 3 do
+                if i + b < size then parts[#parts + 1] = string.char(math.floor(w / 256 ^ b) % 256) end
+            end
+        end
+        return table.concat(parts)
+    end
+    if PERF.bountyOff then
+        local s = str(base + PERF.bountyOff)
+        if s then return s end
+    end
+    for off = 0x40, 0x300, 8 do
+        local s = str(base + off)
+        if s then
+            PERF.bountyOff = off
+            return s
+        end
+    end
+    local okV, v = pcall(function() return data.Value end)
+    if okV and type(v) == "string" and #v < 255 and v:sub(1, 1) == "[" and v:sub(-1) == "]" then return v end
+    return nil
+end
+
+local function readBountyTargets(list)
+    local raw = PERF.readBountyRaw()
+    if not raw then return end
+    local entries = game:GetService("HttpService"):JSONDecode(raw)
+    if type(entries) ~= "table" then return end
+    local players = game:GetService("Players")
+    local lp = players.LocalPlayer
+    local info = ESP_TARGETS.Bounty
+    local minBounty = tonumber(UI.GetValue(uid("bountyMin"))) or 0
+    for _, e in ipairs(entries) do
+        local amount = type(e) == "table" and tonumber(e.Bounty)
+        local name = type(e) == "table" and e.Name
+        if amount and amount > 0 and amount >= minBounty and name then
+            pcall(function()
+                local p = players:FindFirstChild(name)
+                if not p or p == lp then return end
+                local hrp = p.Character and p.Character:FindFirstChild("HumanoidRootPart")
+                if not hrp then return end
+                local digits = tostring(math.floor(amount))
+                local money = (digits:reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
+                list[#list + 1] = {
+                    kind = "bounty",
+                    id = hrp.Address,
+                    part = hrp,
+                    name = "Bounty",
+                    info = info,
+                    color = getBountyColor(amount),
+                    title = "$" .. money,
+                    checkAt = 0,
+                    gone = false,
+                }
+            end)
+        end
+    end
+	return true
+end
+
+local function drawBountyTarget(t, d, rootPos, scale, now)
+    if now >= t.checkAt then
+        t.checkAt = now + PERF.ESP_PARENT_CHECK
+        if t.part.Parent == nil then t.gone = true end
+    end
+    if t.gone then return false end
+    local wpos = t.part.Position
+    local head, headOn = WorldToScreen(wpos + t.info.up)
+    local feet, feetOn = WorldToScreen(wpos + t.info.down)
+    if not headOn and not feetOn then return false end
+    local dist = rootPos and math.floor((rootPos - wpos).Magnitude) or 0
+    local textSize = math.min(getEspTextSize(dist, scale), t.info.textMax or 99)
+    if d.color ~= t.color then
+        pcall(function() d.label.Color = t.color end)
+        pcall(function() d.foot.Color = t.color end)
+        d.color = t.color
+    end
+    if d.textSize ~= textSize then
+        pcall(function() d.label.Size = textSize end)
+        pcall(function() d.foot.Size = textSize end)
+        d.textSize = textSize
+    end
+    if d.title ~= t.title then
+        d.label.Text = t.title
+        d.title = t.title
+    end
+    if d.dist ~= dist then
+        d.foot.Text = "[" .. dist .. "]"
+        d.dist = dist
+    end
+    local hx, hy = math.floor(head.X + 0.5), math.floor(head.Y + 0.5) - textSize - 2
+    if d.hx ~= hx or d.hy ~= hy then
+        d.label.Position = Vector2.new(hx, hy)
+        d.hx, d.hy = hx, hy
+    end
+    local fx, fy = math.floor(feet.X + 0.5), math.floor(feet.Y + 0.5) + 2
+    if d.fx ~= fx or d.fy ~= fy then
+        d.foot.Position = Vector2.new(fx, fy)
+        d.fx, d.fy = fx, fy
+    end
+    return true
+end
+
+local function getEspBounds(t)
+    local lo, hi = t.lo, t.hi
+    if not lo then return nil end
+    local p = t.part.Position
+    local ax, ay, az = p.X + lo.X, p.Y + lo.Y, p.Z + lo.Z
+    local bx, by, bz = p.X + hi.X, p.Y + hi.Y, p.Z + hi.Z
+    local minX, minY, maxX, maxY = math.huge, math.huge, -math.huge, -math.huge
+    local anyOn = false
+    for i = 0, 7 do
+        local sp, on = WorldToScreen(Vector3.new(i % 2 == 0 and ax or bx, i % 4 < 2 and ay or by, i < 4 and az or bz))
+        if on then anyOn = true end
+        if sp.X < minX then minX = sp.X end
+        if sp.Y < minY then minY = sp.Y end
+        if sp.X > maxX then maxX = sp.X end
+        if sp.Y > maxY then maxY = sp.Y end
+    end
+    if not anyOn then return nil end
+    return minX, minY, maxX, maxY, Vector3.new((ax + bx) / 2, (ay + by) / 2, (az + bz) / 2)
+end
+
+local function drawEspTarget(t, d, rootPos, scale, now)
+    if now >= t.checkAt then
+        t.checkAt = now + PERF.ESP_PARENT_CHECK
+        if t.part.Parent == nil then
+            t.gone = true
+        elseif t.name == "Drop" and t.model:GetAttribute("BriefcaseCollected") == true then
+            t.gone = true
+        end
+    end
+    if t.gone then return false end
+    if now >= t.relAt then
+        t.relAt = now + 1
+        PERF.espRel(t)
+    end
+    local okB, minX, minY, maxX, maxY, wpos = pcall(getEspBounds, t)
+    if not okB or not minX then return false end
+    local boxMin = t.info.boxMin or ESP_BOX_MIN
+    local w = math.floor(math.max(maxX - minX + ESP_BOX_PADDING * 2, boxMin) + 0.5)
+    local h = math.floor(math.max(maxY - minY + ESP_BOX_PADDING * 2, boxMin) + 0.5)
+    local x = math.floor((minX + maxX) / 2 - w / 2 + 0.5)
+    local y = math.floor((minY + maxY) / 2 - h / 2 + 0.5)
+    local dist = rootPos and math.floor((rootPos - wpos).Magnitude) or 0
+    local textSize = math.min(getEspTextSize(dist, scale), 13)
+    if t.info.textMin then textSize = math.max(textSize, t.info.textMin) end
+    if d.color ~= t.color then
+        pcall(function() d.box.Color = t.color end)
+        pcall(function() d.label.Color = t.color end)
+        d.color = t.color
+    end
+    if d.w ~= w or d.h ~= h then
+        d.box.Size = Vector2.new(w, h)
+        d.w, d.h = w, h
+    end
+    if d.x ~= x or d.y ~= y then
+        d.box.Position = Vector2.new(x, y)
+        d.x, d.y = x, y
+    end
+    if d.textSize ~= textSize then
+        pcall(function() d.label.Size = textSize end)
+        d.textSize = textSize
+    end
+    if d.dist ~= dist or d.title ~= t.title then
+        d.label.Text = string.format("%s  [%d]", t.title, dist)
+        d.dist, d.title = dist, t.title
+    end
+    local lx, ly = math.floor(x + w / 2 + 0.5), y - textSize - 2
+    if d.lx ~= lx or d.ly ~= ly then
+        d.label.Position = Vector2.new(lx, ly)
+        d.lx, d.ly = lx, ly
+    end
+    return true
+end
+
+local function vaultReadPos(part)
+    local ok, pos = pcall(function() return part.Position end)
+    if ok and pos and pcall(function() return pos.X + 0 end) then return pos end
+    return nil
+end
+
+local function vaultReadColor(part)
+    local ok, r, g, b = pcall(function()
+        local c = part.Color
+        return c.R, c.G, c.B
+    end)
+    if ok and type(r) == "number" then return r, g, b end
+    return nil
+end
+
+local function vaultIsWhite(r, g, b)
+    return r ~= nil and g >= 100 and b >= 100
+end
+
+local function findNearestVault()
+    local char = game:GetService("Players").LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    local me = hrp and vaultReadPos(hrp)
+    if not me then return nil end
+    local casino = PERF.ws("Casino")
+    local vaults = casino and casino:FindFirstChild("HackableVaults")
+    if not vaults then return nil end
+    local best, bestDist = nil, math.huge
+    for _, v in ipairs(vaults:GetChildren()) do
+        local inner = v:FindFirstChild("InnerModel")
+        local puzzle = inner and inner:FindFirstChild("Puzzle")
+        local dial = puzzle and puzzle:FindFirstChild("InnerModel")
+        local ptr = dial and dial:FindFirstChild("LightPtr")
+        local anchor = puzzle and puzzle:FindFirstChild("Part")
+        local pos = anchor and vaultReadPos(anchor)
+        if ptr and pos then
+            local d = (pos - me).Magnitude
+            if d < bestDist then
+                local light
+                pcall(function() light = ptr.Value end)
+                best = {
+                    light = light,
+                    request = puzzle:FindFirstChild("RequestHack"),
+                    update = puzzle:FindFirstChild("UpdateDirection"),
+                }
+                bestDist = d
+            end
+        end
+    end
+    if best and bestDist <= VAULT.START_RANGE then return best end
+    return nil
+end
+
+local function crackVault(target)
+    local function active()
+        return _G.JB_gen == myGen and UI.GetValue(uid("autoVault")) and true or false
+    end
+    local restarts = 0
+    local whites = 0
+    local wasWhite = false
+    local lastPress = 0
+
+    local function requestHack()
+        restarts = restarts + 1
+        pcall(function() target.request:FireServer() end)
+        return tick()
+    end
+
+    notify("Starting in " .. VAULT.START_DELAY .. "s...", VAULT.TITLE, VAULT.START_DELAY)
+    task.wait(VAULT.START_DELAY)
+    if not active() then
+        notify("Stopped", VAULT.TITLE, 3)
+        return
+    end
+    local lastProgress = requestHack()
+
+    while active() do
+        local r, g, b = vaultReadColor(target.light)
+        local white = vaultIsWhite(r, g, b)
+        if white and not wasWhite and tick() - lastPress >= VAULT.PRESS_GAP then
+            pcall(function() target.update:FireServer() end)
+            lastPress = tick()
+            lastProgress = tick()
+            whites = whites + 1
+            if whites >= VAULT.WHITES_NEEDED then
+                notify("Vault cracked!", VAULT.TITLE, 4)
+                return
+            end
+            notify(whites .. "/" .. VAULT.WHITES_NEEDED, VAULT.TITLE, 1)
+        end
+        wasWhite = white
+        if tick() - lastProgress >= VAULT.RESTART_AFTER then
+            if restarts >= VAULT.MAX_RESTARTS then
+                notify("No white light, try another vault", VAULT.TITLE, 4)
+                return
+            end
+            whites = 0
+            lastProgress = requestHack()
+        end
+        task.wait(VAULT.TICK)
+    end
+    notify("Stopped", VAULT.TITLE, 3)
+end
+
+PERF.CFG = {
+    ROOT = "JB Hub",
+    DIR = "JB Hub/config",
+    TITLE = "[JB Hub] Config",
+    EXTRA = { "nofallMethod", "bountyColor", "bountyColorMode", "bountyMin", "hitSoundName", "hitMarkerStyle", "plasmaKillauraTarget", "skinName", "skinTarget", "skyColorPreset", "waterColor", "waterSea", "timePreset", "timeHour", "timeSpeed", "engineBoostMult", "autoTaserRange", "carFlySpeed", "npcRange", "hbX", "hbY", "hbZ", "elevFloor", "guardMode", "guardShootDist", "guardFreq", "guardProtect", "guardFollow", "guardTeam", "guardSpread", },
+}
+
+pcall(function()
+    makefolder(PERF.CFG.ROOT)
+    makefolder(PERF.CFG.DIR)
+end)
+
+function PERF.CFG.ids()
+    local list = {}
+    for _, k in ipairs(PERF.CFG.EXTRA) do list[#list + 1] = k end
+    for _, slot in ipairs(COSMETICS.SLOTS) do list[#list + 1] = slot.id end
+    for _, k in ipairs(ALL_IDS) do list[#list + 1] = k end
+    return list
+end
+
+function PERF.CFG.clean(name)
+    name = tostring(name or ""):gsub("[^%w _%-]", ""):gsub("^%s+", ""):gsub("%s+$", "")
+    return name:sub(1, 32)
+end
+
+function PERF.CFG.pack(v)
+    local t = type(v)
+    if t == "boolean" or t == "number" or t == "string" then return v end
+    if typeof(v) == "Color3" then return { c3 = { v.R, v.G, v.B } } end
+    if t == "table" then
+        local out = {}
+        for k, x in pairs(v) do
+            if type(x) ~= "number" and type(x) ~= "boolean" then return nil end
+            out[k] = x
+        end
+        return out
+    end
+    return nil
+end
+
+function PERF.CFG.unpack(v)
+    if type(v) == "table" and type(v.c3) == "table" then
+        return Color3.new(v.c3[1] or 0, v.c3[2] or 0, v.c3[3] or 0)
+    end
+    return v
+end
+
+PERF.CFG.KEYS = { "resetBindKey", "puzzleSolveKey", "casinoKey", "casinoOpenKey", "autoVaultKey", "plasmaKillauraKey", "killNpcsKey", "carFlyKey", "engineBoostKey", "instantBrakeKey", "autoCuffKey", "autoTaserKey", "cosmeticsKey" }
+
+function PERF.CFG.kb(id)
+    local H = PERF.holdKb or {}
+    local map = {
+        resetBindKey = H.reset, puzzleSolveKey = H.puzzle, casinoKey = H.casino, casinoOpenKey = H.casinoOpen,
+        autoVaultKey = H.vault, cosmeticsKey = H.cosmetics, plasmaKillauraKey = PERF.kaKeybind,
+        killNpcsKey = PERF.killKeybind, autoCuffKey = PERF.cuffKeybind, autoTaserKey = PERF.taseKeybind,
+        carFlyKey = VEHICLE.flyKeybind, engineBoostKey = VEHICLE.boostKeybind, instantBrakeKey = VEHICLE.brakeKeybind,
+    }
+    return map[id]
+end
+
+function PERF.CFG.readKey(id)
+    local kb = PERF.CFG.kb(id)
+    local out = {}
+    if kb then
+        local okK, k = pcall(function() return kb:GetKey() end)
+        if okK and type(k) == "number" then out.key = k end
+        local okM, m = pcall(function() return kb:GetMode() end)
+        if okM and type(m) == "string" then out.mode = m end
+    end
+    if out.key == nil then
+        local okV, v = pcall(UI.GetValue, uid(id))
+        if okV and type(v) == "number" then out.key = v end
+    end
+    return out.key ~= nil and out or nil
+end
+
+function PERF.CFG.writeKey(id, data)
+    if type(data) ~= "table" or type(data.key) ~= "number" then return end
+    local kb = PERF.CFG.kb(id)
+    local done = false
+    if kb then
+        done = pcall(function() kb:SetKey(data.key) end)
+        if data.mode then pcall(function() kb:SetMode(data.mode) end) end
+    end
+    if not done then pcall(UI.SetValue, uid(id), data.key) end
+end
+
+function PERF.CFG.save()
+    local C = PERF.CFG
+    local name = C.clean(UI.GetValue(uid("cfgName")))
+    if name == "" then notify("Enter a config name", C.TITLE, 3) return end
+    local data = {}
+    for _, k in ipairs(C.ids()) do
+        local ok, v = pcall(UI.GetValue, uid(k))
+        local packed = ok and C.pack(v)
+        if packed ~= nil then data[k] = packed end
+    end
+    local keys = {}
+    for _, id in ipairs(C.KEYS) do
+        local d = C.readKey(id)
+        if d then keys[id] = d end
+    end
+    data.__keys = keys
+    local okE, json = pcall(function() return game:GetService("HttpService"):JSONEncode(data) end)
+    local okW = okE and pcall(writefile, C.DIR .. "/" .. name .. ".json", json)
+    notify(okW and ("Config saved: " .. name) or "Failed to save config", C.TITLE, 3)
+end
+
+function PERF.CFG.load()
+    local C = PERF.CFG
+    local name = C.clean(UI.GetValue(uid("cfgName")))
+    if name == "" then notify("Enter a config name", C.TITLE, 3) return end
+    local path = C.DIR .. "/" .. name .. ".json"
+    if not isfile(path) then notify("Config not found: " .. name, C.TITLE, 3) return end
+    local okR, raw = pcall(readfile, path)
+    local okD, data = pcall(function() return game:GetService("HttpService"):JSONDecode(raw) end)
+    if not (okR and okD and type(data) == "table") then notify("Config is corrupted", C.TITLE, 3) return end
+    for _, k in ipairs(C.ids()) do
+        if data[k] ~= nil then pcall(UI.SetValue, uid(k), C.unpack(data[k])) end
+    end
+    if type(data.__keys) == "table" then
+        for id, d in pairs(data.__keys) do C.writeKey(id, d) end
+    end
+    notify("Config loaded: " .. name, C.TITLE, 3)
+end
+
+function PERF.CFG.reset()
+    local C = PERF.CFG
+    local defaults = {
+        nofallMethod = 0, bountyColorMode = 0, bountyMin = 0, hitSoundName = 0, hitMarkerStyle = 0,
+        plasmaKillauraTarget = 0, skinName = 0, skinTarget = 0, skyColorPreset = 0, waterColor = 0,
+        waterSea = 32, timePreset = 0, timeHour = 12, timeSpeed = 1, npcRange = 150,
+        hbX = 10, hbY = 8, hbZ = 10, elevFloor = 0,
+        guardMode = 0, guardShootDist = 400, guardFreq = 3, guardProtect = 80, guardFollow = true, guardTeam = 0, guardSpread = true,
+        engineBoostMult = VEHICLE.BOOST_DEFAULT, carFlySpeed = VEHICLE.FLY_DEFAULT_SPEED,
+        autoTaserRange = PERF.TASE.RANGE,
+    }
+    PERF.muteNotifyUntil = tick() + 3
+    for _, k in ipairs(ALL_IDS) do pcall(UI.SetValue, uid(k), false) end
+    for _, slot in ipairs(COSMETICS.SLOTS) do pcall(UI.SetValue, uid(slot.id), 0) end
+    for k, v in pairs(defaults) do pcall(UI.SetValue, uid(k), v) end
+    PERF.rawNotify("All settings reset to defaults", C.TITLE, 3)
+end
+
+PERF.ONLINE = {
+    URL = "https://jb-hub-online.uhq7k.workers.dev",
+    INTERVAL = 300,
+    count = nil,
+}
+
+function PERF.ONLINE.leave()
+    local O = PERF.ONLINE
+    if not O.sid or O.left then return end
+    O.left = true
+    pcall(function() game:HttpGet(O.URL .. "/leave?id=" .. O.sid) end)
+end
+
+function PERF.ONLINE.text()
+    local O = PERF.ONLINE
+    if O.count then return O.count .. (O.count == 1 and " user online" or " users online") end
+    return "Connecting..."
+end
+
+PERF.ROLES = {
+    TITLE = "[JB Hub] Roles",
+    INTERVAL = 5,
+    DEFAULT = "JB Hub",
+    COLOR = Color3.fromRGB(125, 150, 255),
+    COLORS = { Owner = Color3.fromRGB(255, 200, 60), Tester = Color3.fromRGB(90, 220, 140) },
+    SIZE_NEAR = 15,
+    SIZE_FAR = 9,
+    NEAR = 30,
+    FAR = 500,
+    OFFSET = Vector3.new(0, -3, 0),
+    PADDING = 4,
+    state = "off",
+    status = "Status: Off",
+    users = {},
+    tags = {},
+    labels = {},
+    sizes = {},
+}
+
+function PERF.ROLES.query()
+    if PERF.ROLES.state == "off" then return "" end
+    local lp = game:GetService("Players").LocalPlayer
+    return "&job=" .. tostring(game.JobId) .. "&uid=" .. tostring(lp.UserId)
+end
+
+function PERF.ROLES.ping()
+    local R, O = PERF.ROLES, PERF.ONLINE
+    if not O.sid then return false end
+    local ok, body = pcall(function() return game:HttpGet(O.URL .. "/ping?id=" .. O.sid .. R.query()) end)
+    local okD, data = pcall(function() return game:GetService("HttpService"):JSONDecode(body) end)
+    if not (ok and okD and type(data) == "table" and type(data.users) == "table") then return false end
+    if tonumber(data.online) then O.count = tonumber(data.online) end
+    local fresh = {}
+    for _, user in ipairs(data.users) do
+        local id = tonumber(user)
+        if id then fresh[id] = R.DEFAULT end
+    end
+    if type(data.roles) == "table" then
+        for user, role in pairs(data.roles) do
+            local id = tonumber(user)
+            if id and fresh[id] then fresh[id] = tostring(role) end
+        end
+    end
+    if not fresh[game:GetService("Players").LocalPlayer.UserId] then return false end
+    R.users = fresh
+    return true
+end
+
+function PERF.ROLES.release()
+    local R, O = PERF.ROLES, PERF.ONLINE
+    R.state = "off"
+    R.users = {}
+    if O.sid then pcall(function() game:HttpGet(O.URL .. "/ping?id=" .. O.sid) end) end
+end
+
+function PERF.ROLES.removeTag(userId)
+    local R = PERF.ROLES
+    local tag = R.tags[userId]
+    if tag then pcall(function() tag:Remove() end) end
+    R.tags[userId], R.labels[userId], R.sizes[userId] = nil, nil, nil
+end
+
+function PERF.ROLES.clear()
+    for userId in pairs(PERF.ROLES.tags) do PERF.ROLES.removeTag(userId) end
+end
+
+function PERF.ROLES.tag(userId, label, size)
+    local R = PERF.ROLES
+    local tag = R.tags[userId]
+    if not tag then
+        tag = Drawing.new("Text")
+        tag.Center = true
+        tag.Outline = true
+        tag.Visible = false
+        pcall(function() tag.Font = Drawing.Fonts.SystemBold or Drawing.Fonts.System end)
+        R.tags[userId] = tag
+    end
+    if R.labels[userId] ~= label then
+        tag.Text = "[" .. label .. "]"
+        tag.Color = R.COLORS[label] or R.COLOR
+        R.labels[userId] = label
+    end
+    if R.sizes[userId] ~= size then
+        pcall(function() tag.FontSize = size end)
+        pcall(function() tag.Size = size end)
+        R.sizes[userId] = size
+    end
+    return tag
+end
+
+task.spawn(function()
+    local R = PERF.ROLES
+    local last = 0
+    local function connectedText()
+        return "Status: Connected as " .. tostring(R.users[game:GetService("Players").LocalPlayer.UserId])
+    end
+    while _G.JB_gen == myGen do
+        PERF.run("rolesNet", function()
+            local wanted = UI.GetValue(uid("hubRoles")) and true or false
+            if R.state == "off" and wanted then
+                R.state = "connecting"
+                R.status = "Status: Connecting..."
+                pcall(UI.SetValue, uid("hubRoles"), false)
+                if R.ping() then
+                    R.state = "on"
+                    last = tick()
+                    R.status = connectedText()
+                    pcall(UI.SetValue, uid("hubRoles"), true)
+                    notify("Connected to JB Hub server", R.TITLE, 3)
+                else
+                    R.state = "off"
+                    R.status = "Status: Connection failed"
+                    notify("Could not reach JB Hub server", R.TITLE, 4)
+                end
+            elseif R.state == "on" and not wanted then
+                R.release()
+                R.status = "Status: Off"
+            elseif R.state == "on" and tick() - last >= R.INTERVAL then
+                R.status = R.ping() and connectedText() or "Status: Reconnecting..."
+                last = tick()
+            end
+        end)
+        task.wait(0.2)
+    end
+end)
+
+task.spawn(function()
+    local R = PERF.ROLES
+    local Players = game:GetService("Players")
+    local tracked, lastScan = {}, 0
+    while _G.JB_gen == myGen do
+        if R.state == "on" then
+            PERF.run("rolesDraw", function()
+                local now = tick()
+                if now - lastScan >= 1 then
+                    lastScan = now
+                    tracked = {}
+                    for _, player in ipairs(Players:GetPlayers()) do
+                        local userId = player.UserId
+                        if R.users[userId] then
+                            local char = player.Character
+                            local root = char and char:FindFirstChild("HumanoidRootPart")
+                            if root then tracked[#tracked + 1] = { id = userId, root = root } end
+                        end
+                    end
+                end
+                local seen = {}
+                local camera = workspace.CurrentCamera
+                local camPos = camera and camera.CFrame.Position
+                if camPos then
+                    for _, t in ipairs(tracked) do
+                        local label = R.users[t.id]
+                        local okP, rootPos = pcall(function() return t.root.Position end)
+                        if label and okP then
+                            local worldPos = rootPos + R.OFFSET
+                            local alpha = math.clamp(((worldPos - camPos).Magnitude - R.NEAR) / (R.FAR - R.NEAR), 0, 1)
+                            local size = math.floor(R.SIZE_NEAR + (R.SIZE_FAR - R.SIZE_NEAR) * alpha + 0.5)
+                            local tag = R.tag(t.id, label, size)
+                            seen[t.id] = true
+                            local screenPos, onScreen = WorldToScreen(worldPos)
+                            if onScreen then
+                                tag.Position = Vector2.new(screenPos.X, screenPos.Y + R.PADDING)
+                                tag.Visible = true
+                            else
+                                tag.Visible = false
+                            end
+                        end
+                    end
+                end
+                for userId in pairs(R.tags) do
+                    if not seen[userId] then R.removeTag(userId) end
+                end
+            end)
+            task.wait()
+        else
+            R.clear()
+            task.wait(0.2)
+        end
+    end
+    R.clear()
+end)
+
+task.spawn(function()
+    local O = PERF.ONLINE
+    local HS = game:GetService("HttpService")
+    local okG, sid = pcall(function() return HS:GenerateGUID(false) end)
+    O.sid = (okG and sid) or (tostring(math.random(10000000, 99999999)) .. tostring(math.random(10000000, 99999999)))
+    while _G.JB_gen == myGen do
+        local ok, body = pcall(function() return game:HttpGet(O.URL .. "/ping?id=" .. O.sid .. PERF.ROLES.query()) end)
+        local okD, data = pcall(function() return HS:JSONDecode(body) end)
+        if ok and okD and type(data) == "table" and tonumber(data.online) then
+            O.count = tonumber(data.online)
+            SPLASH.info.online = O.count
+        end
+        local t0 = tick()
+        while _G.JB_gen == myGen and tick() - t0 < O.INTERVAL do task.wait(1) end
+    end
+    O.leave()
+end)
+
+PERF.HERE = {
+    INTERVAL = 30,
+    others = 0,
+    seen = {},
+}
+
+task.spawn(function()
+    local H, O = PERF.HERE, PERF.ONLINE
+    local okJ, job = pcall(function() return tostring(game.JobId) end)
+    if not okJ or #job < 8 then return end
+    local t0 = tick()
+    while _G.JB_gen == myGen and (not O.sid or not SPLASH.done) and tick() - t0 < 60 do task.wait(0.5) end
+    local t2 = tick()
+    while _G.JB_gen == myGen and tick() - t2 < 3 do task.wait(0.5) end
+    if not O.sid or _G.JB_gen ~= myGen then return end
+    local base = O.URL .. "/here?id=" .. O.sid .. "&job=" .. job
+    print("[HereDebug] start sid=" .. O.sid:sub(1, 8) .. " job=" .. job)
+    while _G.JB_gen == myGen do
+        local delay = H.INTERVAL
+        local ok, body = pcall(function() return game:HttpGet(base .. "&t=" .. math.floor(tick() * 1000)) end)
+        local okD, data = pcall(function() return game:GetService("HttpService"):JSONDecode(body) end)
+        print(string.format("[HereDebug] %.0f ok=%s okD=%s known=%d body=%s", tick(), tostring(ok), tostring(okD), H.others, tostring(body)))
+        if ok and okD and type(data) == "table" then
+            if data.reg == false then
+                pcall(function() game:HttpGet(O.URL .. "/ping?id=" .. O.sid .. PERF.ROLES.query()) end)
+                delay = 2
+            else
+                local n = tonumber(data.others) or 0
+                local fresh = n > H.others
+                if type(data.ids) == "table" then
+                    for _, k in pairs(data.ids) do
+                        if not H.seen[k] then
+                            H.seen[k] = true
+                            fresh = true
+                        end
+                    end
+                end
+                if fresh and n > 0 then notify("JB Hub user is in the server", "[JB Hub]", 5) end
+                H.others = n
+            end
+        end
+        local t1 = tick()
+        while _G.JB_gen == myGen and tick() - t1 < delay do task.wait(1) end
+    end
+    pcall(function() game:HttpGet(base .. "&leave=1") end)
+end)
+
+PERF.ELEV = {
+    FLOORS = { "Vaults", "Ground", "Security", "The Roof" },
+    INDEX = { ["Vaults"] = 1, ["Ground"] = 2, ["Security"] = 3, ["The Roof"] = 4 },
+    INTERVAL = 0.05,
+    selected = "Vaults",
+}
+
+function PERF.ELEV.detector(index)
+    local casino = workspace:FindFirstChild("Casino")
+    local elevator = casino and casino:FindFirstChild("Elevator")
+    if not elevator then return nil end
+    local floors = elevator:FindFirstChild("Floors")
+    local floor = floors and floors:FindFirstChild(tostring(index))
+    local button = floor and floor:FindFirstChild("Call")
+    if not button then
+        local car = elevator:FindFirstChild("Car")
+        local inner = car and car:FindFirstChild("InnerModel")
+        local calls = inner and inner:FindFirstChild("Calls")
+        button = calls and calls:FindFirstChild(tostring(index))
+    end
+    if not button then return nil end
+    if button.ClassName == "ClickDetector" then return button end
+    for _, child in ipairs(button:GetDescendants()) do
+        if child.ClassName == "ClickDetector" then return child end
+    end
+    return nil
+end
+
+function PERF.ELEV.floorIndex()
+    local E = PERF.ELEV
+    local value = UI.GetValue(uid("elevFloor"))
+    if type(value) == "number" and E.FLOORS[math.floor(value) + 1] then
+        return math.floor(value) + 1
+    end
+    if type(value) == "string" and E.INDEX[value] then
+        return E.INDEX[value]
+    end
+    return E.INDEX[E.selected] or 1
+end
+
+function PERF.ELEV.call()
+    local E = PERF.ELEV
+    local index = E.floorIndex()
+    local detector = E.detector(index)
+    local now = tick()
+    if not detector then
+        if now - (E.warnAt or 0) >= 10 then
+            E.warnAt = now
+            local loaded = workspace:FindFirstChild("Casino") ~= nil
+            notify(loaded and ("Button not found for " .. tostring(E.FLOORS[index])) or "Casino not loaded, get closer", "[JB Hub] Elevator", 3)
+        end
+        return false
+    end
+    local fired = pcall(fireclickdetector, detector)
+    if not fired and now - (E.warnAt or 0) >= 10 then
+        E.warnAt = now
+        notify("Failed to call the elevator", "[JB Hub] Elevator", 3)
+    end
+    return fired
+end
+
+task.spawn(function()
+    while _G.JB_gen == myGen do
+        if UI.GetValue(uid("elevLoop")) then
+            PERF.ELEV.call()
+        end
+        task.wait(PERF.ELEV.INTERVAL)
+    end
+end)
+
+PERF.MANSION = {
+    TITLE = "[JB Hub] Teleport to Mansion",
+    POINT = Vector3.new(1369.4, -216.6, -4693.8),
+    REWRITE = 6,
+    SUCCESS = 50,
+    TIMEOUT = 20,
+    busy = false,
+}
+
+PERF.MANSION = {
+    TITLE = "[JB Hub] Teleport to Mansion",
+    POINT = Vector3.new(1369.4, -216.6, -4693.8),
+    DEST = Vector3.new(1276.8, 42.2, -4814.1),
+    NEAR = 80,
+    REWRITE = 6,
+    SUCCESS = 50,
+    TIMEOUT = 20,
+    busy = false,
+}
+
+function PERF.MANSION.teleport()
+    local M = PERF.MANSION
+    if M.busy then return end
+    local char = game:GetService("Players").LocalPlayer.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    local hum = char and char:FindFirstChild("Humanoid")
+    if not root or not hum then
+        notify("Character not found", M.TITLE, 3)
+        return
+    end
+    local startPos = root.Position
+    if (startPos - M.DEST).Magnitude < M.NEAR then
+        notify("Already at the Mansion", M.TITLE, 3)
+        return
+    end
+    local okSit, sitting = pcall(function() return hum.Sit end)
+    if okSit and sitting == true then
+        notify("Exit your vehicle first", M.TITLE, 3)
+        return
+    end
+    local serverObj = hum:FindFirstChild("HumanoidUnloadServerPosition")
+    local function serverPos()
+        local ok, value = pcall(function() return serverObj.Value end)
+        if ok and typeof(value) == "Vector3" then return value end
+        return nil
+    end
+    local serverStart = serverObj and serverPos()
+    M.busy = true
+    notify("Teleporting...", M.TITLE, 3)
+    local started = tick()
+    local writes = 0
+    local success = false
+    local lastPos = startPos
+    while _G.JB_gen == myGen and tick() - started < M.TIMEOUT do
+        local okPos, current = pcall(function() return root.Position end)
+        if not okPos or typeof(current) ~= "Vector3" then break end
+        lastPos = current
+        local server = serverStart and serverPos()
+        if server then
+            if (server - serverStart).Magnitude > M.SUCCESS and (server - M.POINT).Magnitude > M.SUCCESS then
+                success = true
+                break
+            end
+        elseif (current - startPos).Magnitude > M.SUCCESS and (current - M.POINT).Magnitude > M.SUCCESS then
+            success = true
+            break
+        end
+        if (current - M.POINT).Magnitude > M.REWRITE then
+            pcall(function() root.Position = M.POINT end)
+            writes = writes + 1
+        end
+        task.wait()
+    end
+    M.busy = false
+    if success then
+        notify("Teleported to Mansion", M.TITLE, 3)
+    else
+        notify("Teleport failed, try again", M.TITLE, 4)
+    end
+end
+
+PERF.AFK = {
+    KEYS = { 0x57, 0x41, 0x53, 0x44, 0x5A, 0x51, 0x20, 0x10, 0x11 },
+    SILENT_KEY = 0x7C,
+    MOVE_KEYS = { { 0x57, 0x53 }, { 0x41, 0x44 } },
+    MIN_DELAY = 45,
+    MAX_DELAY = 90,
+    lastActivity = tick(),
+    nextDelay = 60,
+}
+
+function PERF.AFK.userActive()
+    if not isrbxactive() then return false end
+    if ismouse1pressed() or ismouse2pressed() then return true end
+    for _, key in ipairs(PERF.AFK.KEYS) do
+        if iskeypressed(key) then return true end
+    end
+    return false
+end
+
+function PERF.AFK.pulse()
+    if not isrbxactive() then return false end
+    local dx = math.random(0, 1) == 0 and 2 or -2
+    mousemoverel(dx, 0)
+    task.wait(0.05 + math.random() * 0.05)
+    mousemoverel(-dx, 0)
+    local pair = PERF.AFK.MOVE_KEYS[math.random(1, #PERF.AFK.MOVE_KEYS)]
+    for _, vk in ipairs(pair) do
+        keypress(vk)
+        task.wait(0.02 + math.random() * 0.02)
+        keyrelease(vk)
+        task.wait(0.05)
+    end
+    return true
+end
+
+task.spawn(function()
+    local A = PERF.AFK
+    local warnedAt = 0
+    while _G.JB_gen == myGen do
+        task.wait(0.25)
+        if UI.GetValue(uid("antiAfk")) then
+            local okA, active = pcall(A.userActive)
+            if okA and active then
+                A.lastActivity = tick()
+            elseif tick() - A.lastActivity >= A.nextDelay then
+                local okP, sent = pcall(A.pulse)
+                if okP and sent then
+                    A.lastActivity = tick()
+                    A.nextDelay = math.random(A.MIN_DELAY, A.MAX_DELAY)
+                elseif tick() - warnedAt >= 300 then
+                    warnedAt = tick()
+                    notify("Roblox is in the background, keep it in front to stay active", "[JB Hub] Anti AFK", 5)
+                end
+            end
+        else
+            A.lastActivity = tick()
+        end
+    end
+end)
+
+local function buildTab()
+    UI.AddTab("JB Hub", function(tab)
+        local misc = tab:Section("Misc" .. string.rep(" ", math.floor(tonumber(string.sub(S, 2)) / 1000) % 40 + 1), "Left", nil, 260)
+        misc:Toggle(uid("nofall"), "No Fall Damage")
+        misc:Combo(uid("nofallMethod"), "Method", NFD_METHODS, 0)
+		misc:Toggle(uid("nolaser"), "No Laser Damage")
+		misc:Toggle(uid("noturret"), "No Turret Damage")
+		misc:Toggle(uid("noForcefield"), "Disable Forcefields")
+		misc:Tip("Military Base forcefield and Mansion CEO aura blast")
+		misc:Toggle(uid("antiTaser"), "Anti Taser Ragdoll")     
+        misc:Toggle(uid("unlockSlots"), "Unlock Weapons Slots")
+        misc:Tip("Make you able to switch weapons while holding a bag and more ...")
+        misc:Toggle(uid("jetpack"), "Infinity Jetpack")		
+--      misc:Toggle(uid("nosit"),  "No Sit")
+        misc:Toggle(uid("resetBind"), "Force Reset Bind")
+        local rk = misc:Keybind(uid("resetBindKey"), PERF.RESET_KEY, "hold", function() PERF.resetRequested = true end)
+        PERF.holdKb.reset = rk
+        pcall(function() rk:AddToHotkey("Force Reset", uid("resetBind")) end)
+        misc:Button("Force Reset", function() forceReset() end)
+		
+        local esp = tab:Section("ESP", "Left")
+		esp:Toggle(uid("airdropEsp"), "Airdrop ESP")
+        esp:Toggle(uid("keycardEsp"), "Keycard ESP")
+        esp:Toggle(uid("crimekeyEsp"), "Crimekey ESP")	
+        esp:Toggle(uid("cashEsp"), "Cash Dropped ESP")
+        esp:Toggle(uid("bountyEsp"), "Bounty ESP")		
+        esp:ColorPicker(uid("bountyColor"), 1, 0.24, 0.24, 1, function(...) PERF.bountyColor = PERF.toColor(...) or PERF.bountyColor end)
+        esp:Combo(uid("bountyColorMode"), "Bounty Color", ESP_TARGETS.Bounty.modes, 0)
+        esp:SliderInt(uid("bountyMin"), "Min Bounty", 0, 25000, 0)
+		
+        local casino = tab:Section("Casino##" .. S, "Left", { "Casino", "Tomb", "Power Plant" })
+        if casino.page == 1 then
+            casino:Toggle(uid("tombSpikes"), "No Spike Damage")
+            casino:Toggle(uid("tombDarts"), "No Dart Damage")
+            casino:Toggle(uid("tombBridge"), "Safe Bridge")
+            casino:Toggle(uid("tombCart"), "No Cart Barrier Damage")
+        elseif casino.page == 2 then
+            casino:Toggle(uid("puzzleSolve"), "Auto-Solve Puzzle")
+            local fk = casino:Keybind(uid("puzzleSolveKey"), FLOW_KEY, "hold", function() flowRequested = true end)
+            PERF.holdKb.puzzle = fk
+            pcall(function() fk:AddToHotkey("Auto-Solve Puzzle", uid("puzzleSolve")) end)
+            casino:Toggle(uid("puzzlePath"), "Show Puzzle Path")
+            casino:Toggle(uid("ppWire"), "No Barbed Wire Damage")
+            casino:Toggle(uid("ppPistons"), "No Piston Damage")
+        else
+            casino:Text("Require Hybrid Mod (1, 2, 3, 4, 5, 6) !!!")
+            casino:Toggle(uid("casino"), "Get Casino Code")
+            local ck = casino:Keybind(uid("casinoKey"), CASINO_KEY, "hold", function() casinoRequested = true end)
+            PERF.holdKb.casino = ck
+            pcall(function() ck:AddToHotkey("Get Casino Code", uid("casino")) end)
+            casino:Toggle(uid("casinoOpen"), "Open Casino Door (1)")
+            local cok = casino:Keybind(uid("casinoOpenKey"), CASINO_OPEN_KEY, "hold", function() casinoOpenRequested = true end)
+            PERF.holdKb.casinoOpen = cok
+            pcall(function() cok:AddToHotkey("Open Casino Door", uid("casinoOpen")) end)
+            casino:Toggle(uid("autoGlass"), "Auto Glass (2)")
+            casino:Toggle(uid("autoVault"), "Auto Vault (3)")
+            local avk = casino:Keybind(uid("autoVaultKey"), VAULT_KEY, "hold", function() vaultRequested = true end)
+            PERF.holdKb.vault = avk
+            pcall(function() avk:AddToHotkey("Auto Vault", uid("autoVault")) end)
+            casino:Toggle(uid("autoLoot"), "Auto Collect Loot (4)")
+            casino:Toggle(uid("autoHack"), "Auto Computer Hack (5)")
+            casino:Toggle(uid("elevLoop"), "Elevator Loop Call (6)")
+            casino:Combo(uid("elevFloor"), "Floor", PERF.ELEV.FLOORS, 0, function(index, text)
+                if type(text) == "string" and PERF.ELEV.INDEX[text] then
+                    PERF.ELEV.selected = text
+                elseif type(index) == "number" and PERF.ELEV.FLOORS[index + 1] then
+                    PERF.ELEV.selected = PERF.ELEV.FLOORS[index + 1]
+                end
+            end)
+            casino:Button("Call Elevator", function() PERF.ELEV.call() end)
+        end
+		
+        local mods = tab:Section("Modifiers##" .. S, "Left", { "Modifiers", "Weapons" })
+        if mods.page == 1 then
+            mods:Toggle(uid("nerfSkins"), "Nerf Skins")
+            mods:Tip("Pistol and Revolver use the Nerf models.")
+            mods:Toggle(uid("skinChanger"), "Skin Changer")
+            mods:Combo(uid("skinName"), "Skin", PERF.SKIN_LABELS, 0)
+            mods:Combo(uid("skinTarget"), "Weapon", PERF.SKIN_TARGETS, 0)
+            mods:Button("Apply Skin", function() PERF.skinApplyRequested = true end)
+            mods:Toggle(uid("hitSound"), "Hit Sound")
+            mods:Combo(uid("hitSoundName"), "Sound", PERF.HIT_LABELS, 0)
+            mods:Toggle(uid("hitMarker"), "Hit Markers")
+            mods:Combo(uid("hitMarkerStyle"), "Marker", PERF.HITFX_MARKERS, 0)
+            mods:Toggle(uid("hitKill"), "Kill Message")
+        else
+            mods:Toggle(uid("swordNoCd"),  "Sword No Cooldown")
+            mods:Toggle(uid("swordLunge"), "Sword Always Lunge")
+            mods:Toggle(uid("punchNoCd"),  "Punch No Cooldown")
+            mods:Toggle(uid("instant"),    "Instant Interaction")
+            mods:Toggle(uid("plasma"),     "Instant Plasma Pistol")
+            mods:Tip("Equip Plasma Pistol before enabling it")
+            mods:Toggle(uid("rocketLock"), "Rocket Instant Lock")
+            mods:Toggle(uid("norecoil"),   "No Recoil")
+            mods:Toggle(uid("nospread"),   "No Spread")
+            mods:Toggle(uid("autoShoot"),  "Auto Shoot")
+            mods:Tip("Make All Weapons Automatic")
+        end
+		
+        local cfg = tab:Section("Config##" .. S, "Right", { "Config" })
+        cfg:Text("Config")
+        cfg:InputText(uid("cfgName"), "Config Name", "")
+        cfg:Button("Load", function() PERF.CFG.load() end)
+        cfg:Button("Save", function() PERF.CFG.save() end)
+        cfg:Toggle(uid("hubRoles"), "Display JB Hub Roles - Server Sided")
+        cfg:Spacing()
+		
+        local utils = tab:Section("Utils", "Right")
+		utils:Toggle(uid("antiAfk"), "Anti AFK")
+        utils:Button("Teleport to Mansion", function() task.spawn(PERF.MANSION.teleport) end)
+        utils:Button("Reset All To Defaults", function() PERF.CFG.reset() end)
+		
+		local ka = tab:Section("Killaura", "Right")
+        ka:Text("Require Hybrid Mod (Pro Only) !!!")
+        ka:Toggle(uid("plasmaKillaura"), "PlasmaPistol Killaura")
+        local kak = ka:Keybind(uid("plasmaKillauraKey"), KILLAURA_KEY, "toggle", function() end)
+        PERF.kaKeybind = kak
+        pcall(function() kak:AddToHotkey("PlasmaPistol Killaura", uid("plasmaKillaura")) end)
+        ka:Combo(uid("plasmaKillauraTarget"), "Target", PLASMA_TARGET_MODES, 0)
+
+        local hbx = tab:Section("Hitbox Expander", "Right")
+        hbx:Toggle(uid("npcHitbox"), "NPC's Hitbox Expander")
+        hbx:SliderInt(uid("hbX"), "Hitbox X", 2, 30, 10)
+        hbx:SliderInt(uid("hbY"), "Hitbox Y", 2, 30, 8)
+        hbx:SliderInt(uid("hbZ"), "Hitbox Z", 2, 30, 10)
+
+        local npc = tab:Section("NPC##" .. S, "Right", { "NPC", "Guard Control" })
+        if npc.page == 1 then
+            npc:Combo(uid("guardMode"), "Mode", PERF.GUARD.MODES, 0)
+            npc:SliderInt(uid("guardShootDist"), "Shoot Distance", 50, 500, 400)
+            npc:SliderInt(uid("guardFreq"), "Trigger Freq", 1, 10, 3)
+            npc:SliderInt(uid("guardProtect"), "Protect Radius", 20, 300, 80)
+            npc:Toggle(uid("guardFollow"), "Follow Me", true)
+            npc:Combo(uid("guardTeam"), "Target Team", PERF.GUARD.TEAMS, 0)
+            npc:Tip("None = guards only follow you")
+            npc:Toggle(uid("guardSpread"), "Spread Targets", true)
+            npc:Tip("Split guards between threats instead of all on the closest")
+        else
+            npc:Toggle(uid("killNpcs"), "Kill All NPCs")
+            local knk = npc:Keybind(uid("killNpcsKey"), PERF.KILL_NPC_KEY, "toggle", function() end)
+            PERF.killKeybind = knk
+            pcall(function() knk:AddToHotkey("Kill All NPCs", uid("killNpcs")) end)
+            npc:Toggle(uid("guards"), "Make Guards Disabled")
+            npc:Toggle(uid("attackCeo"), "Make Guards Attack CEO")
+            npc:SliderInt(uid("npcRange"), "Range", 0, 300, 150)
+        end
+
+        local hud = tab:Section("HUD", "Right")
+        hud:Toggle(uid("robHud"), "Robbery State")
+        hud:Tip("Robbery panel with timers, players and bounties")
+
+        local veh = tab:Section("Vehicle", "Right")
+        veh:Toggle(uid("carFly"), "Vehicle Fly")
+        local cfk = veh:Keybind(uid("carFlyKey"), VEHICLE.FLY_KEY, "toggle", function() end)
+        VEHICLE.flyKeybind = cfk
+        local okHk, errHk = pcall(function() cfk:AddToHotkey("Vehicle Fly", uid("carFly")) end)
+        if not okHk and not VEHICLE.hkWarned then VEHICLE.hkWarned = true print("[JB] AddToHotkey error: " .. tostring(errHk)) end
+        veh:SliderInt(uid("carFlySpeed"), "Speed", 0, 1000, VEHICLE.FLY_DEFAULT_SPEED)
+        veh:Toggle(uid("engineBoost"), "Engine Boost")
+        local ebk = veh:Keybind(uid("engineBoostKey"), VEHICLE.BOOST_KEY, "toggle", function() end)
+        VEHICLE.boostKeybind = ebk
+        pcall(function() ebk:AddToHotkey("Engine Boost", uid("engineBoost")) end)
+        veh:SliderFloat(uid("engineBoostMult"), "Boost", 1, VEHICLE.BOOST_MAX, VEHICLE.BOOST_DEFAULT, "%.2f")		
+        veh:Toggle(uid("instantBrake"), "Instant Brake")
+        local ibk = veh:Keybind(uid("instantBrakeKey"), VEHICLE.BRAKE_KEY, "toggle", function() end)
+        VEHICLE.brakeKeybind = ibk
+        pcall(function() ibk:AddToHotkey("Instant Brake", uid("instantBrake")) end)
+        veh:Toggle(uid("antiTirePop"), "Anti Tires Pop")
+        veh:Toggle(uid("antiFlip"), "Anti Flip")
+        veh:Toggle(uid("nitro"), "Infinity Nitro")
+		
+        local police = tab:Section("Police", "Right")
+        police:Toggle(uid("autoCuff"), "Auto Cuff")
+        local ack = police:Keybind(uid("autoCuffKey"), PERF.CUFF.KEY, "toggle", function() end)
+        PERF.cuffKeybind = ack
+        pcall(function() ack:AddToHotkey("Instant Auto Cuff", uid("autoCuff")) end)
+        police:Toggle(uid("autoTaser"), "Auto Taser")
+        local atk = police:Keybind(uid("autoTaserKey"), PERF.TASE.KEY, "toggle", function() end)
+        PERF.taseKeybind = atk
+        pcall(function() atk:AddToHotkey("Auto Taser", uid("autoTaser")) end)
+        police:SliderInt(uid("autoTaserRange"), "Max Range", 0, 85, PERF.TASE.RANGE)
+		
+        local cos = tab:Section("Cosmetics", "Right")
+        for _, slot in ipairs(COSMETICS.SLOTS) do
+            cos:Combo(uid(slot.id), slot.label, slot.list, 0)
+        end
+        cos:Toggle(uid(COSMETICS.PLATE.id), "Plate")
+        cos:Button("Apply Selected Cosmetics", function()
+            if PERF.requireHybrid(COSMETICS.TITLE) then COSMETICS.startBind() end
+        end)
+        cos:Toggle(uid("cosmeticsBind"), "Apply Cosmetics Bind")
+        local cosk = cos:Keybind(uid("cosmeticsKey"), COSMETICS.KEY, "hold", function() COSMETICS.requested = true end)
+        PERF.holdKb.cosmetics = cosk
+        pcall(function() cosk:AddToHotkey("Apply Cosmetics", uid("cosmeticsBind")) end)
+        cos:Toggle(uid("cosmeticsLoop"), "Loop Cosmetics")
+		
+        local world = tab:Section("World", "Right")
+        world:Toggle(uid("skyColor"), "Sky Color")
+        world:Combo(uid("skyColorPreset"), "Color", PERF.SKY_NAMES, 0)
+        world:Toggle(uid("waterCustom"), "Water Customizer")
+        world:Combo(uid("waterColor"), "Water Color", PERF.WATER_NAMES, 0)
+        world:SliderInt(uid("waterSea"), "Sea State", 0, 100, 32)
+        world:Tip("0 = frozen sea, 100 = maximum storm")
+        world:Toggle(uid("timeChanger"), "Time Changer")
+        world:Combo(uid("timePreset"), "Time", PERF.TIME.PRESETS, 0)
+        world:SliderFloat(uid("timeHour"), "Custom Hour", 0, 24, 12, "%.1f h")
+        world:Toggle(uid("timeCycle"), "Fast Cycle")
+        world:SliderFloat(uid("timeSpeed"), "Cycle Speed", 0.1, 6, 1, "%.1f h/s")
+        world:Toggle(uid("matrixMode"), "Matrix Mode")
+        world:Tip("Green and black world, neon edges, green water and fog")
+
+    end)
+end
+
+pcall(function()
+    local char = game:GetService("Players").LocalPlayer.Character
+    local hum = char and (char:FindFirstChild("Humanoid") or char:FindFirstChildOfClass("Humanoid"))
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    local addr = hum and tonumber(hum.Address)
+    local base = hrp and tonumber(hrp.Address)
+    local okR, real = pcall(function() return hum.Health end)
+    local okPos, pos = pcall(function() return hrp.Position end)
+
+    local function healthAt(off)
+        if not addr or addr < 4096 or not okR or type(real) ~= "number" or real <= 0 or type(off) ~= "number" then return false end
+        local ok, h = pcall(memory_read, "float", addr + off)
+        return ok and type(h) == "number" and math.abs(h - real) < 0.01
+    end
+
+    local function primAt(primOff, posOff)
+        if not base or base < 4096 or not okPos or not pos or type(primOff) ~= "number" or type(posOff) ~= "number" then return false end
+        local okP, prim = pcall(memory_read, "uintptr_t", base + primOff)
+        if not okP or not prim or prim < 4096 then return false end
+        for i, c in ipairs({ pos.X, pos.Y, pos.Z }) do
+            local ok, v = pcall(memory_read, "float", prim + posOff + (i - 1) * 4)
+            if not ok or type(v) ~= "number" or math.abs(v - c) > 0.5 then return false end
+        end
+        return true
+    end
+
+    local d = PERF.dump or {}
+    local function same(class, field, value)
+        local c = d[class]
+        local v = type(c) == "table" and tonumber(c[field]) or nil
+        if v == nil then return nil end
+        return v == value
+    end
+    local function rf(a)
+        local ok, v = pcall(memory_read, "float", a)
+        return ok and type(v) == "number" and v or nil
+    end
+    local function rb(a)
+        local ok, v = pcall(memory_read, "byte", a)
+        return ok and v or nil
+    end
+    local function rp(a)
+        local ok, v = pcall(memory_read, "uintptr_t", a)
+        return ok and type(v) == "number" and v > 4096 and v or nil
+    end
+    local function ru(a)
+        local ok, v = pcall(memory_read, "uintptr_t", a)
+        return ok and type(v) == "number" and v or nil
+    end
+
+    local checks = {}
+    local function add(name, ok) checks[#checks + 1] = { name = name, ok = ok } end
+
+    add("HUM_HEALTH", healthAt(HUM_HEALTH))
+    add("PRIMITIVE_OFFSET", primAt(PRIMITIVE_OFFSET, VELOCITY_Y_OFFSET - 4 - 0xC))
+    add("SIT_OFFSET", same("Humanoid", "Sit", SIT_OFFSET))
+    add("PLATFORM_STAND_OFFSET", same("Humanoid", "PlatformStand", PLATFORM_STAND_OFFSET))
+    add("VELOCITY_Y_OFFSET", same("Primitive", "AssemblyLinearVelocity", VELOCITY_Y_OFFSET - 4))
+    add("FLIP_ANG", same("Primitive", "AssemblyAngularVelocity", VEHICLE.FLIP_ANG))
+
+    local atmosOk = nil
+    for key, off in pairs(PERF.ATMOS) do
+        local r = same("Atmosphere", key, off)
+        if r == false then atmosOk = false break end
+        if r then atmosOk = true end
+    end
+    add("ATMOS", atmosOk)
+
+    local waterOk = nil
+    local waterMap = { Color = "WaterColor", Reflectance = "WaterReflectance", Transparency = "WaterTransparency", WaveSize = "WaterWaveSize", WaveSpeed = "WaterWaveSpeed" }
+    for key, field in pairs(waterMap) do
+        local r = same("Terrain", field, PERF.WATER_OFF[key])
+        if r == false then waterOk = false break end
+        if r then waterOk = true end
+    end
+    add("WATER_OFF", waterOk)
+
+    local head = char and char:FindFirstChild("Head")
+    local hb = head and tonumber(head.Address)
+    if base and hb and hb > 4096 then
+        add("TR_OFF", rf(base + PERF.HB.TR_OFF) == 1 and rf(hb + PERF.HB.TR_OFF) == 0)
+        local okC, cr, cg, cb = pcall(function()
+            local c = head.Color
+            return c.R, c.G, c.B
+        end)
+        if okC and type(cr) == "number" and type(cg) == "number" and type(cb) == "number" then
+            if cr <= 1 and cg <= 1 and cb <= 1 then cr, cg, cb = cr * 255, cg * 255, cb * 255 end
+            local r, g, b = rb(hb + PERF.PART_COLOR), rb(hb + PERF.PART_COLOR + 1), rb(hb + PERF.PART_COLOR + 2)
+            add("PART_COLOR", r ~= nil and g ~= nil and b ~= nil and math.abs(r - cr) <= 2 and math.abs(g - cg) <= 2 and math.abs(b - cb) <= 2)
+        end
+    end
+
+    local folder = game:GetService("Players").LocalPlayer:FindFirstChild("Folder")
+    local item = folder and folder:GetChildren()[1]
+    local itemBase = item and tonumber(item.Address)
+    if itemBase and itemBase > 4096 then
+        local name = item.Name
+        local s = rp(itemBase + PERF.NERF_NAME)
+        local size = s and ru(s + PERF.NERF_SIZE)
+        local cap = s and ru(s + PERF.NERF_CAP)
+        local data = cap and (cap > 15 and rp(s + PERF.NERF_DATA) or (s + PERF.NERF_DATA))
+        local good = data ~= nil and size == #name
+        if good then
+            for i = 1, math.min(#name, 16) do
+                if rb(data + i - 1) ~= string.byte(name, i) then good = false break end
+            end
+        end
+        add("NERF_NAME / NERF_DATA / NERF_SIZE / NERF_CAP", good)
+    end
+
+    local bad, known = {}, 0
+    for _, c in ipairs(checks) do
+        if c.ok ~= nil then
+            known = known + 1
+            if not c.ok then bad[#bad + 1] = c.name end
+        end
+    end
+
+    if not addr or not base then
+        SPLASH.step("Memory check skipped, no character", 40, "warn")
+    elseif #bad == 0 then
+        SPLASH.step("Memory offsets verified  " .. known .. "/" .. #checks, 40)
+    else
+        SPLASH.step("Outdated offsets", 40, "warn")
+    end
+	
+    if PERF.offsetDebug then
+        if #bad > 0 then
+            print("[JB Debug] Update: " .. table.concat(bad, ", "))
+        else
+            print("[JB Debug] All offsets up to date (" .. known .. "/" .. #checks .. ")")
+        end
+    end
+
+    local rs = game:GetService("ReplicatedStorage")
+    local found = 0
+    for _, ok in ipairs({ rs:FindFirstChild("BountyData") ~= nil, rs:FindFirstChild("PostieReceived") ~= nil, PERF.ws("Vehicles") ~= nil }) do
+        if ok then found = found + 1 end
+    end
+    SPLASH.step("Game data located  " .. found .. "/3", 52, found == 3 and "ok" or "warn")
+
+    local hybrid = PERF.isHybrid()
+    SPLASH.info.hybrid = hybrid and "Hybrid ON" or "Hybrid OFF"
+    if hybrid then
+        SPLASH.step("Hybrid mode active", 64)
+    else
+        SPLASH.step("Hybrid mode off, some features locked", 64, "warn")
+    end
+end)
+
+task.spawn(function()
+    for _ = 1, 3 do
+        pcall(function() UI.RemoveTab("JB Hub") end)
+        task.wait(0.05)
+    end
+    task.wait(0.25)
+    SPLASH.uiOk = pcall(buildTab)
+    SPLASH.uiDone = true
+end)
+
+local function isSittingNow()
+    local sitting = false
+    pcall(function()
+        local hum = getHumanoid()
+        local addr = hum and tonumber(hum.Address)
+        if addr and addr > 4096 then
+            sitting = memory_read("byte", addr + SIT_OFFSET) == 1
+        end
+    end)
+    return sitting
+end
+
+task.spawn(function()
+    local targets = nil
+    local wasOn = false
+    while _G.JB_gen == myGen do
+        PERF.run("plasma", function()
+            local on = UI.GetValue(uid("plasma")) and true or false
+            if on and not wasOn then
+                if not isPlasmaEquipped() then
+                    UI.SetValue(uid("plasma"), false)
+                    notify("Equip Plasma Pistol before", "[JB Hub] Instant Plasma Pistol", 3)
+                    return
+                end
+                targets = scanInstantPlasma()
+                if not targets then
+                    UI.SetValue(uid("plasma"), false)
+                    notify("Config not found, try again", "[JB Hub] Instant Plasma Pistol", 3)
+                    return
+                end
+                if not writePlasmaTargets(targets) then
+                    targets = nil
+                    UI.SetValue(uid("plasma"), false)
+                    notify("Config changed, try again", "[JB Hub] Instant Plasma Pistol", 3)
+                    return
+                end
+                wasOn = true
+                notify("ON", "[JB Hub] Instant Plasma Pistol", 3)
+            elseif not on and wasOn then
+                wasOn = false
+                targets = nil
+                notify("OFF", "[JB Hub] Instant Plasma Pistol", 3)
+            elseif on and targets then
+                if not writePlasmaTargets(targets) then
+                    wasOn = false
+                    targets = nil
+                    UI.SetValue(uid("plasma"), false)
+                    notify("Plasma Pistol changed, enable it again", "[JB Hub] Instant Plasma Pistol", 3)
+                end
+            end
+        end)
+        task.wait(INSTANT_PLASMA_TICK)
+    end
+end)
+
+task.spawn(function()
+    local TITLE = "[JB Hub] Infinity Nitro"
+    local cache = {}
+    local lastScan = 0
+    local wasOn = false
+    local wasSitting = false
+    local seatScanned = false
+    local active = false
+    while _G.JB_gen == myGen do
+        PERF.run("nitro", function()
+            local on = UI.GetValue(uid("nitro")) and true or false
+            if on ~= wasOn then
+                wasOn = on
+                if on then
+                    seatScanned, active = false, false
+                    wasSitting = isSittingNow()
+                    cache = PERF.numericOnly(lockedGetgc(NITRO_KEYS))
+                    lastScan = tick()
+                    if #cache == 0 then notify("Get in a vehicle to activate", TITLE, 3) end
+                else
+                    active = false
+                    notify("OFF", TITLE, 3)
+                end
+            end
+            if on then
+                local sitting = isSittingNow()
+                if sitting and not wasSitting and count(cache) == 0 and (not seatScanned or tick() - lastScan >= NITRO_EMPTY_RETRY) then
+                    wait(NITRO_SEAT_DELAY)
+                    cache = PERF.numericOnly(lockedGetgc(NITRO_KEYS))
+                    lastScan = tick()
+                    seatScanned = true
+                elseif not sitting and tick() - lastScan >= NITRO_RESCAN_EVERY then
+                    cache = PERF.numericOnly(lockedGetgc(NITRO_KEYS))
+                    lastScan = tick()
+                end
+                wasSitting = sitting
+                cache = PERF.gcAlive(cache)
+                if #cache > 0 then
+                    applygc(cache, NITRO_VALUES)
+                    if not active then
+                        active = true
+                        notify("ON", TITLE, 3)
+                    end
+                end
+            end
+        end)
+        task.wait(NITRO_APPLY_TICK)
+    end
+end)
+
+task.spawn(function()
+    local KEYS = { "LocalFuel", "LocalMaxFuel", "ThrustingBornAt" }
+    local VALUES = { LocalFuel = 999999, LocalMaxFuel = 999999, ThrustingBornAt = 0 }
+    local TICK = 0.25
+    local EMPTY_RETRY = 180
+    local SPAWN_DELAY = 2
+    local THRUST_RESCAN = 3
+	
+    local cache, wasOn, applied, lastScan, lastChar, lastPack, pendingAt = {}, false, false, 0, nil, nil, nil
+    local thrustTried = false
+
+    local function packModel(char)
+        return char and (char:FindFirstChild("JetPack") or char:FindFirstChild("Jetpack"))
+    end
+
+    local function valid(e)
+        local ok, ptr = pcall(memory_read, "uintptr_t", e.addr + 0x10)
+        return ok and ptr == e.keyPtr
+    end
+
+    local function hasThrust()
+        for _, e in ipairs(cache) do
+            if e.key == "ThrustingBornAt" then return true end
+        end
+        return false
+    end
+
+    local function restore()
+        for _, e in ipairs(cache) do
+            if valid(e) then pcall(memory_write, "double", e.addr, e.original) end
+        end
+        cache = {}
+    end
+
+    local function scan()
+        restore()
+        local seen = {}
+        for _, e in ipairs(lockedGetgc(KEYS)) do
+            local key = tostring(e.key)
+            local addr = tonumber(e.addr)
+            if VALUES[key] ~= nil and addr and addr > 4096 and not seen[addr] and tonumber(tostring(e.value)) then
+                local okP, keyPtr = pcall(memory_read, "uintptr_t", addr + 0x10)
+                local okV, original = pcall(memory_read, "double", addr)
+                if okP and okV and keyPtr and keyPtr > 4096 then
+                    seen[addr] = true
+                    cache[#cache + 1] = { addr = addr, key = key, keyPtr = keyPtr, original = original }
+                end
+            end
+        end
+        lastScan = tick()
+    end
+
+    local function apply()
+        local kept, consumed = {}, false
+        for _, e in ipairs(cache) do
+            if valid(e) then
+                if e.key == "LocalFuel" then
+                    local okR, cur = pcall(memory_read, "double", e.addr)
+                    if okR and type(cur) == "number" and cur < VALUES.LocalFuel - 0.5 and cur > VALUES.LocalFuel - 1000 then
+                        consumed = true
+                    end
+                end
+                if pcall(memory_write, "double", e.addr, VALUES[e.key]) then
+                    kept[#kept + 1] = e
+                end
+            end
+        end
+        cache = kept
+        return #kept, consumed
+    end
+
+    while _G.JB_gen == myGen do
+        PERF.run("jetpack", function()
+            local on = UI.GetValue(uid("jetpack")) and true or false
+            if on ~= wasOn then
+                wasOn = on
+                if on then
+                    applied = false
+                    local char = game:GetService("Players").LocalPlayer.Character
+                    lastChar = char and char.Address
+                    lastPack = packModel(char) and true or false
+                    scan()
+                else
+                    restore()
+                    pendingAt = nil
+                    notify("OFF", "[JB Hub] Infinity Jetpack", 3)
+                end
+            end
+            if not on then return end
+
+            local now = tick()
+            local char = game:GetService("Players").LocalPlayer.Character
+            local charAddr = char and char.Address
+            local pack = packModel(char) and true or false
+            if charAddr ~= lastChar or (pack and not lastPack) then
+                pendingAt, thrustTried = now + SPAWN_DELAY, false
+            end
+            lastChar, lastPack = charAddr, pack
+
+            if pendingAt and now >= pendingAt then
+                pendingAt = nil
+                scan()
+            elseif #cache == 0 and now - lastScan >= EMPTY_RETRY then
+                scan()
+            end
+
+            if #cache > 0 then
+                local n, consumed = apply()
+                if consumed and pack and not thrustTried and not hasThrust() then
+                    thrustTried = true
+                    scan()
+                    apply()
+                end
+                if n > 0 and not applied then
+                    applied = true
+                    notify("ON", "[JB Hub] Infinity Jetpack", 3)
+                end
+            end
+        end)
+        task.wait(TICK)
+    end
+    restore()
+end) 
+
+task.spawn(function()
+    local TITLE = "[JB Hub] No Laser Damage"
+    local TICK, NEAR, NEAR_CHECK, NEAR_REFRESH, FAR_REFRESH, EXTRA_EVERY, FULL_EVERY = 0.15, 600, 0.5, 6, 4, 1, 1
+    local slots, near = {}, {}
+    local trapDone = {}
+    local wasOn, nearAt, farAt, extraAt, recheckAt, nextFar, nextNear, fullAt, missAt = false, 0, 0, 0, 0, 1, 1, 0, 0
+
+    local function refresh(i)
+        local pathList = LASER_CONTAINERS[i]
+        local slot = slots[i] or {}
+        slots[i] = slot
+        slot.at = tick()
+        local root = resolveLaserRoot(pathList)
+        if not root then
+            slot.list, slot.anchors = {}, nil
+            return
+        end
+        local roots = { root }
+        if pathList.sub then
+            local valid = slot.folders and #slot.folders > 0 and tick() - (slot.foldersAt or 0) < 10
+            if valid then
+                for _, f in ipairs(slot.folders) do
+                    if not f.Parent then valid = false break end
+                end
+            end
+            if not valid then
+                slot.folders, slot.foldersAt = {}, tick()
+                for n, d in ipairs(root:GetDescendants()) do
+                    if n % PERF.LASER_YIELD_EVERY == 0 then task.wait() end
+                    if d.Name == pathList.sub then slot.folders[#slot.folders + 1] = d end
+                end
+            end
+            roots = slot.folders
+        end
+        local list, anchors = {}, {}
+        for _, r in ipairs(roots) do
+            if not pcall(collectLaserParts, r, pathList, list, anchors) then
+                pcall(collectLaserPartsSafe, r, pathList, list)
+            end
+        end
+        slot.list, slot.fresh = list, list
+        if #anchors == 0 then
+            for k = 1, #list, 4 do
+                pcall(function()
+                    local p = list[k].Position
+                    anchors[#anchors + 1] = p.X
+                    anchors[#anchors + 1] = p.Z
+                end)
+            end
+        end
+        if #anchors > 0 then slot.anchors = anchors end
+    end
+
+    local function foldersGone(slot)
+        for _, f in ipairs(slot.folders or {}) do
+            if not f.Parent then return true end
+        end
+        return false
+    end
+
+    local function myPos()
+        local hrp = getHRP()
+        return hrp and vaultReadPos(hrp)
+    end
+
+    local function updateNear(me)
+        nearAt = tick()
+        near = {}
+        if not me then return end
+        local range = NEAR * NEAR
+        for i = 1, #LASER_CONTAINERS do
+            local a = slots[i] and slots[i].anchors
+            if a then
+                for k = 1, #a - 1, 2 do
+                    local dx, dz = a[k] - me.X, a[k + 1] - me.Z
+                    if dx * dx + dz * dz <= range then
+                        near[#near + 1] = i
+                        break
+                    end
+                end
+            end
+        end
+    end
+
+    local function shrinkNear(full)
+        for _, i in ipairs(near) do
+            local slot = slots[i]
+            local list = slot and (full and slot.list or slot.fresh)
+            if slot then slot.fresh = nil end
+            if list then
+                for k = 1, #list do
+                    pcall(function()
+                        local part = list[k]
+                        if part.Size.X > 0.01 then part.Size = LASER_TINY end
+                    end)
+                end
+            end
+        end
+    end
+
+    local function neutralizeTraps()
+        local mansion = PERF.ws("MansionRobbery")
+        local traps = mansion and mansion:FindFirstChild("LaserTraps")
+        if not traps then return end
+        for _, trap in ipairs(traps:GetChildren()) do
+            local key = trap.Address
+            if not trapDone[key] then
+                pcall(function()
+                    if trap:GetAttribute("LaserTrapDamage") ~= 0 then trap:SetAttribute("LaserTrapDamage", 0) end
+                    trapDone[key] = true
+                end)
+            end
+        end
+    end
+
+    local function count()
+        local n = 0
+        for _, slot in pairs(slots) do n = n + #(slot.list or {}) end
+        return n
+    end
+
+    while _G.JB_gen == myGen do
+        PERF.run("nolaser", function()
+            local on = UI.GetValue(uid("nolaser")) and true or false
+            if on ~= wasOn then
+                wasOn = on
+                if not on then
+                    slots, near, trapDone = {}, {}, {}
+                    notify("OFF", TITLE, 3)
+                    return
+                end
+                for i = 1, #LASER_CONTAINERS do refresh(i) end
+                updateNear(myPos())
+                shrinkNear(true)
+                local total = count()
+                notify(total > 0 and ("ON (" .. total .. " traps)") or "ON (no traps loaded yet)", TITLE, 3)
+                return
+            end
+            if not on then return end
+
+            local now = tick()
+            if not PERF.solving then
+                if now - nearAt >= NEAR_CHECK then
+                    updateNear(myPos())
+                    for _, i in ipairs(near) do
+                        if slots[i] and foldersGone(slots[i]) then refresh(i) end
+                    end
+                end
+                if #near > 0 then
+                    nextNear = nextNear % #near + 1
+                    local i = near[nextNear]
+                    if now - (slots[i] and slots[i].at or 0) >= NEAR_REFRESH then refresh(i) end
+                end
+                if now - missAt >= 2 then
+                    missAt = now
+                    for i = 1, #LASER_CONTAINERS do
+                        local slot = slots[i]
+                        if (not slot or not slot.anchors) and now - (slot and slot.at or 0) >= 6 and resolveLaserRoot(LASER_CONTAINERS[i]) then
+                            refresh(i)
+                        end
+                    end
+                end
+                if now - farAt >= FAR_REFRESH then
+                    farAt = now
+                    refresh(nextFar)
+                    nextFar = nextFar % #LASER_CONTAINERS + 1
+                end
+            end
+            local full = now - fullAt >= FULL_EVERY
+            if full then fullAt = now end
+            shrinkNear(full)
+            if now - extraAt >= EXTRA_EVERY then
+                extraAt = now
+                if now - recheckAt >= 10 then
+                    recheckAt = now
+                    trapDone = {}
+                end
+                pcall(neutralizeTraps)
+            end
+        end)
+        task.wait(TICK)
+    end
+end)
+
+task.spawn(function()
+    local WIRE_PATH = { "PowerPlant", only = "BarbedWire" }
+    local wires, pistons = {}, {}
+    local wireOn, pistonOn, wireAt, pistonAt, moveAt = false, false, 0, 0, 0
+
+    local function getWires()
+        local list = {}
+        local root = resolveLaserRoot(WIRE_PATH)
+        if root and not pcall(collectLaserParts, root, WIRE_PATH, list) then
+            list = {}
+            pcall(collectLaserPartsSafe, root, WIRE_PATH, list)
+        end
+        local anchor
+        for _, part in ipairs(list) do
+            local ok, p = pcall(function() return part.Position end)
+            if ok and typeof(p) == "Vector3" then anchor = p break end
+        end
+        if not anchor then return list end
+        local function consider(part)
+            if part.Name ~= "BarbedWire" then return end
+            local touch = false
+            for _, c in ipairs(part:GetChildren()) do
+                if c.ClassName == "TouchTransmitter" then touch = true break end
+            end
+            if not touch then return end
+            local ok, p = pcall(function() return part.Position end)
+            if ok and typeof(p) == "Vector3" and (p - anchor).Magnitude <= 400 then list[#list + 1] = part end
+        end
+        for _, c in ipairs(workspace:GetChildren()) do
+            if c.Name == "BarbedWire" then
+                pcall(consider, c)
+            elseif c.Name == "Model" and c.ClassName == "Model" then
+                for _, m in ipairs(c:GetChildren()) do pcall(consider, m) end
+            end
+        end
+        return list
+    end
+
+    local function moveAway(part)
+        pcall(function()
+            local p = part.Position
+            if p.Y > DART_AWAY_Y + 100 then part.Position = Vector3.new(p.X, DART_AWAY_Y, p.Z) end
+        end)
+    end
+
+    while _G.JB_gen == myGen do
+        PERF.run("powerPlant", function()
+            local w = UI.GetValue(uid("ppWire")) and true or false
+            local p = UI.GetValue(uid("ppPistons")) and true or false
+            if w ~= wireOn then
+                wireOn, wires, wireAt = w, {}, 0
+                notify(w and "ON" or "OFF", "[JB Hub] No Barbed Wire Damage", 3)
+            end
+            if p ~= pistonOn then
+                pistonOn, pistons, pistonAt = p, {}, 0
+                notify(p and "ON" or "OFF", "[JB Hub] No Piston Damage", 3)
+            end
+            local now = tick()
+            if w then
+                if not PERF.solving and now - wireAt >= PISTON_REFRESH then
+                    wires, wireAt = getWires(), now
+                end
+                for _, part in ipairs(wires) do
+                    pcall(function()
+                        if part.Size.X > 0.01 then part.Size = LASER_TINY end
+                    end)
+                end
+            end
+            if p then
+                if not PERF.solving and now - pistonAt >= PISTON_REFRESH then
+                    pistons, pistonAt = getPistonOrigins(), now
+                end
+                if now - moveAt >= 1 then
+                    moveAt = now
+                    for _, origin in ipairs(pistons) do moveAway(origin) end
+                end
+            end
+        end)
+        task.wait((UI.GetValue(uid("ppWire")) or UI.GetValue(uid("ppPistons"))) and 0.15 or 0.5)
+    end
+end)
+
+task.spawn(function()
+    local FEATURES = {
+        { id = "tombSpikes", label = "No Spike Damage" },
+        { id = "tombDarts", label = "No Dart Damage" },
+        { id = "tombBridge", label = "Safe Bridge" },
+        { id = "tombCart", label = "No Cart Barrier Damage" },
+    }
+    local state = {}
+    local dartOriginals, spikeOriginals, plankOriginals, woodOriginals = {}, {}, {}, {}
+    local closedSince, bridgeChecked = {}, {}
+    local spikeList, lastSpikeScan, lastRecheck = {}, 0, 0
+
+    local function sinkPart(part, store)
+        local p = part.Position
+        if p.Y > DART_AWAY_Y + 100 then
+            local key = part.Address
+            if not store[key] then store[key] = { part = part, pos = p } end
+            part.Position = Vector3.new(p.X, DART_AWAY_Y, p.Z)
+        end
+    end
+
+    local function restorePositions(store)
+        for key, e in pairs(store) do
+            pcall(function() e.part.Position = e.pos end)
+            store[key] = nil
+        end
+    end
+
+    local function applyDarts(tomb)
+        local room = tomb:FindFirstChild("DartRoom")
+        local darts = room and room:FindFirstChild("Darts")
+        if not darts then return end
+        for _, d in ipairs(darts:GetChildren()) do
+            pcall(sinkPart, d, dartOriginals)
+        end
+    end
+
+    local function applySpikes(tomb, now)
+        if now - lastSpikeScan >= PERF.TOMB_SPIKE_REFRESH then
+            lastSpikeScan = now
+            local room = tomb:FindFirstChild("SpikeRoom")
+            local list = {}
+            if room then pcall(collectLaserParts, room, {}, list) end
+            spikeList = list
+        end
+        for _, part in ipairs(spikeList) do
+            pcall(function()
+                local size = part.Size
+                if size.X > 0.01 then
+                    local key = part.Address
+                    if not spikeOriginals[key] then spikeOriginals[key] = { part = part, size = size } end
+                    part.Size = LASER_TINY
+                end
+            end)
+        end
+    end
+
+    local function restoreSpikes()
+        for key, e in pairs(spikeOriginals) do
+            pcall(function() e.part.Size = e.size end)
+            spikeOriginals[key] = nil
+        end
+        spikeList, lastSpikeScan = {}, 0
+    end
+
+    local function isPlankVisible(plank)
+        local inner = plank:FindFirstChild("InnerModel")
+        local board = inner and inner:FindFirstChild("Plank")
+        return board ~= nil and board.Transparency < 1
+    end
+
+    local function freezeBridge(tomb, now)
+        local bridge = tomb:FindFirstChild("Bridge")
+        if not bridge then return end
+        for _, plank in ipairs(bridge:GetChildren()) do
+            pcall(function()
+                local key = plank.Address
+                if bridgeChecked[key] then return end
+                if plank:GetAttribute("DoorDuration") == BRIDGE_FROZEN_DURATION then
+                    bridgeChecked[key] = true
+                    return
+                end
+                if plank:GetAttribute("DoorOpen") == true or not isPlankVisible(plank) then
+                    closedSince[key] = nil
+                    return
+                end
+                closedSince[key] = closedSince[key] or now
+                if now - closedSince[key] >= BRIDGE_SETTLE_TIME then
+                    plankOriginals[key] = {
+                        plank = plank,
+                        angle = plank:GetAttribute("DoorMaxAngle"),
+                        duration = plank:GetAttribute("DoorDuration"),
+                    }
+                    plank:SetAttribute("DoorMaxAngle", BRIDGE_FLAT_ANGLE)
+                    plank:SetAttribute("DoorDuration", BRIDGE_FROZEN_DURATION)
+                    bridgeChecked[key] = true
+                end
+            end)
+        end
+    end
+
+    local function restoreBridge()
+        for key, entry in pairs(plankOriginals) do
+            pcall(function()
+                if entry.angle ~= nil then entry.plank:SetAttribute("DoorMaxAngle", entry.angle) end
+                if entry.duration ~= nil then entry.plank:SetAttribute("DoorDuration", entry.duration) end
+            end)
+            plankOriginals[key] = nil
+        end
+        closedSince, bridgeChecked = {}, {}
+    end
+
+    local function hideCartPlanks(tomb)
+        local cart = tomb:FindFirstChild("Cart")
+        local planks = cart and cart:FindFirstChild("Planks")
+        if not planks then return end
+        for _, wood in ipairs(planks:GetChildren()) do
+            if wood.Name == "Wood" then pcall(sinkPart, wood, woodOriginals) end
+        end
+    end
+
+    local apply = {
+        tombDarts = applyDarts,
+        tombSpikes = applySpikes,
+        tombBridge = freezeBridge,
+        tombCart = hideCartPlanks,
+    }
+    local restore = {
+        tombDarts = function() restorePositions(dartOriginals) end,
+        tombSpikes = restoreSpikes,
+        tombBridge = restoreBridge,
+        tombCart = function() restorePositions(woodOriginals) end,
+    }
+
+    while _G.JB_gen == myGen do
+        local anyOn = false
+        PERF.run("tomb", function()
+            local now = tick()
+            if now - lastRecheck >= PERF.TOMB_RECHECK then
+                lastRecheck = now
+                bridgeChecked = {}
+            end
+            local tomb = nil
+            for _, f in ipairs(FEATURES) do
+                local on = UI.GetValue(uid(f.id)) and true or false
+                if on ~= (state[f.id] or false) then
+                    state[f.id] = on
+                    if not on then pcall(restore[f.id]) end
+                    notify(on and "ON" or "OFF", "[JB Hub] " .. f.label, 3)
+                end
+                if on then
+                    anyOn = true
+                    tomb = tomb or PERF.ws("RobberyTomb")
+                    if tomb then pcall(apply[f.id], tomb, now) end
+                end
+            end
+        end)
+        task.wait(anyOn and PERF.TOMB_TICK or 0.5)
+    end
+    for _, f in ipairs(FEATURES) do
+        if state[f.id] then pcall(restore[f.id]) end
+    end
+end)
+
+task.spawn(function()
+    local wasOn = false
+    local originals = {}
+    local milEntries = nil
+    local lastMilScan = 0
+    local milDelay = MIL_TURRET_RESCAN
+
+    local turretList, lastTurretScan = {}, 0
+    local TURRET_SCAN_EVERY, TURRET_MAX_DEPTH = 60, 4
+
+    local function isAutoTurret(m)
+        local base, arm = m:FindFirstChild("Base"), m:FindFirstChild("Arm")
+        return base and arm and base:FindFirstChild("Root") and arm:FindFirstChild("Root")
+            and arm:FindFirstChild("Barrel") and arm:FindFirstChild("Tip") and true or false
+    end
+
+    local function getOilRigTurrets()
+        if tick() - lastTurretScan < TURRET_SCAN_EVERY then return turretList end
+        lastTurretScan = tick()
+        local list, seen, visited = {}, {}, 0
+        local skip = { Vehicles = true }
+        for _, p in ipairs(game:GetService("Players"):GetPlayers()) do skip[p.Name] = true end
+
+        local function add(m)
+            local key = m.Address
+            if not seen[key] then
+                seen[key] = true
+                list[#list + 1] = m
+            end
+        end
+
+        local function walk(node, depth)
+            for _, c in ipairs(node:GetChildren()) do
+                visited = visited + 1
+                if visited % 400 == 0 then task.wait() end
+                local cls = c.ClassName
+                if cls == "Model" or cls == "Folder" then
+                    local ok, auto = false, false
+                    if cls == "Model" then ok, auto = pcall(isAutoTurret, c) end
+                    if ok and auto then
+                        add(c)
+                    elseif depth < TURRET_MAX_DEPTH and not (depth == 1 and skip[c.Name]) then
+                        walk(c, depth + 1)
+                    end
+                end
+            end
+        end
+
+        pcall(walk, workspace, 1)
+        for _, pathList in ipairs(TURRET_CONTAINERS) do
+            local root = resolveLaserRoot(pathList)
+            if root then
+                for _, t in ipairs(root:GetChildren()) do add(t) end
+            end
+        end
+        turretList = list
+        return list
+    end
+
+    local function getCargoTurrets()
+        local list = {}
+        for _, pathList in ipairs(TURRET_MODELS) do
+            local t = resolveLaserRoot(pathList)
+            if t then table.insert(list, t) end
+        end
+        if #list > 0 then return list end
+        local ship = PERF.ws("CargoShip")
+        if not ship then
+            PERF.cargoFound = {}
+            return list
+        end
+        if tick() - (PERF.cargoScanAt or 0) >= 5 then
+            PERF.cargoScanAt = tick()
+            local found = {}
+            for i, d in ipairs(ship:GetDescendants()) do
+                if i % 400 == 0 then task.wait() end
+                if d.ClassName == "Model" then
+                    local ok, auto = pcall(isAutoTurret, d)
+                    if ok and auto then found[#found + 1] = d end
+                end
+            end
+            PERF.cargoFound = found
+        end
+        return PERF.cargoFound or list
+    end
+
+    local turretDone, turretRecheckAt = {}, 0
+    local function withoutCargo(list)
+        local ship = PERF.ws("CargoShip")
+        if not ship then return list end
+        local out = {}
+        for _, t in ipairs(list) do
+            local ok, inside = pcall(function() return t:IsDescendantOf(ship) end)
+            if not (ok and inside) then out[#out + 1] = t end
+        end
+        return out
+    end
+    local function applyTurrets(list)
+        local now = tick()
+        if now >= turretRecheckAt then
+            turretRecheckAt = now + PERF.TURRET_RECHECK
+            turretDone = {}
+        end
+        local count = 0
+        for _, t in ipairs(list) do
+            pcall(function()
+                local key = t.Address
+                if turretDone[key] then
+                    count = count + 1
+                    return
+                end
+                local hz = t:GetAttribute("TurretShootHz")
+                if hz ~= nil or isAutoTurret(t) then
+                    count = count + 1
+                    if hz ~= 0 then
+                        if not originals[key] then
+                            originals[key] = { turret = t, hz = hz }
+                        end
+                        t:SetAttribute("TurretShootHz", 0)
+                    end
+                    turretDone[key] = true
+                end
+            end)
+        end
+        return count
+    end
+
+    local cargoSlots = {}
+    local cargoDelay = CARGO.RESCAN
+    local lastCargoScan = 0
+
+    local function readNumber(addr)
+        local okT, tag = pcall(memory_read, "int", addr + 12)
+        local okD, d = pcall(memory_read, "double", addr)
+        if okT and tag == 3 and okD and type(d) == "number" then return d end
+        return nil
+    end
+
+    local function scanCargo()
+        lastCargoScan = tick()
+        local shoots, hits = {}, {}
+        for _, e in ipairs(lockedGetgc({ "LastShoot", "LastHit" })) do
+            local k = tostring(e.key)
+            local a = tonumber(e.addr)
+            if a and tonumber(tostring(e.value)) then
+                if k == "LastShoot" then
+                    table.insert(shoots, a)
+                elseif k == "LastHit" then
+                    table.insert(hits, a)
+                end
+            end
+        end
+        for _, a in ipairs(shoots) do
+            if not cargoSlots[a] then
+                for _, h in ipairs(hits) do
+                    if math.abs(h - a) <= CARGO.PAIR_RANGE then
+                        cargoSlots[a] = h
+                        break
+                    end
+                end
+            end
+        end
+    end
+
+    local function restoreCargo()
+        for a in pairs(cargoSlots) do
+            if readNumber(a) == CARGO.FREEZE then
+                pcall(memory_write, "double", a, os.clock())
+            end
+        end
+        cargoSlots = {}
+        lastCargoScan = 0
+    end
+
+    local function modelPos(m)
+        for _, c in ipairs(m:GetChildren()) do
+            local ok, p = pcall(function() return c.Position end)
+            if ok and p and pcall(function() return p.X + 0 end) then return p end
+        end
+        for _, c in ipairs(m:GetChildren()) do
+            for _, cc in ipairs(c:GetChildren()) do
+                local ok, p = pcall(function() return cc.Position end)
+                if ok and p and pcall(function() return p.X + 0 end) then return p end
+            end
+        end
+        return nil
+    end
+
+    local function isNear(m, range)
+        local hrp = getHRP()
+        local okMe, me = pcall(function() return hrp.Position end)
+        if not okMe or not me then return true end
+        local okP, p = pcall(modelPos, m)
+        if not okP or not p then return true end
+        return (p - me).Magnitude <= range
+    end
+
+    local function applyCargo(list)
+        if #list == 0 then
+            restoreCargo()
+            return 0
+        end
+        local slots = 0
+        for _ in pairs(cargoSlots) do slots = slots + 1 end
+        local every = slots >= #list and CARGO.RESCAN_SLOW or cargoDelay
+        local near = false
+        for _, t in ipairs(list) do
+            local okP, p = pcall(modelPos, t)
+            local hrp = getHRP()
+            local okMe, me = pcall(function() return hrp.Position end)
+            if okP and p and okMe and me and (p - me).Magnitude <= PERF.NEAR_CARGO then near = true break end
+        end
+        if near and tick() - lastCargoScan >= every then
+            scanCargo()
+            local after = 0
+            for _ in pairs(cargoSlots) do after = after + 1 end
+            cargoDelay = after > slots and CARGO.RESCAN or math.min(cargoDelay * 2, CARGO.RESCAN_SLOW)
+        end
+        local frozen = 0
+        for a, h in pairs(cargoSlots) do
+            local d = readNumber(a)
+            local hv = readNumber(h)
+            if d and hv and hv < CARGO.FREEZE / 10 then
+                if d ~= CARGO.FREEZE then
+                    pcall(memory_write, "double", a, CARGO.FREEZE)
+                end
+                frozen = frozen + 1
+            else
+                cargoSlots[a] = nil
+            end
+        end
+        return frozen > 0 and #list or 0
+    end    
+
+    local function restoreTurrets(list, defaultHz)
+        for _, t in ipairs(list) do
+            pcall(function()
+                local key = t.Address
+                local entry = originals[key]
+                if t:GetAttribute("TurretShootHz") == 0 then
+                    t:SetAttribute("TurretShootHz", entry and entry.hz or defaultHz or TURRET_DEFAULT_HZ)
+                end
+                originals[key] = nil
+            end)
+        end
+    end
+
+    local function restoreAllTurrets()
+        for _, entry in pairs(originals) do
+            pcall(function()
+                if entry.turret:GetAttribute("TurretShootHz") == 0 then
+                    entry.turret:SetAttribute("TurretShootHz", entry.hz)
+                end
+            end)
+        end
+        turretDone, turretRecheckAt = {}, 0
+        turretList, lastTurretScan = {}, 0
+        restoreCargo()
+        originals = {}
+    end
+
+    local function scanMilitary()
+        lastMilScan = tick()
+        local entries = {}
+        for _, e in ipairs(lockedGetgc(MIL_TURRET_KEYS)) do
+            local key = tostring(e.key)
+            local value = tonumber(tostring(e.value))
+            local addr = tonumber(e.addr)
+            if MIL_TURRET_VALUES[key] ~= nil and value and addr then
+                local ok, cur = pcall(memory_read, "double", addr)
+                if ok and type(cur) == "number" and math.abs(cur - value) < 0.0001 then
+                    local original = value
+                    if math.abs(value - MIL_TURRET_VALUES[key]) < 0.0001 then
+                        original = MIL_TURRET_DEFAULTS[key]
+                    end
+                    table.insert(entries, { key = key, original = original, addr = addr })
+                end
+            end
+        end
+        if #entries == 0 then return nil end
+        return entries
+    end
+
+    local function writeMilitary(entries, restoring)
+        for _, e in ipairs(entries) do
+            local ok, cur = pcall(memory_read, "double", e.addr)
+            if not ok or type(cur) ~= "number" then return false end
+            local target = MIL_TURRET_VALUES[e.key]
+            if math.abs(cur - e.original) > 0.0001 and math.abs(cur - target) > 0.0001 then
+                return false
+            end
+        end
+        for _, e in ipairs(entries) do
+            local value = restoring and e.original or MIL_TURRET_VALUES[e.key]
+            pcall(function() memory_write("double", e.addr, value) end)
+        end
+        return true
+    end
+
+    local function nearMilitary()
+        local base = PERF.ws("MilitaryBase")
+        local tower = base and base:FindFirstChild("MilitaryTower")
+        if not tower then return true end
+        local okP, p = pcall(modelPos, tower)
+        local hrp = getHRP()
+        local okMe, me = pcall(function() return hrp.Position end)
+        if not (okP and p and okMe and me) then return false end
+        return (p - me).Magnitude <= 1200
+    end
+
+    local function applyMilitary(notifyWhenFound)
+        if milEntries and not writeMilitary(milEntries, false) then
+            milEntries = nil
+            milDelay = MIL_TURRET_RESCAN
+        end
+        local near = nearMilitary()
+        if near and not PERF.milWasNear then lastMilScan, milDelay = 0, MIL_TURRET_RESCAN end
+        PERF.milWasNear = near
+        if not milEntries and tick() - lastMilScan >= milDelay and near then
+            milEntries = scanMilitary()
+            if milEntries and writeMilitary(milEntries, false) then
+                milDelay = MIL_TURRET_RESCAN
+                if notifyWhenFound then
+                    PERF.notifySafe("Military turrets disabled", TURRET_TITLE, 3)
+                end
+            else
+                milEntries = nil
+                milDelay = math.min(milDelay * 2, 20)
+            end
+        end
+        return milEntries ~= nil
+    end
+
+    local function restoreMilitary()
+        if milEntries then
+            writeMilitary(milEntries, true)
+        end
+        milEntries = nil
+    end
+
+    local homes, homeGhosts, lastHomeScan = {}, {}, 0
+    local homeShown = false
+
+    local function scanHomes()
+        lastHomeScan = tick()
+        local list = {}
+        for _, child in ipairs(workspace:GetChildren()) do
+            if child:FindFirstChild("Turret") then list[#list + 1] = child end
+        end
+        homes = list
+    end
+
+    local ghostList, ghostAt, ghostSrc = {}, 0, nil
+    local function applyHomes()
+        local now = tick()
+        if PERF.homeModels ~= ghostSrc or now - ghostAt >= 10 then
+            ghostSrc, ghostAt = PERF.homeModels, now
+            ghostList = {}
+            for _, home in ipairs(ghostSrc or {}) do
+                pcall(function()
+                    for _, m in ipairs(home:GetChildren()) do
+                        if m.Name == "Turret" then
+                            local ghost = m:FindFirstChild("IsGhost")
+                            if ghost then ghostList[#ghostList + 1] = ghost end
+                        end
+                    end
+                end)
+            end
+        end
+        for _, ghost in ipairs(ghostList) do
+            pcall(function()
+                if ghost.Value ~= true then
+                    local key = ghost.Address
+                    if homeGhosts[key] == nil then
+                        homeGhosts[key] = { value = ghost, old = ghost.Value }
+                    end
+                    ghost.Value = true
+                end
+            end)
+        end
+        return #ghostList
+    end
+
+    local function restoreHomes()
+        for _, e in pairs(homeGhosts) do
+            pcall(function() e.value.Value = e.old end)
+        end
+        homeGhosts = {}
+        homes = {}
+        ghostList, ghostAt, ghostSrc = {}, 0, nil
+        lastHomeScan = 0
+    end
+
+    local oilShown, cargoShown = false, false
+
+    local function groupNotify(name, count, wasShown, live)
+        if count > 0 then
+            if not wasShown then
+                notify(live and (name .. " turrets disabled") or (name .. ": " .. count .. " turrets disabled"), TURRET_TITLE, 3)
+            end
+            return true
+        end
+        if not live then
+            notify(name .. ": not loaded", TURRET_TITLE, 3)
+        end
+        return false
+    end
+
+    while _G.JB_gen == myGen do
+        PERF.run("noturret", function()
+            local on = UI.GetValue(uid("noturret")) and true or false
+            if on and not wasOn then
+                wasOn = true
+                lastMilScan = 0
+                milDelay = MIL_TURRET_RESCAN
+                oilShown = groupNotify("Oil Rig", applyTurrets(withoutCargo(getOilRigTurrets())), false, false)
+                cargoShown = groupNotify("Cargo Ship", applyCargo(getCargoTurrets()), false, false)
+                homeShown = groupNotify("Home", applyHomes(), false, false)
+                local mil = applyMilitary(false)
+                PERF.notifySafe(mil and "Military turrets disabled" or (nearMilitary() and "Military: offsets outdated, wait for JB Hub update ..." or "Military: ready, activates near the base"), TURRET_TITLE, 3)
+            elseif not on and wasOn then
+                wasOn = false
+                oilShown, cargoShown, homeShown = false, false, false
+                restoreAllTurrets()
+                restoreHomes()
+                restoreMilitary()
+                notify("OFF", TURRET_TITLE, 3)
+            elseif on then
+                oilShown = groupNotify("Oil Rig", applyTurrets(withoutCargo(getOilRigTurrets())), oilShown, true)
+                cargoShown = groupNotify("Cargo Ship", applyCargo(getCargoTurrets()), cargoShown, true)
+                homeShown = groupNotify("Home", applyHomes(), homeShown, true)
+                applyMilitary(true)
+            end
+        end)
+        task.wait(TURRET_TICK)
+    end
+    restoreAllTurrets()
+    restoreHomes()
+    restoreMilitary()
+end)
+
+task.spawn(function()
+    local wasOn = false
+    local keyDown = false
+    local busy = false
+    local lastDone = 0
+    while _G.JB_gen == myGen do
+        PERF.run("puzzleSolve", function()
+            local on = UI.GetValue(uid("puzzleSolve")) and true or false
+            if on ~= wasOn then
+                wasOn = on
+                notify(on and "ON" or "OFF", "[JB Hub] Auto-Solve Puzzle", 3)
+            end
+            local down = false
+            down = PERF.keyDown("puzzle", FLOW_KEY)
+            local trigger = (down and not keyDown) or flowRequested
+            keyDown = down
+            flowRequested = false
+            if trigger and on and not busy and tick() - lastDone > 1 then
+                busy = true
+                PERF.solving = true
+                local ok, err = pcall(autoSolveFlow)
+                PERF.solving = false
+                if not ok then
+                    pcall(mouse1release)
+                    notify("Error: " .. tostring(err), "[JB Hub] Auto-Solve Puzzle", 3)
+                end
+                flowRequested = false
+                lastDone = tick()
+                busy = false
+            end
+        end)
+        task.wait(0.03)
+    end
+end)
+
+task.spawn(function()
+    local wasOn, shown, seen = false, false, false
+    while _G.JB_gen == myGen do
+        PERF.run("puzzlePath", function()
+            local on = UI.GetValue(uid("puzzlePath")) and true or false
+            if on ~= wasOn then
+                wasOn = on
+                if not on then
+                    clearFlowLines()
+                    shown = false
+                end
+                notify(on and "ON" or "OFF", "[JB Hub] Show Puzzle Path", 3)
+            end
+            if not isFlowOpen() then
+                seen = false
+                if shown then
+                    clearFlowLines()
+                    shown = false
+                end
+                return
+            end
+            if not seen then
+                seen = true
+                local puzzle = readFlowPuzzle()
+                if puzzle and (on or UI.GetValue(uid("puzzleSolve"))) then
+                    task.spawn(function() solveFlowPuzzle(puzzle) end)
+                end
+            end
+            if on and not shown then
+                shown = true
+                local puzzle = readFlowPuzzle()
+                if puzzle then
+                    clearFlowLines()
+                    showFlowPath(puzzle)
+                end
+            end
+        end)
+        task.wait(FLOW_PATH_REFRESH)
+    end
+    clearFlowLines()
+end)
+
+task.spawn(function()
+    local drawings = {}
+    local targets = {}
+    local wasOn = {}
+    local scan = nil
+    local lastSearch = 0
+    local scale = 1
+    local lastScaleAt = 0
+    local frame = 0
+    local bountyList, lastBounty = {}, 0
+
+    local classes, classesAt = {}, tick()
+
+    local function startScan()
+        if tick() - classesAt > 60 then classes, classesAt = {}, tick() end
+        local cash = PERF.ws("DroppedCash")
+        return {
+            lists = { workspace:GetChildren(), cash and cash:GetChildren() or {} },
+            li = 1,
+            i = 0,
+            found = {},
+        }
+    end
+
+    local function stepScan(budget)
+        while budget > 0 do
+            local list = scan.lists[scan.li]
+            if not list then return true end
+            scan.i = scan.i + 1
+            local child = list[scan.i]
+            if child == nil then
+                scan.li = scan.li + 1
+                scan.i = 0
+            else
+                budget = budget - 1
+                local okK, key = pcall(function() return child.Address end)
+                local c = nil
+                if okK then c = classes[key] end
+                if c and c.gone then
+                    classes[key] = nil
+                    c = nil
+                end
+                if c == nil then
+                    local container = scan.li == 2 and "DroppedCash" or nil
+                    local okN, name = pcall(function() return child.Name end)
+                    local info = okN and ESP_TARGETS[name]
+                    if not info or info.container ~= container then
+                        c = false
+                    else
+                        local ok, t = pcall(readEspTarget, child, container, name)
+                        if ok and t then c = t end
+                    end
+                    if okK and c ~= nil then classes[key] = c end
+                end
+                if c then scan.found[#scan.found + 1] = c end
+            end
+        end
+        return false
+    end
+
+    local function readRootPos()
+        local c = game:GetService("Players").LocalPlayer.Character
+        local root = c and c:FindFirstChild("HumanoidRootPart")
+        return root and root.Position
+    end
+
+    local function readScale()
+        local h = workspace.CurrentCamera.ViewportSize.Y
+        if h and h > 0 then return h / ESP_SCREEN_HEIGHT end
+        return 1
+    end
+	
+	local enabledCache, enabledAt = {}, 0
+
+    while _G.JB_gen == myGen do
+        local idle = true
+        PERF.run("esp", function()
+            local enabled = enabledCache
+            local anyOn = false
+            if tick() - enabledAt >= 0.15 then
+                enabledAt = tick()
+                enabled = {}
+                for name, info in pairs(ESP_TARGETS) do
+                    enabled[name] = UI.GetValue(uid(info.id)) and true or false
+                    if enabled[name] ~= (wasOn[name] or false) then
+                        wasOn[name] = enabled[name]
+                        notify(enabled[name] and "ON" or "OFF", info.title, 3)
+                    end
+                end
+                enabledCache = enabled
+            end
+            for _, v in pairs(enabled) do
+                if v then anyOn = true break end
+            end
+            idle = not anyOn
+
+            local now = tick()
+            if not anyOn then
+                targets = {}
+                bountyList = {}
+                scan = nil
+            else
+                if enabled.Bounty then
+                    if now - lastBounty >= PERF.BOUNTY_EVERY then PERF.run("espBounty", function()
+                        lastBounty = now
+                        local list = {}
+                        local ok, good = pcall(readBountyTargets, list)
+                        if ok and good then
+                            bountyList = list
+                            PERF.bountyGoodAt = now
+                        elseif now - (PERF.bountyGoodAt or 0) > 30 then
+                            bountyList = {}
+                        end
+                    end) end
+                else
+                    bountyList = {}
+                    lastBounty = 0
+                end
+                local needScan = false
+                for name, v in pairs(enabled) do
+                    if v and name ~= "Bounty" then needScan = true break end
+                end
+                if not needScan then
+                    targets, scan = {}, nil
+                elseif not scan and now - lastSearch >= ESP_SEARCH_EVERY then
+                    lastSearch = now
+                    local ok, s = pcall(startScan)
+                    if ok then scan = s end
+                end
+                if scan then PERF.run("espScan", function()
+                    local ok, done = pcall(stepScan, PERF.ESP_SCAN_CHUNK)
+                    if not ok then
+                        scan = nil
+                    elseif done then
+                        targets = scan.found
+                        scan = nil
+                    end
+                end) end
+                if now - lastScaleAt >= 1 then
+                    lastScaleAt = now
+                    local ok, s = pcall(readScale)
+                    if ok and s then scale = s end
+                end
+            end
+
+            local okRoot, rootPos = pcall(readRootPos)
+            if not okRoot then rootPos = nil end
+            frame = frame + 1
+
+            PERF.run("espDraw", function()
+            for _, group in ipairs({ targets, bountyList }) do
+                for _, t in ipairs(group) do
+                    if enabled[t.name] then
+                        local isBounty = t.kind == "bounty"
+                        local d = drawings[t.id]
+                        if not d then
+                            d = isBounty and newBountyDrawing(t.color) or newEspDrawing(t.info)
+                            drawings[t.id] = d
+                        end
+                        d.frame = frame
+                        local ok, show = pcall(isBounty and drawBountyTarget or drawEspTarget, t, d, rootPos, scale, now)
+                        setEspVisible(d, ok and show == true)
+                    end
+                end
+            end
+            end)
+
+            for id, d in pairs(drawings) do
+                if d.frame ~= frame then
+                    removeEspDrawing(d)
+                    drawings[id] = nil
+                end
+            end
+        end)
+        task.wait(idle and 0.25 or (#targets == 0 and #bountyList == 0 and 0.1 or 0))
+    end
+    for _, d in pairs(drawings) do
+        removeEspDrawing(d)
+    end
+end)
+
+task.spawn(function()
+    local TITLE = "[JB Hub] Kill All NPCs"
+    local wasOn, lastArmed = false, false
+    local hums, tried, counted = {}, {}, {}
+    local pending, lastNotify, lastClear = 0, 0, 0
+
+    local function getHum(m, key)
+        local h = hums[key]
+        if h then
+            local ok, same = pcall(function() return tonumber(h.Parent.Address) == tonumber(m.Address) end)
+            if ok and same then return h end
+        end
+        h = m:FindFirstChildOfClass("Humanoid") or false
+        hums[key] = h
+        return h or nil
+    end
+
+    while _G.JB_gen == myGen do
+        local active = false
+        PERF.run("KillNpcs", function()
+            local armed = UI.GetValue(uid("killNpcs")) and true or false
+            if armed ~= lastArmed then
+                lastArmed = armed
+                notify(armed and "Enabled" or "Disabled", TITLE, 3)
+            end
+            local on = armed and keybindActive(PERF.killKeybind)
+            if on ~= wasOn then
+                wasOn = on
+                hums, tried, counted, pending = {}, {}, {}, 0
+                notify(on and "Kill ON" or "Kill OFF", TITLE, 2)
+            end
+            if not on or PERF.solving then return end
+            active = true
+            local now = tick()
+            if now - lastClear >= 30 then
+                lastClear = now
+                hums = {}
+            end
+            local myPos, range = getNpcRange()
+            for _, folder in ipairs(PERF.npcFolders) do
+                local okC, children = pcall(function() return folder:GetChildren() end)
+                if okC then
+                    for _, m in ipairs(children) do
+                        pcall(function()
+                            local key = m.Address
+                            local hum = getHum(m, key)
+                            if not hum or not npcInRange(m, myPos, range) then return end
+                            local hp = hum.Health
+                            if hp > 0 then
+                                tried[key] = true
+                                pcall(function() hum.Health = 0 end)
+                                local addr = tonumber(hum.Address)
+                                if addr and addr > 4096 then pcall(memory_write, "float", addr + HUM_HEALTH, 0) end
+                            elseif tried[key] and not counted[key] then
+                                counted[key] = true
+                                pending = pending + 1
+                            end
+                        end)
+                    end
+                end
+            end
+            if pending > 0 and now - lastNotify >= 1 then
+                lastNotify = now
+                notify(pending .. " NPCs killed", TITLE, 2)
+                pending = 0
+            end
+        end)
+        task.wait(active and PERF.NPC_TICK or 0.25)
+    end
+end)
+
+task.spawn(function()
+    local TITLE = "[JB Hub] Make Guards Disabled"
+    local wasOn = false
+    local originals = {}
+    local myId = game:GetService("Players").LocalPlayer.UserId
+    local ownerSeen = {}
+
+    local function playerName(id)
+        for _, p in ipairs(game:GetService("Players"):GetPlayers()) do
+            if p.UserId == id then
+                local okD, dn = pcall(function() return p.DisplayName end)
+                if okD and dn and dn ~= "" then return dn end
+                local okN, n = pcall(function() return p.Name end)
+                if okN and n and n ~= "" then return n end
+            end
+        end
+        return tostring(id)
+    end
+
+    local function attr(g, name)
+        local ok, v = pcall(function() return g:GetAttribute(name) end)
+        return ok and v or nil
+    end
+
+    local function alive(g)
+        local ok, hp = pcall(function()
+            local hum = g:FindFirstChildOfClass("Humanoid")
+            return hum and hum.Health
+        end)
+        return ok and hp ~= nil and hp > 0
+    end
+
+    local function restoreAll()
+        for _, o in pairs(originals) do
+            pcall(function()
+                if o.dist ~= nil and o.guard:GetAttribute("MaxShootDist") == 0 then
+                    o.guard:SetAttribute("MaxShootDist", o.dist)
+                end
+                if o.freq ~= nil and o.guard:GetAttribute("GuardTriggerPressFreq") == 0 then
+                    o.guard:SetAttribute("GuardTriggerPressFreq", o.freq)
+                end
+            end)
+        end
+        originals = {}
+    end
+
+    local function enforce(o)
+        local g = o.guard
+        local dist = attr(g, "MaxShootDist")
+        if dist ~= 0 then
+            if dist ~= nil then o.dist = dist end
+            g:SetAttribute("MaxShootDist", 0)
+        end
+        local freq = attr(g, "GuardTriggerPressFreq")
+        if freq ~= 0 then
+            if freq ~= nil then o.freq = freq end
+            g:SetAttribute("GuardTriggerPressFreq", 0)
+        end
+        if attr(g, "NPCDestType") ~= 3 then
+            local home = attr(g, "NPCHomePosition")
+            if not home then
+                if not o.stay then
+                    pcall(function() o.stay = g:FindFirstChild("HumanoidRootPart").Position end)
+                end
+                home = o.stay
+            end
+            if home then pcall(function() g:SetAttribute("NPCDestPos", home) end) end
+            g:SetAttribute("NPCDestType", 3)
+        end
+    end
+
+    while _G.JB_gen == myGen do
+        local active = false
+        PERF.run("GuardsDisabled", function()
+            local on = UI.GetValue(uid("guards")) and true or false
+            if on ~= wasOn then
+                wasOn = on
+                ownerSeen = {}
+                if not on then restoreAll() end
+                notify(on and "ON" or "OFF", TITLE, 3)
+            end
+            if not on or PERF.solving then return end
+            active = true
+            local folders = {}
+            for _, f in ipairs(PERF.npcFolders) do folders[#folders + 1] = f end
+            local mansion = PERF.ws("MansionRobbery")
+            local mg = mansion and mansion:FindFirstChild("GuardsFolder")
+            if mg then
+                local has = false
+                for _, f in ipairs(folders) do
+                    if f == mg then has = true break end
+                end
+                if not has then folders[#folders + 1] = mg end
+            end
+            local fresh, seen, owners = 0, {}, {}
+            for _, g in ipairs(getGuards(folders)) do
+                local ok, key = pcall(function() return g.Address end)
+                if ok and not PERF.ceoGuards[key] and alive(g) then
+                    seen[key] = true
+                    local owner = tonumber(attr(g, "NPCNetworkOwnerId"))
+                    if owner and owner > 0 and owner ~= myId then owners[owner] = (owners[owner] or 0) + 1 end
+                    local o = originals[key]
+                    if not o then
+                        o = { guard = g }
+                        originals[key] = o
+                        fresh = fresh + 1
+                    end
+                    pcall(enforce, o)
+                end
+            end
+            for key in pairs(originals) do
+                if not seen[key] then originals[key] = nil end
+            end
+            if fresh > 0 then
+                notify(fresh .. " guards disabled", TITLE, 2)
+            end
+            local now = tick()
+            for owner, count in pairs(owners) do
+                if not ownerSeen[owner] or now - ownerSeen[owner] >= 60 then
+                    ownerSeen[owner] = now
+                    notify(playerName(owner) .. " controls " .. count .. " guards, they can't be disabled", TITLE, 4)
+                end
+            end
+        end)
+        task.wait(active and PERF.NPC_TICK or 0.3)
+    end
+    restoreAll()
+end)
+
+task.spawn(function()
+    local H = PERF.HB
+    local holder = game:GetService("ReplicatedStorage")
+    local tracked, dead, queue = {}, {}, {}
+    local wasOn, lastSize, sizeAt, mansion, mansionAt = false, nil, nil, nil, 0
+
+    local function rf(a)
+        local ok, v = pcall(memory_read, "float", a)
+        return ok and v or nil
+    end
+
+    local function rb(a)
+        local ok, v = pcall(memory_read, "byte", a)
+        return ok and v or nil
+    end
+
+    local function wanted()
+        return Vector3.new(tonumber(UI.GetValue(uid("hbX"))) or 10, tonumber(UI.GetValue(uid("hbY"))) or 8, tonumber(UI.GetValue(uid("hbZ"))) or 10)
+    end
+
+    local function paint(o, alpha, r, g, b)
+        local okV, live = pcall(function()
+            return o.mAddr ~= nil and o.model.Parent ~= nil and tonumber(o.root.Parent.Address) == o.mAddr and tonumber(o.root.Address) == o.base
+        end)
+        if not okV or not live then return end
+        pcall(memory_write, "float", o.base + H.TR_OFF, alpha)
+        pcall(memory_write, "byte", o.base + PERF.PART_COLOR, r)
+        pcall(memory_write, "byte", o.base + PERF.PART_COLOR + 1, g)
+        pcall(memory_write, "byte", o.base + PERF.PART_COLOR + 2, b)
+    end
+
+    local function shape(o, size)
+        pcall(function() o.root.Size = size end)
+        pcall(function() o.root.CanCollide = false end)
+    end
+
+    local function capture(m, root)
+        local base = tonumber(root.Address)
+        if not base or base <= 4096 then return nil end
+        local okS, size = pcall(function() return root.Size end)
+        local okC, cc = pcall(function() return root.CanCollide end)
+        local okM, mAddr = pcall(function() return tonumber(m.Address) end)
+        return {
+            model = m, root = root, base = base, mAddr = okM and mAddr or nil,
+            hum = m:FindFirstChildOfClass("Humanoid") or m:FindFirstChild("Humanoid"),
+            size = okS and size or Vector3.new(2, 2, 1),
+            cc = (okC and cc ~= nil) and cc or true,
+            tr = rf(base + H.TR_OFF) or 1,
+            col = { rb(base + PERF.PART_COLOR) or 0, rb(base + PERF.PART_COLOR + 1) or 0, rb(base + PERF.PART_COLOR + 2) or 0 },
+            checkAt = 0, born = tick(), refreshCount = 0, refreshFrom = 0,
+        }
+    end
+
+    local function apply(o, size)
+        paint(o, H.ALPHA, H.COLOR[1], H.COLOR[2], H.COLOR[3])
+        shape(o, size)
+        o.checkAt = tick() + H.YOUNG_VERIFY
+    end
+
+    local function restore(o)
+        pcall(function() o.root.Size = o.size end)
+        pcall(function() o.root.CanCollide = o.cc end)
+        paint(o, o.tr, o.col[1], o.col[2], o.col[3])
+    end
+
+    local function canRefresh(o)
+        local now = tick()
+        if now - o.refreshFrom > H.REFRESH_WINDOW then o.refreshFrom, o.refreshCount = now, 0 end
+        if o.refreshCount >= H.REFRESH_CAP then return false end
+        o.refreshCount = o.refreshCount + 1
+        return true
+    end
+
+    local function refreshBatch(list)
+        local moved = {}
+        for _, o in ipairs(list) do
+            local okP, p = pcall(function() return o.model.Parent end)
+            if okP and p and p ~= holder and pcall(function() o.model.Parent = holder end) then
+                moved[#moved + 1] = { o = o, p = p }
+            end
+        end
+        if #moved == 0 then return end
+        task.wait()
+        for _, e in ipairs(moved) do
+            if not pcall(function() e.o.model.Parent = e.p end) then
+                task.wait()
+                pcall(function() e.o.model.Parent = e.p end)
+            end
+        end
+    end
+
+    local function restoreAll()
+        local all = {}
+        for _, o in pairs(tracked) do
+            restore(o)
+            all[#all + 1] = o
+        end
+        tracked, queue = {}, {}
+        for i = 1, #all, H.REFRESH_PER_TICK do
+            local part = {}
+            for j = i, math.min(i + H.REFRESH_PER_TICK - 1, #all) do part[#part + 1] = all[j] end
+            refreshBatch(part)
+        end
+    end
+
+    local function getMansion(now)
+        if mansion and pcall(function() return mansion.Parent.Name end) then return mansion end
+        if now - mansionAt >= H.MANSION_EVERY then
+            mansionAt = now
+            mansion = PERF.ws("MansionRobbery")
+        end
+        return mansion
+    end
+
+    while _G.JB_gen == myGen do
+        local active, batch = false, {}
+        PERF.run("hitbox", function()
+            local on = UI.GetValue(uid("npcHitbox")) and true or false
+            local size = wanted()
+            local sizeKey = tostring(size)
+            if on ~= wasOn then
+                wasOn = on
+                if on then
+                    dead, lastSize, sizeAt = {}, sizeKey, nil
+                    notify(string.format("ON - %dx%dx%d", math.floor(size.X), math.floor(size.Y), math.floor(size.Z)), H.TITLE, 3)
+                else
+                    restoreAll()
+                    notify("OFF - hitboxes restored", H.TITLE, 3)
+                end
+            end
+            if not on or PERF.solving then return end
+            active = true
+            local now = tick()
+            if now - (H.deadAt or 0) >= 60 then H.deadAt, dead = now, {} end
+ 
+            local sources = {}
+            for _, f in ipairs(PERF.npcFolders) do sources[#sources + 1] = f end
+            local m0 = getMansion(now)
+            if m0 then sources[#sources + 1] = m0 end
+
+            for _, f in ipairs(sources) do
+                local okC, kids = pcall(function() return f:GetChildren() end)
+                for _, m in ipairs(okC and kids or {}) do
+                    local okK, k = pcall(function() return tostring(m.Address) end)
+                    if okK and k and not tracked[k] and not dead[k] then
+                        local isBoss = m.Name == "ActiveBoss"
+                        local okG, guard = pcall(function() return m:GetAttribute("GuardTriggerPressFreq") ~= nil end)
+                        local root = (isBoss or (okG and guard)) and m:FindFirstChild("HumanoidRootPart")
+                        if root then
+                            local o = capture(m, root)
+                            if o then
+                                tracked[k] = o
+                                apply(o, size)
+                                o.refreshAt = now + H.REFRESH_DELAY
+                            end
+                        elseif not isBoss and okG and not guard then
+                            dead[k] = true
+                        end
+                    end
+                end
+            end
+
+            if sizeKey ~= lastSize then
+                lastSize, sizeAt = sizeKey, now + H.SLIDER_DELAY
+                for _, o in pairs(tracked) do shape(o, size) end
+            end
+            if sizeAt and now >= sizeAt then
+                sizeAt = nil
+                for k in pairs(tracked) do queue[k] = true end
+            end
+
+            for k, o in pairs(tracked) do
+                if o.refreshAt and now >= o.refreshAt then
+                    o.refreshAt = nil
+                    queue[k] = true
+                end
+                if now >= o.checkAt then
+                    o.checkAt = now + ((now - o.born < H.YOUNG) and H.YOUNG_VERIFY or H.VERIFY)
+                    local okP = pcall(function() return o.model.Parent.Name end)
+                    local okH, hp = pcall(function() return o.hum.Health end)
+                    if not okP then
+                        tracked[k] = nil
+                    elseif okH and hp and hp <= 0 then
+                        restore(o)
+                        tracked[k], dead[k] = nil, true
+                    else
+                        local cur = o.model:FindFirstChild("HumanoidRootPart")
+                        local okA, addr = pcall(function() return tonumber(cur.Address) end)
+                        if okA and addr and addr ~= o.base then
+                            local n = capture(o.model, cur)
+                            if n then
+                                tracked[k] = n
+                                apply(n, size)
+                                queue[k] = true
+                            end
+                        else
+                            local okS, s = pcall(function() return o.root.Size end)
+                            local tr = rf(o.base + H.TR_OFF)
+                            if not okS or not s or math.abs(s.X - size.X) > 0.01 or math.abs(s.Y - size.Y) > 0.01 or math.abs(s.Z - size.Z) > 0.01 then
+                                shape(o, size)
+                                if not o.refreshAt and canRefresh(o) then queue[k] = true end
+                            end
+                            if tr and math.abs(tr - H.ALPHA) > 0.001 then
+                                paint(o, H.ALPHA, H.COLOR[1], H.COLOR[2], H.COLOR[3])
+                                queue[k] = true
+                            end
+                        end
+                    end
+                end
+            end
+
+            for k in pairs(queue) do
+                queue[k] = nil
+                if tracked[k] then batch[#batch + 1] = tracked[k] end
+                if #batch >= H.REFRESH_PER_TICK then break end
+            end
+        end)
+        if #batch > 0 then refreshBatch(batch) end
+        task.wait(active and H.TICK or 0.3)
+    end
+    restoreAll()
+end)
+
+-- cmds
+task.spawn(function()
+    local lp = game:GetService("Players").LocalPlayer
+    local prefix = tostring(lp.UserId) .. "-"
+    local scroll, scrollAt, primed, pending = nil, 0, false, nil
+    local seen, seenCount = {}, 0
+
+    local function findScroll()
+        local ok, s = pcall(function()
+            return game:GetService("CoreGui").ExperienceChat.appLayout.chatWindow.contentFrame.scrollingView.bottomLockedScrollView.scrollView
+        end)
+        return ok and s or nil
+    end
+
+    local function tap(vk)
+        keypress(vk)
+        task.wait(0.15)
+        keyrelease(vk)
+    end
+
+    local function exitGame()
+        if not isrbxactive() then
+            notify("Focus the Roblox window, then try again", "[JB Hub]", 3)
+            return
+        end
+        notify("Leaving the game...", "[JB Hub]", 2)
+        PERF.ONLINE.leave()
+        task.wait(0.5)
+        tap(0x1B)
+        task.wait(1)
+        tap(0x4C)
+        task.wait(1)
+        tap(0x0D)
+    end
+
+    local function mark(n)
+        if seenCount > 500 then seen, seenCount = {}, 0 end
+        seen[n], seenCount = true, seenCount + 1
+    end
+
+    while _G.JB_gen == myGen do
+        PERF.run("chatCmd", function()
+            local now = tick()
+            if scroll and not pcall(function() return scroll.Parent.Name end) then scroll = nil end
+            if not scroll then
+                if now - scrollAt < 5 then return end
+                scrollAt, primed = now, false
+                scroll = findScroll()
+                if not scroll then return end
+            end
+            local okC, kids = pcall(function() return scroll:GetChildren() end)
+            if not okC then return end
+            if not primed then
+                for _, c in ipairs(kids) do
+                    local okN, n = pcall(function() return c.Name end)
+                    if okN then mark(n) end
+                end
+                primed = true
+                return
+            end
+            for i = math.max(1, #kids - 3), #kids do
+                local c = kids[i]
+                local okN, n = pcall(function() return c.Name end)
+                if okN and n and not seen[n] then
+                    mark(n)
+                    if string.sub(n, 1, #prefix) == prefix then
+                        local okT, body = pcall(function() return c.TextMessage.BodyText.Text end)
+                        local cmd = okT and type(body) == "string" and string.match(body, ":%s*(;%S+)%s*$")
+                        cmd = cmd and string.lower(cmd)
+                        if cmd == ";exit" then
+                            pending = "exit"
+                        elseif cmd == ";reset" then
+                            pending = "reset"
+                        end
+                    end
+                end
+            end
+        end)
+        if pending == "exit" then
+            pending = nil
+            exitGame()
+        elseif pending == "reset" then
+            pending = nil
+            forceReset()
+        end
+        task.wait(0.3)
+    end
+end)
+
+task.spawn(function()
+    local wasOn, keyDown = false, false
+    while _G.JB_gen == myGen do
+        PERF.run("resetBind", function()
+            local on = UI.GetValue(uid("resetBind")) and true or false
+            if on ~= wasOn then
+                wasOn = on
+                notify(on and "ON" or "OFF", "[JB Hub] Force Reset Bind", 3)
+            end
+            local down = on and PERF.keyDown("reset", PERF.RESET_KEY) or false
+            local trigger = (down and not keyDown) or (on and PERF.resetRequested)
+            keyDown = down
+            PERF.resetRequested = false
+            if trigger and not resetting then forceReset() end
+        end)
+        task.wait(0.05)
+    end
+end)
+
+task.spawn(function()
+    local TITLE = "[JB Hub] Make Guards Attack CEO"
+    local RANGE, SCAN_EVERY, OWNER_EVERY, BOSS_EVERY, WARN_EVERY = 300, 0.5, 0.25, 0.5, 15
+    local boss, entries = {}, {}
+    local wasOn, bossDown, myId = false, false, nil
+    local lastBoss, lastScan, lastWarn = 0, 0, 0
+
+    local function attr(g, name)
+        local ok, v = pcall(function() return g:GetAttribute(name) end)
+        return ok and v or nil
+    end
+
+    local function setAttr(g, name, v)
+        if attr(g, name) ~= v then pcall(function() g:SetAttribute(name, v) end) end
+    end
+
+    local function refreshBoss()
+        local mansion = PERF.ws("MansionRobbery")
+        local model = mansion and mansion:FindFirstChild("ActiveBoss")
+        boss.folder = mansion and mansion:FindFirstChild("GuardsFolder")
+        boss.root = model and model:FindFirstChild("HumanoidRootPart")
+        boss.hum = model and model:FindFirstChildOfClass("Humanoid")
+        local ok, a = pcall(function() return boss.root.Address end)
+        boss.addr = ok and a or nil
+    end
+
+    local function bossHealth()
+        if not boss.hum then return nil end
+        local ok, hp = pcall(function() return boss.hum.Health end)
+        return ok and type(hp) == "number" and hp or nil
+    end
+
+    local function save(e)
+        local g = e.guard
+        e.dv = e.dv or g:FindFirstChild("NPCDestObj")
+        local okV, dest = pcall(function() return e.dv.Value end)
+        e.saved = {
+            involved = attr(g, "TargetingInvolvedPlayer"),
+            maxShoot = attr(g, "MaxShootDist"),
+            freq = attr(g, "GuardTriggerPressFreq"),
+            destType = attr(g, "NPCDestType"),
+            dest = okV and dest or nil,
+        }
+        PERF.ceoGuards[e.key] = true
+    end
+
+    local function apply(e)
+        local g = e.guard
+        setAttr(g, "TargetingInvolvedPlayer", true)
+        if (tonumber(attr(g, "MaxShootDist")) or 0) < 1000 then setAttr(g, "MaxShootDist", 1000) end
+        if (tonumber(attr(g, "GuardTriggerPressFreq")) or 0) <= 0 then setAttr(g, "GuardTriggerPressFreq", 2) end
+        e.dv = e.dv or g:FindFirstChild("NPCDestObj")
+        if e.dv then
+            local ok, a = pcall(function() return e.dv.Value.Address end)
+            if not ok or a ~= boss.addr then pcall(function() e.dv.Value = boss.root end) end
+        end
+        setAttr(g, "NPCDestType", 2)
+    end
+
+    local function restore(e)
+        local s = e.saved
+        PERF.ceoGuards[e.key] = nil
+        if not s then return end
+        local g = e.guard
+        pcall(function() g:SetAttribute("TargetingInvolvedPlayer", s.involved) end)
+        pcall(function() g:SetAttribute("MaxShootDist", s.maxShoot) end)
+        pcall(function() g:SetAttribute("GuardTriggerPressFreq", s.freq) end)
+        pcall(function() g:SetAttribute("NPCDestType", s.destType) end)
+        if e.dv then pcall(function() e.dv.Value = s.dest end) end
+        e.saved = nil
+    end
+
+    local function restoreAll()
+        for _, e in pairs(entries) do pcall(restore, e) end
+        entries = {}
+        PERF.ceoGuards = {}
+    end
+
+    local function scanGuards(now)
+        lastScan = now
+        for key, e in pairs(entries) do
+            local ok, p = pcall(function() return e.guard.Parent end)
+            if not ok or not p then
+                PERF.ceoGuards[key] = nil
+                entries[key] = nil
+            end
+        end
+        if not boss.folder or not boss.root then return end
+        local okB, bossPos = pcall(function() return boss.root.Position end)
+        if not okB then return end
+        for _, g in ipairs(boss.folder:GetChildren()) do
+            if attr(g, "GuardTriggerPressFreq") ~= nil then
+                local okK, key = pcall(function() return g.Address end)
+                if okK and not entries[key] then
+                    local okD, d = pcall(function() return (g:FindFirstChild("HumanoidRootPart").Position - bossPos).Magnitude end)
+                    if not okD or d <= RANGE then
+                        entries[key] = { guard = g, key = key, owned = false, nextOwner = 0 }
+                    end
+                end
+            end
+        end
+    end
+
+    while _G.JB_gen == myGen do
+        local active = false
+        PERF.run("AttackCeo", function()
+            local on = UI.GetValue(uid("attackCeo")) and true or false
+            if on ~= wasOn then
+                wasOn = on
+                if not on then restoreAll() end
+                bossDown, lastBoss, lastScan = false, 0, 0
+                notify(on and "ON" or "OFF", TITLE, 3)
+            end
+            if not on or PERF.solving then return end
+            myId = myId or tonumber(game:GetService("Players").LocalPlayer.UserId)
+            local now = tick()
+
+            if now - lastBoss >= BOSS_EVERY or not boss.root or boss.root.Parent == nil then
+                lastBoss = now
+                local old = boss.addr
+                refreshBoss()
+                if boss.addr ~= old then
+                    restoreAll()
+                    bossDown, lastScan = false, 0
+                end
+            end
+            if not boss.root then
+                if next(entries) then restoreAll() end
+                bossDown = false
+                return
+            end
+
+            local hp = bossHealth()
+            if not hp then return end
+            if hp <= 0 then
+                if not bossDown then
+                    bossDown = true
+                    restoreAll()
+                    notify("CEO defeated", TITLE, 4)
+                end
+                return
+            end
+            bossDown = false
+            active = true
+
+            if now - lastScan >= SCAN_EVERY then scanGuards(now) end
+
+            local fresh, owned, total = 0, 0, 0
+            for _, e in pairs(entries) do
+                total = total + 1
+                if now >= e.nextOwner then
+                    e.nextOwner = now + OWNER_EVERY
+                    local mine = tonumber(attr(e.guard, "NPCNetworkOwnerId")) == myId
+                    if mine and not e.owned then
+                        if not e.saved then pcall(save, e) end
+                        fresh = fresh + 1
+                    elseif not mine and e.owned then
+                        pcall(restore, e)
+                    end
+                    e.owned = mine
+                end
+                if e.owned then
+                    owned = owned + 1
+                    pcall(apply, e)
+                end
+            end
+
+            if fresh > 0 then
+                notify(fresh .. " guards attacking CEO (" .. owned .. "/" .. total .. " controlled)", TITLE, 2)
+            elseif total > 0 and owned == 0 and now - lastWarn >= WARN_EVERY then
+                lastWarn = now
+                notify(total .. " guards near CEO, all controlled by other players", TITLE, 3)
+            end
+        end)
+        task.wait(active and PERF.NPC_TICK or 0.3)
+    end
+    restoreAll()
+end)
+
+task.spawn(function()
+    local G = PERF.GUARD
+    local TITLE = "[JB Hub] Guard Control"
+    local lp = game:GetService("Players").LocalPlayer
+    local myId = tonumber(lp.UserId)
+    local entries = {}
+    local lastMode, lastScan, lastBlock, lastOwned = "Off", 0, 0, 0
+
+    local function setAttr(g, k, v)
+        local ok, cur = pcall(function() return g:GetAttribute(k) end)
+        if not ok or cur ~= v then pcall(function() g:SetAttribute(k, v) end) end
+    end
+
+    local function addrOf(inst)
+        local ok, a = pcall(function() return inst.Address end)
+        return ok and a or nil
+    end
+
+    local function save(e)
+        local g = e.model
+        local okV, dest = pcall(function() return e.dv.Value end)
+        e.saved = {
+            involved = g:GetAttribute("TargetingInvolvedPlayer"),
+            maxShoot = g:GetAttribute("MaxShootDist"),
+            freq = g:GetAttribute("GuardTriggerPressFreq"),
+            destType = g:GetAttribute("NPCDestType"),
+            dest = okV and dest or nil,
+        }
+    end
+
+    local function restore(e)
+        local s, g = e.saved, e.model
+        if not s then return end
+        pcall(function() g:SetAttribute("TargetingInvolvedPlayer", s.involved) end)
+        pcall(function() g:SetAttribute("MaxShootDist", s.maxShoot) end)
+        pcall(function() g:SetAttribute("GuardTriggerPressFreq", s.freq) end)
+        pcall(function() g:SetAttribute("NPCDestType", s.destType) end)
+        if e.dv then pcall(function() e.dv.Value = s.dest end) end
+        e.saved, e.destAddr = nil, nil
+    end
+
+    local function restoreAll()
+        for _, e in pairs(entries) do
+            if e.mine then pcall(restore, e) end
+        end
+        entries = {}
+        lastOwned = 0
+    end
+
+    local function setDest(e, part)
+        local a = addrOf(part)
+        if e.dv and (e.destAddr ~= a or addrOf(e.dv.Value) ~= a) then
+            pcall(function() e.dv.Value = part end)
+            e.destAddr = a
+        end
+        setAttr(e.model, "NPCDestType", 2)
+    end
+
+    local function attack(e, part)
+        local g = e.model
+        setAttr(g, "TargetingInvolvedPlayer", true)
+        setAttr(g, "MaxShootDist", tonumber(UI.GetValue(uid("guardShootDist"))) or 400)
+        setAttr(g, "GuardTriggerPressFreq", tonumber(UI.GetValue(uid("guardFreq"))) or 3)
+        setDest(e, part)
+    end
+
+    local function follow(e, part)
+        local g = e.model
+        setAttr(g, "TargetingInvolvedPlayer", false)
+        setAttr(g, "MaxShootDist", 0)
+        setAttr(g, "GuardTriggerPressFreq", 0)
+        setDest(e, part)
+    end
+
+    local function hold(e)
+        local g = e.model
+        setAttr(g, "MaxShootDist", 0)
+        setAttr(g, "GuardTriggerPressFreq", 0)
+        setAttr(g, "NPCDestType", 3)
+        e.destAddr = nil
+    end
+
+    local function scan()
+        local seen = {}
+        for _, folder in ipairs(PERF.npcFolders) do
+            local okC, children = pcall(function() return folder:GetChildren() end)
+            if okC then
+                for _, m in ipairs(children) do
+                    pcall(function()
+                        local key = m.Address
+                        local e = entries[key]
+                        if not e then
+                            local hum = m:FindFirstChildOfClass("Humanoid")
+                            local hrp = m:FindFirstChild("HumanoidRootPart")
+                            if not hum or not hrp then return end
+                            e = { model = m, hum = hum, hrp = hrp, dv = m:FindFirstChild("NPCDestObj") }
+                            entries[key] = e
+                        end
+                        if not e.dv then e.dv = m:FindFirstChild("NPCDestObj") end
+                        if e.hum.Health <= 0 then return end
+                        local mine = tonumber(m:GetAttribute("NPCNetworkOwnerId")) == myId
+                        if mine and not e.saved then save(e) end
+                        if not mine then e.saved, e.destAddr = nil, nil end
+                        e.mine = mine
+                        seen[key] = true
+                    end)
+                end
+            end
+        end
+        for key in pairs(entries) do
+            if not seen[key] then entries[key] = nil end
+        end
+    end
+
+    local function getThreats(myRoot)
+        local list = {}
+        local team = G.TEAMS[(tonumber(UI.GetValue(uid("guardTeam"))) or 0) + 1] or "All"
+        if team == "None" then return list end
+        local radius = tonumber(UI.GetValue(uid("guardProtect"))) or 80
+        for _, p in ipairs(game:GetService("Players"):GetPlayers()) do
+            if p ~= lp then
+                pcall(function()
+                    local char = p.Character
+                    local hum = char and char:FindFirstChildOfClass("Humanoid")
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hum or not hrp or hum.Health <= 0 then return end
+                    local okT, name = pcall(function() return p.Team and p.Team.Name or "" end)
+                    if team ~= "All" and not (okT and name == team) then return end
+                    if (hrp.Position - myRoot.Position).Magnitude <= radius then
+                        list[#list + 1] = { hrp = hrp, addr = addrOf(hrp), assigned = 0 }
+                    end
+                end)
+            end
+        end
+        return list
+    end
+
+    while _G.JB_gen == myGen do
+        local active = false
+        PERF.run("GuardControl", function()
+            local mode = G.MODES[(tonumber(UI.GetValue(uid("guardMode"))) or 0) + 1] or "Off"
+            if mode ~= lastMode then
+                if mode == "Off" then restoreAll() end
+                notify(mode == "Off" and "OFF" or (mode .. " ON"), TITLE, 3)
+                lastMode = mode
+            end
+            if mode == "Off" or PERF.solving then return end
+            if UI.GetValue(uid("guards")) or UI.GetValue(uid("attackCeo")) then
+                if next(entries) then restoreAll() end
+                if tick() - lastBlock >= 10 then
+                    lastBlock = tick()
+                    notify("Disable Make Guards Disabled and Make Guards Attack CEO first", TITLE, 4)
+                end
+                return
+            end
+            active = true
+            local now = tick()
+            if now - lastScan >= 0.5 then
+                lastScan = now
+                scan()
+                local owned = 0
+                for _, e in pairs(entries) do
+                    if e.mine then owned = owned + 1 end
+                end
+                if owned > lastOwned then notify(owned .. " guards under your control", TITLE, 2) end
+                lastOwned = owned
+            end
+            local char = lp.Character
+            local myRoot = char and char:FindFirstChild("HumanoidRootPart")
+            if not myRoot then return end
+            local threats = getThreats(myRoot)
+            local spread = UI.GetValue(uid("guardSpread"))
+            local followOn = UI.GetValue(uid("guardFollow"))
+            for _, e in pairs(entries) do
+                if e.mine then
+                    local pick, best = nil, math.huge
+                    for _, t in ipairs(threats) do
+                        local okD, d = pcall(function() return (t.hrp.Position - e.hrp.Position).Magnitude end)
+                        if okD then
+                            local score = spread and d + t.assigned * 100000 or d
+                            if t.addr and t.addr == e.targetAddr then score = score - 30 end
+                            if score < best then pick, best = t, score end
+                        end
+                    end
+                    if pick then
+                        pick.assigned = pick.assigned + 1
+                        e.targetAddr = pick.addr
+                        attack(e, pick.hrp)
+                    elseif followOn then
+                        follow(e, myRoot)
+                    else
+                        hold(e)
+                    end
+                end
+            end
+        end)
+        task.wait(active and 0.2 or 0.3)
+    end
+    restoreAll()
+end)
+
+task.spawn(function()
+    local wasOn, keyDown, busy = false, false, false
+    while _G.JB_gen == myGen do
+        PERF.run("autoVault", function()
+            local on = UI.GetValue(uid("autoVault")) and true or false
+            if on ~= wasOn then
+                wasOn = on
+                notify(on and "ON" or "OFF", VAULT.TITLE, 3)
+            end
+            local down = false
+            down = PERF.keyDown("vault", VAULT_KEY)
+            local trigger = (down and not keyDown) or vaultRequested
+            keyDown = down
+            vaultRequested = false
+            if trigger and on and not busy then
+                busy = true
+                local target = findNearestVault()
+                if not target then
+                    notify("No vault nearby", VAULT.TITLE, 3)
+                elseif not (target.light and target.request and target.update) then
+                    notify("Vault not ready", VAULT.TITLE, 3)
+                else
+                    local ok, err = pcall(crackVault, target)
+                    if not ok then
+                        notify("Error: " .. tostring(err), VAULT.TITLE, 3)
+                    end
+                end
+                vaultRequested = false
+                busy = false
+            end
+        end)
+        task.wait(0.03)
+    end
+end)
+
+task.spawn(function()
+    local wasOn = false
+    local cache = {}
+    local lastScan = 0
+    local lastFire = {}
+    local cutShown = {}
+    local foundShown = false
+
+    local function rescan(casino)
+        local fresh = {}
+        for _, glass in ipairs(casino:GetChildren()) do
+            if glass.Name == "Glass" then
+                local key = glass.Address
+                local entry = cache[key]
+                if not entry then
+                    local remote = glass:FindFirstChild("CutRemote")
+                    local pos = remote and vaultReadPos(glass)
+                    if pos then entry = { glass = glass, remote = remote, pos = pos } end
+                end
+                if entry then fresh[key] = entry end
+            end
+        end
+        cache = fresh
+    end
+
+    while _G.JB_gen == myGen do
+        local waitTime = GLASS.IDLE
+        PERF.run("autoGlass", function()
+            local on = UI.GetValue(uid("autoGlass")) and true or false
+            if on ~= wasOn then
+                wasOn = on
+                cache = {}
+                lastFire = {}
+                cutShown = {}
+                foundShown = false
+                lastScan = 0
+                notify(on and "ON" or "OFF", GLASS.TITLE, 3)
+            end
+            if not on then return end
+
+            local now = tick()
+            if now - lastScan >= GLASS.RESCAN then
+                lastScan = now
+                local casino = PERF.ws("Casino")
+                if casino then rescan(casino) else cache = {} end
+                if not foundShown then
+                    local n = 0
+                    for _ in pairs(cache) do n = n + 1 end
+                    if n > 0 then
+                        foundShown = true
+                        notify(n .. " glass found", GLASS.TITLE, 3)
+                    end
+                end
+            end
+            if next(cache) == nil then return end
+
+            local char = game:GetService("Players").LocalPlayer.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            local me = hrp and vaultReadPos(hrp)
+            if not me then return end
+            waitTime = GLASS.TICK
+
+            for key, entry in pairs(cache) do
+                local inRange = (entry.pos - me).Magnitude <= GLASS.RANGE
+                if inRange or (lastFire[key] and not cutShown[key]) then
+                    local isCut
+                    pcall(function() isCut = entry.glass:GetAttribute("IsCut") end)
+                    if isCut == true then
+                        if lastFire[key] and not cutShown[key] then
+                            cutShown[key] = true
+                            notify("Glass cut", GLASS.TITLE, 2)
+                        end
+                    else
+                        cutShown[key] = nil
+                        if inRange and now - (lastFire[key] or 0) >= GLASS.PER_GAP then
+                            lastFire[key] = now
+                            pcall(function() entry.remote:FireServer() end)
+                        end
+                    end
+                end
+            end
+        end)
+        task.wait(waitTime)
+    end
+end)
+
+task.spawn(function()
+    local wasOn = false
+    local cache = {}
+    local lastScan = 0
+    local lastFire = {}
+    local bag, bagScanAt = nil, 0
+    local fullShown = false
+
+    local function lootPos(loot)
+        if loot:IsA("BasePart") then return vaultReadPos(loot) end
+        for _, d in ipairs(loot:GetDescendants()) do
+            if d:IsA("BasePart") then
+                local p = vaultReadPos(d)
+                if p then return p end
+            end
+        end
+        return nil
+    end
+
+    local function rescan(loots)
+        local fresh = {}
+        for _, loot in ipairs(loots:GetChildren()) do
+            local key = loot.Address
+            local entry = cache[key]
+            if not entry then
+                local remote = loot:FindFirstChild("CasinoLootCollect")
+                local pos = remote and lootPos(loot)
+                if pos then entry = { remote = remote, pos = pos } end
+            end
+            if entry then fresh[key] = entry end
+        end
+        cache = fresh
+    end
+
+    local function findBag()
+        local lp = game:GetService("Players").LocalPlayer
+        for _, c in ipairs(lp:GetChildren()) do
+            if c.Name == "Value" and c:FindFirstChild("Amount") and c:FindFirstChild("Maximum") then
+                return c
+            end
+        end
+        return nil
+    end
+
+    local function readLabel()
+        local gui = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui")
+        local node = gui
+        for _, name in ipairs(LOOT.BAG_LABEL) do
+            node = node and node:FindFirstChild(name)
+        end
+        if not node then return nil end
+        local text = tostring(node.Text):gsub(",", "")
+        local a, b = text:match("(%d+)%s*/%s*%$?(%d+)")
+        return tonumber(a), tonumber(b)
+    end
+
+    local function bagFull(now)
+        if not bag or bag.Parent == nil then
+            bag = nil
+            if now - bagScanAt >= LOOT.BAG_SCAN then
+                bagScanAt = now
+                bag = findBag()
+            end
+            if not bag then return false end
+        end
+        local amount, cap
+        local okL, la, lb = pcall(readLabel)
+        if okL then cap = lb end
+        pcall(function()
+            amount = tonumber(bag.Amount.Value)
+            if not cap or cap <= 0 then
+                local max = tonumber(bag.Maximum.Value) or 0
+                local mult = 1
+                local enabled = bag:FindFirstChild("MultEnabled")
+                local m = bag:FindFirstChild("Mult")
+                if enabled and enabled.Value == true and m then mult = tonumber(m.Value) or 1 end
+                cap = max * mult
+            end
+        end)
+        if okL and la and (not amount or la > amount) then amount = la end
+        if not amount or not cap or cap <= 0 then return false end
+        return amount >= cap
+    end
+
+    while _G.JB_gen == myGen do
+        local waitTime = LOOT.IDLE
+        PERF.run("autoLoot", function()
+            local on = UI.GetValue(uid("autoLoot")) and true or false
+            if on ~= wasOn then
+                wasOn = on
+                cache = {}
+                lastFire = {}
+                lastScan = 0
+                bag, bagScanAt, fullShown = nil, 0, false
+                notify(on and "ON" or "OFF", LOOT.TITLE, 3)
+            end
+            if not on then return end
+
+            local now = tick()
+            if now - lastScan >= LOOT.RESCAN then
+                lastScan = now
+                local casino = PERF.ws("Casino")
+                local loots = casino and casino:FindFirstChild("Loots")
+                if loots then rescan(loots) else cache = {} end
+            end
+            if next(cache) == nil then return end
+
+            local char = game:GetService("Players").LocalPlayer.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            local me = hrp and vaultReadPos(hrp)
+            if not me then return end
+            waitTime = LOOT.TICK
+
+            local targets = {}
+            for key, entry in pairs(cache) do
+                if (entry.pos - me).Magnitude <= LOOT.RANGE and now - (lastFire[key] or 0) >= LOOT.PER_GAP then
+                    targets[#targets + 1] = key
+                end
+            end
+            if #targets == 0 then return end
+
+            if bagFull(now) then
+                if not fullShown then
+                    fullShown = true
+                    notify("Bag full, collecting paused", LOOT.TITLE, 3)
+                end
+                return
+            end
+            if fullShown then
+                fullShown = false
+                notify("Collecting resumed", LOOT.TITLE, 2)
+            end
+
+            for _, key in ipairs(targets) do
+                local entry = cache[key]
+                lastFire[key] = now
+                pcall(function() entry.remote:FireServer() end)
+            end
+        end)
+        task.wait(waitTime)
+    end
+end)
+
+task.spawn(function()
+    local TITLE = "[JB Hub] Auto Computer Hack"
+    local RANGE, GAP, TICK, IDLE = 15, 3, 0.2, 1
+    local wasOn, lastFire, posCache, securityShown = false, {}, {}, false
+
+    local function keyOf(pc, i)
+        local ok, a = pcall(function() return tostring(pc.Address) end)
+        return (ok and a) or tostring(i)
+    end
+
+    local function posOf(key, pc)
+        if posCache[key] then return posCache[key] end
+        local okP, prim = pcall(function() return pc.PrimaryPart end)
+        local p = okP and prim and vaultReadPos(prim)
+        if not p then
+            for _, d in ipairs(pc:GetChildren()) do
+                p = vaultReadPos(d)
+                if p then break end
+            end
+        end
+        posCache[key] = p
+        return p
+    end
+
+    while _G.JB_gen == myGen do
+        local waitTime = IDLE
+        PERF.run("autoHack", function()
+            local on = UI.GetValue(uid("autoHack")) and true or false
+            if on ~= wasOn then
+                wasOn = on
+                lastFire, posCache, securityShown = {}, {}, false
+                notify(on and "ON" or "OFF", TITLE, 3)
+            end
+            if not on then return end
+
+            local casino = PERF.ws("Casino")
+            local computers = casino and casino:FindFirstChild("Computers")
+            if not computers then return end
+            local char = game:GetService("Players").LocalPlayer.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            local me = hrp and vaultReadPos(hrp)
+            if not me then return end
+
+            local list = computers:GetChildren()
+            local first = list[1] and posOf(keyOf(list[1], 1), list[1])
+            if first and (first - me).Magnitude > 300 then return end
+
+            local now, security, active = tick(), false, false
+            for i, pc in ipairs(list) do
+                if pc:GetAttribute("ComputerActive") == true then
+                    if pc:GetAttribute("ShowDisableSecurityPrompt") == true then
+                        security = true
+                    else
+                        active = true
+                        local key = keyOf(pc, i)
+                        local pos = posOf(key, pc)
+                        local remote = pc:FindFirstChild("CasinoComputerHack")
+                        if remote and pos and (pos - me).Magnitude <= RANGE and now - (lastFire[key] or 0) >= GAP then
+                            lastFire[key] = now
+                            pcall(function() remote:FireServer() end)
+                        end
+                    end
+                end
+            end
+            if active then waitTime = TICK end
+
+            if security and not securityShown then
+                securityShown = true
+                notify("Security computer found - hold E on the red screen", TITLE, 5)
+            elseif not security then
+                securityShown = false
+            end
+        end)
+        task.wait(waitTime)
+    end
+end)
+
+task.spawn(function()
+    local casDown, kaDown, openDown = false, false, false
+    PERF.kaArmed, PERF.kaActive = false, false   
+    while _G.JB_gen == myGen do
+        PERF.run("plasmaKillaura", function()
+            local cnow = false
+            cnow = PERF.keyDown("casino", CASINO_KEY)
+            if (cnow and not casDown) or casinoRequested then
+                casinoRequested = false
+                if cnow then casDown = true end
+                requestCasinoCode()
+            elseif not cnow then
+                casDown = false
+            end
+			
+			local onow = false
+            onow = PERF.keyDown("casinoOpen", CASINO_OPEN_KEY)
+            if (onow and not openDown) or casinoOpenRequested then
+                casinoOpenRequested = false
+                if onow then openDown = true end
+                requestCasinoOpen()
+            elseif not onow then
+                openDown = false
+            end
+
+            local kaArmed = UI.GetValue(uid("plasmaKillaura")) and true or false
+            if kaArmed ~= PERF.kaArmed then
+                PERF.kaArmed = kaArmed
+                notify(kaArmed and "Enabled" or "Disabled", "[JB Hub] PlasmaPistol Killaura", 3)
+            end
+            PERF.kaActive = kaArmed and keybindActive(PERF.kaKeybind)      
+
+--          if UI.GetValue(uid("nosit")) then
+--              killSit()
+--          end
+        end)
+        task.wait(0.03)
+    end
+end)
+
+task.spawn(function()
+    local camera = workspace.CurrentCamera
+    local wasOn = false
+    local lastAmmo = nil
+    local lastAmmoChange = os.clock()
+    local lastEquip = 0
+    local lastMode = nil
+    local gear = nil
+    local gearAt = 0
+    local targets = {}
+    local targetsAt = 0
+    local targetsMode = nil
+
+    local function loadGear()
+        local item = getPlasmaItem()
+        if not item then return nil end
+        local g = {
+            item = item,
+            equip = item:FindFirstChild("InventoryEquipRemote"),
+            reload = item:FindFirstChild("Reload"),
+            shoot = item:FindFirstChild("Shoot"),
+            damage = item:FindFirstChild("Damage"),
+        }
+        if g.equip and g.reload and g.shoot and g.damage then return g end
+        return nil
+    end
+
+    local function readAmmo()
+        local ammo = nil
+        pcall(function() ammo = gear and gear.item:GetAttribute("AmmoCurrent") end)
+        return ammo
+    end
+
+    local function isReloading()
+        local reloading = false
+        pcall(function() reloading = gear ~= nil and gear.item:GetAttribute("IsReloading") == true end)
+        return reloading
+    end
+
+    local function refreshGear(force)
+        local now = os.clock()
+        if force or not gear or now - gearAt >= PERF.PLASMA_CACHE_TIME then
+            gearAt = now
+            local ok, g = pcall(loadGear)
+            gear = ok and g or nil
+        end
+        return gear
+    end
+
+    while _G.JB_gen == myGen do
+        local enabled = PERF.kaArmed and PERF.kaActive and true or false
+
+        local mode = getPlasmaTargetMode()
+        if mode ~= lastMode then
+            if lastMode ~= nil then
+                notify("Target: " .. mode, "[JB Hub] PlasmaPistol Killaura", 3)
+            end
+            lastMode = mode
+        end
+
+        if enabled then
+            if not wasOn then
+                wasOn = true
+                notify("ON", "[JB Hub] PlasmaPistol Killaura", 3)
+                refreshGear(true)
+                lastAmmo = readAmmo()
+                lastAmmoChange = os.clock()
+                lastEquip = 0
+                targetsAt = 0
+            end
+
+            pcall(function()
+                if PERF.solving then return end
+                if not refreshGear(false) then return end
+
+                local now = os.clock()
+
+                if now - lastEquip >= PLASMA_EQUIP_INTERVAL then
+                    pcall(function() gear.equip:FireServer(true) end)
+                    lastEquip = now
+                end
+
+                local ammo = readAmmo()
+
+                if ammo ~= nil and ammo ~= lastAmmo then
+                    lastAmmo = ammo
+                    lastAmmoChange = now
+                end
+
+                local idleFor = now - lastAmmoChange
+
+                if ammo ~= nil and (ammo <= 0 or (ammo < PLASMA_MAX_AMMO and idleFor >= PLASMA_IDLE_TIME)) and not isReloading() then
+                    pcall(function() gear.reload:FireServer() end)
+                    task.wait(PLASMA_RELOAD_WAIT)
+                    lastAmmo = readAmmo()
+                    lastAmmoChange = os.clock()
+                end
+
+                local lp = game:GetService("Players").LocalPlayer
+                local myHRP = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
+
+                if myHRP and ammo and ammo > 0 then
+                    if mode ~= targetsMode or now - targetsAt >= PERF.PLASMA_TARGET_REFRESH then
+                        targetsMode = mode
+                        targetsAt = now
+                        targets = getPlasmaTargets()
+                    end
+                    local shoot, damage = gear.shoot, gear.damage
+                    for _, target in ipairs(targets) do
+                        if isPlasmaTargetValid(target) and (myHRP.Position - target.hrp.Position).Magnitude <= PLASMA_MAX_DISTANCE then
+                            camera.CFrame = CFrame.lookAt(camera.CFrame.Position, target.hrp.Position)
+
+                            for _ = 1, PLASMA_BURST do
+                                if not isPlasmaTargetValid(target) then break end
+                                local position = target.hrp.Position
+                                pcall(function() shoot:FireServer() end)
+                                task.wait(PLASMA_SHOOT_TO_DAMAGE)
+                                pcall(function() damage:FireServer(position, target.humanoid) end)
+                            end
+                        end
+                    end
+                end
+            end)
+
+            task.wait(PLASMA_TICK)
+        else
+            if wasOn then
+                wasOn = false
+                gear = nil
+                targets = {}
+                notify("OFF", "[JB Hub] PlasmaPistol Killaura", 3)
+            end
+            task.wait(0.25)
+        end
+    end
+end)
+
+local function jobEnabled(id)
+    if id == "springs" then
+        return isOn("norecoil")
+    end
+    return isOn(id)
+end
+
+local function scanSprings()
+    local found = {}
+    for _, entry in ipairs(lockedGetgc(true)) do
+        if typeof(entry) == "table" then
+            local ok, has = pcall(function()
+                return entry.SpringCamera ~= nil
+                    or (entry.CrossHair ~= nil and entry.CrossHair.Spring ~= nil)
+            end)
+            if ok and has then found[#found + 1] = entry end
+        end
+    end
+    springTargets = found
+end
+
+local function applySprings()
+    for _, entry in ipairs(springTargets) do
+        pcall(function()
+            if entry.SpringCamera then
+                entry.SpringCamera:SetTarget(Vector3.new(0, 0, 0))
+                entry.SpringCamera:Accelerate(Vector3.new(0, 0, 0))
+            end
+            if entry.CrossHair and entry.CrossHair.Spring then
+                entry.CrossHair.Spring:SetTarget(0)
+                entry.CrossHair.Spring:Accelerate(0)
+            end
+        end)
+    end
+end
+
+local function getNfdMethod()
+    local idx = tonumber(UI.GetValue(uid("nofallMethod"))) or 0
+    return NFD_METHODS[idx + 1] or "Zone Follow"
+end
+
+local function getNfdVelocityY(hrp)
+    local base = tonumber(hrp.Address)
+    if not base or base <= 4096 then return nil end
+    local prim = memory_read("uintptr_t", base + PRIMITIVE_OFFSET)
+    if not prim or prim <= 4096 then return nil end
+    return memory_read("float", prim + VELOCITY_Y_OFFSET)
+end
+
+task.spawn(function()
+    local wasOn = false
+    local applied = false
+    local activeMethod = nil
+    local zone = nil
+    local dropped = 0
+    local lastTime = tick()
+    local pulseUntil = 0
+    local pulseAddr = nil
+    local checkedAddr, offsetsOk, offsetsWarned = nil, false, false
+
+    local function pulseOffsetsValid(hum, hrp, addr)
+        local okH, h = pcall(memory_read, "float", addr + HUM_HEALTH)
+        local okR, real = pcall(function() return hum.Health end)
+        if not (okH and okR and type(h) == "number" and type(real) == "number" and math.abs(h - real) < 0.01) then return false end
+        local okB, b = pcall(memory_read, "byte", addr + PLATFORM_STAND_OFFSET)
+        if not okB or (b ~= 0 and b ~= 1) then return false end
+        local okPS, ps = pcall(function() return hum.PlatformStand end)
+        if okPS and type(ps) == "boolean" and (ps and 1 or 0) ~= b then return false end
+        local okV, vy = pcall(getNfdVelocityY, hrp)
+        if not okV or type(vy) ~= "number" or vy ~= vy or math.abs(vy) > 2000 then return false end
+        local okA, av = pcall(function() return hrp.AssemblyLinearVelocity.Y end)
+        if okA and type(av) == "number" and math.abs(av - vy) > 5 then return false end
+        return true
+    end
+
+    local function releasePulse()
+        if pulseAddr then
+            pcall(function() memory_write("byte", pulseAddr + PLATFORM_STAND_OFFSET, 0) end)
+        end
+        pulseUntil = 0
+        pulseAddr = nil
+        dropped = 0
+    end
+
+    local function restoreZone()
+        pcall(function()
+            local z = zone or findZone()
+            if z then
+                if _G.NFD_original then z.Size = _G.NFD_original end
+                if _G.NFD_originalPos then z.Position = _G.NFD_originalPos end
+            end
+        end)
+        zone = nil
+    end
+
+    local function stopMethod(method)
+        if method == "Zone Follow" then
+            restoreZone()
+        elseif method == "Pulse" then
+            releasePulse()
+            restoreZone()
+        end
+    end
+
+    local zoneCenter, zoneCheckAt = nil, 0
+    local function stepZone()
+        local now = tick()
+        if not zone or now >= zoneCheckAt then
+            zoneCheckAt = now + PERF.NFD_ZONE_CHECK
+            zoneCenter = nil
+            if not zone or zone.Parent == nil then
+                zone = findZone()
+                zoneCenter = nil
+                if not zone then return false end
+                _G.NFD_original = _G.NFD_original or zone.Size
+                _G.NFD_originalPos = _G.NFD_originalPos or zone.Position
+            end
+            if zone.Size.X < 2000 then
+                zone.Size = NFD_ZONE_SIZE
+                zoneCenter = nil
+            end
+        end
+        local char = game:GetService("Players").LocalPlayer.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if not hrp then return false end
+        local p = hrp.Position
+        local c = zoneCenter
+        local m = PERF.NFD_ZONE_MARGIN
+        if not c or math.abs(p.X - c.X) > m or math.abs(p.Y - c.Y) > m or math.abs(p.Z - c.Z) > m then
+            zone.Position = p
+            zoneCenter = p
+        end
+        return true
+    end
+
+    local function stepPulse()
+        local now = tick()
+        local dt = math.min(now - lastTime, 0.1)
+        lastTime = now
+        local char = game:GetService("Players").LocalPlayer.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if not (hum and hrp) then
+            dropped = 0
+            return false
+        end
+        local addr = tonumber(hum.Address)
+        if not addr or addr <= 4096 then return false end
+        if addr ~= checkedAddr and pulseUntil == 0 then
+            checkedAddr = addr
+            offsetsOk = pulseOffsetsValid(hum, hrp, addr)
+            if not offsetsOk and not offsetsWarned then
+                offsetsWarned = true
+                PERF.notifySafe("Pulse is outdated, using Zone Follow until JB Hub update", "[JB Hub] No Fall Damage", 5)
+            end
+        end
+        if not offsetsOk then return stepZone() end
+        local vy = getNfdVelocityY(hrp)
+        if not vy then return false end
+        if pulseUntil > 0 then
+            if now >= pulseUntil then
+                memory_write("byte", addr + PLATFORM_STAND_OFFSET, 0)
+                pulseUntil = 0
+            end
+            return true
+        end
+        if vy < NFD_FALLING_SPEED then
+            dropped = dropped + (-vy) * dt
+            local okB, b = pcall(memory_read, "byte", addr + PLATFORM_STAND_OFFSET)
+            if dropped >= NFD_RESET_EVERY and okB and b == 0 then
+                memory_write("byte", addr + PLATFORM_STAND_OFFSET, 1)
+                pulseAddr = addr
+                pulseUntil = now + NFD_PULSE_TIME
+                dropped = 0
+            end
+        else
+            dropped = 0
+        end
+        return true
+    end
+
+    while _G.JB_gen == myGen do
+        local waitTime = 0.25
+        PERF.run("nofall", function()
+            local on = UI.GetValue(uid("nofall")) and true or false
+            if not on then
+                if wasOn then
+                    stopMethod(activeMethod)
+                    activeMethod = nil
+                    applied = false
+                    wasOn = false
+                    notify("OFF", "[JB Hub] No Fall Damage", 3)
+                end
+                return
+            end
+
+            local method = getNfdMethod()
+            if method ~= activeMethod then
+                if activeMethod then stopMethod(activeMethod) end
+                zoneCenter = nil
+                activeMethod = method
+                applied = false
+                lastTime = tick()
+            end
+            wasOn = true
+
+            local okCall, ok
+            if method == "Pulse" then
+                okCall, ok = pcall(stepPulse)
+                waitTime = NFD_PULSE_TICK
+            else
+                okCall, ok = pcall(stepZone)
+                waitTime = NFD_FOLLOW_TICK
+            end
+
+            if okCall and ok and not applied then
+                applied = true
+                notify("ON (" .. method .. ")", "[JB Hub] No Fall Damage", 3)
+            end
+        end)
+        task.wait(waitTime)
+    end
+    stopMethod(activeMethod)
+end)
+
+task.spawn(function()
+    local casinoWasOn, nositWasOn = false, false
+	local casinoOpenWasOn = false
+    local jobCache, jobDirty = {}, {}
+    local springRaw = -1
+    local lastSig, lastSigCheck, lastReapply, lastSafety = nil, 0, 0, tick()
+
+    local function equipSignature()
+        local sig = 0
+        pcall(function()
+            local folder = game:GetService("Players").LocalPlayer:FindFirstChild("Folder")
+            for _, item in ipairs(folder:GetChildren()) do
+                local c = item:GetAttribute("InventoryItemLocalEquipped")
+                if type(c) == "number" then sig = sig + c end
+            end
+        end)
+        return sig
+    end
+    while _G.JB_gen == myGen do
+        local ranHeavy = false
+        PERF.run("jobs", function()
+            if not resetting and tick() - lastSitAt > SIT_PRIORITY then
+                local now = tick()
+                if now - lastSigCheck >= 1 then
+                    lastSigCheck = now
+                    local sig = PERF.equipVersion
+                    local safety = now - lastSafety >= PERF.JOB_SAFETY_RESCAN
+                    if (lastSig ~= nil and sig ~= lastSig) or safety then
+                        lastSafety = now
+                        for id in pairs(jobCache) do jobDirty[id] = now + 2 end
+                    end
+                    lastSig = sig
+                end
+
+                local keys, owners = {}, {}
+                local due = false
+                for _, id in ipairs(JOB_ORDER) do
+                    if id ~= "springs" then
+                        if jobEnabled(id) then
+                            if not jobCache[id] and not jobDirty[id] then jobDirty[id] = now + PERF.JOB_BATCH_DELAY end
+                            if jobDirty[id] and jobDirty[id] <= now then due = true end
+                        else
+                            jobCache[id], jobDirty[id], notified[id] = nil, nil, false
+                        end
+                    end
+                end
+                if due then
+                    for _, id in ipairs(JOB_ORDER) do
+                        if id ~= "springs" and jobDirty[id] then
+                            for _, k in ipairs(defs[id].keys) do
+                                if not owners[k] then
+                                    keys[#keys + 1] = k
+                                    owners[k] = {}
+                                end
+                                table.insert(owners[k], id)
+                            end
+                        end
+                    end
+                end
+
+                if #keys > 0 then
+                    ranHeavy = true
+                    local found = {}
+                    for _, e in ipairs(lockedGetgc(keys)) do
+                        local key = tostring(e.key)
+                        local ids = owners[key]
+                        if ids then
+                            for _, id in ipairs(ids) do
+                                if PERF.gcValueMatches(e, defs[id].vals[key]) then
+                                    found[id] = found[id] or {}
+                                    table.insert(found[id], e)
+                                end
+                            end
+                        end
+                    end
+                    for _, ids in pairs(owners) do
+                        for _, id in ipairs(ids) do
+                            if jobDirty[id] then
+                                jobDirty[id] = nil
+                                jobCache[id] = found[id] or {}
+                                pcall(applygc, PERF.filterProtected(id, jobCache[id], true), defs[id].vals)                                
+                                if #jobCache[id] > 0 and not notified[id] then
+                                    notified[id] = true
+                                    notify("ON", "[JB Hub] " .. defs[id].label, 3)
+                                end
+                            end
+                        end
+                    end
+                elseif now - lastReapply >= 4 then
+                    lastReapply = now
+                    for id, cache in pairs(jobCache) do
+                        if #cache > 0 then
+                            local alive = PERF.gcAlive(cache)
+                            if #alive == 0 then
+                                jobCache[id] = nil
+                            else
+                                jobCache[id] = alive
+                                PERF.applyChunked(PERF.filterProtected(id, alive), defs[id].vals)
+                            end
+                        end
+                    end
+                end
+
+                if jobEnabled("springs") then
+                    local char = game:GetService("Players").LocalPlayer.Character
+                    local charAddr = char and char.Address
+                    local first = nextApply.springs == nil or nextApply.springs == 0
+                    local need = first or #springTargets == 0 or charAddr ~= springRaw
+                    if need and (nextApply.springs or 0) <= now then
+                        ranHeavy = true
+                        springRaw = charAddr
+                        nextApply.springs = now + SPRING_RESCAN_EVERY
+                        scanSprings()
+                    end
+                else
+                    nextApply.springs = 0
+                end
+            end
+            local casinoOn = UI.GetValue(uid("casino")) and true or false
+            if casinoOn ~= casinoWasOn then
+                casinoWasOn = casinoOn
+                notify(casinoOn and "ON" or "OFF", "[JB Hub] Get Casino Code", 3)
+            end
+			
+			local casinoOpenOn = UI.GetValue(uid("casinoOpen")) and true or false
+            if casinoOpenOn ~= casinoOpenWasOn then
+                casinoOpenWasOn = casinoOpenOn
+                notify(casinoOpenOn and "ON" or "OFF", "[JB Hub] Open Casino Door", 3)
+            end
+
+--          local nositOn = UI.GetValue(uid("nosit")) and true or false
+--          if nositOn ~= nositWasOn then
+--              nositWasOn = nositOn
+--              notify("JB", "No Sit " .. (nositOn and "on" or "off"), 3)
+--          end
+
+            if isOn("norecoil") and not resetting then
+                applySprings()
+            end
+        end)
+        task.wait(ranHeavy and HEAVY_COOLDOWN or 0.25)
+    end
+end)
+
+function COSMETICS.findRemote(name)
+    local rs = game:GetService("ReplicatedStorage")
+    local r = rs:FindFirstChild(name, true)
+    if not r then
+        pcall(function() r = game:FindFirstChild(name, true) end)
+    end
+    return r
+end
+
+function COSMETICS.getPicks()
+    local picks, sig = {}, {}
+    for _, slot in ipairs(COSMETICS.SLOTS) do
+        local idx = tonumber(UI.GetValue(uid(slot.id))) or 0
+        local value = slot.list[idx + 1]
+        table.insert(sig, tostring(idx))
+        if value and value ~= "None" then
+            table.insert(picks, { slot = slot, value = value })
+        end
+    end
+    local plate = UI.GetValue(uid(COSMETICS.PLATE.id)) and true or false
+    table.insert(sig, plate and "P" or "-")
+    if plate then
+        table.insert(picks, { slot = COSMETICS.PLATE, value = COSMETICS.PLATE_TEXT })
+    end
+    return picks, table.concat(sig, ",")
+end
+
+function COSMETICS.startBind()
+    if tick() - COSMETICS.lastFlip < 0.3 then return end
+    COSMETICS.lastFlip = tick()
+    if not COSMETICS.carKey() then
+        notify("Get in a vehicle first", COSMETICS.TITLE, 3)
+        return
+    end
+    local picks = COSMETICS.getPicks()
+    if #picks == 0 then
+        notify("Nothing selected", COSMETICS.TITLE, 3)
+        return
+    end
+    COSMETICS.bindActive = true
+    COSMETICS.bindNotify = true
+    COSMETICS.leftAt = nil
+end
+
+function COSMETICS.stopBind(reason)
+    if not COSMETICS.bindActive then return end
+    COSMETICS.bindActive = false
+    COSMETICS.bindNotify = false
+    COSMETICS.leftAt = nil
+    if reason then notify(reason, COSMETICS.TITLE, 3) end
+end
+
+task.spawn(function()
+    while _G.JB_gen == myGen do
+        if COSMETICS.bindActive then
+            PERF.run("cosmeticsBind", function()
+                if COSMETICS.carKey() then
+                    COSMETICS.leftAt = nil
+                else
+                    COSMETICS.leftAt = COSMETICS.leftAt or tick()
+                    if tick() - COSMETICS.leftAt >= COSMETICS.EXIT_GRACE then
+                        COSMETICS.stopBind("Left vehicle, apply stopped")
+                    end
+                end
+            end)
+            task.wait(PERF.FRAME)
+        else
+            task.wait(0.1)
+        end
+    end
+end)
+
+task.spawn(function()
+    local wasOn, keyDown = false, false
+    while _G.JB_gen == myGen do
+        PERF.run("cosmeticsBind", function()
+            local on = UI.GetValue(uid("cosmeticsBind")) and true or false
+            if on ~= wasOn then
+                wasOn = on
+                if not on then COSMETICS.stopBind() end
+                notify(on and "Bind ON" or "Bind OFF", COSMETICS.TITLE, 3)
+            end
+            local now = false
+            if on then now = PERF.keyDown("cosmetics", COSMETICS.KEY) end
+            local fire = (now and not keyDown) or (COSMETICS.requested and on)
+            COSMETICS.requested = false
+            keyDown = now
+            if fire then COSMETICS.startBind() end
+        end)
+        task.wait(0.05)
+    end
+end)
+
+COSMETICS.ORDER = { BodyColor = 1, SecondBodyColor = 1, WheelColor = 1, SpoilerColor = 1, Texture = 2, SecondTexture = 2, Horn = 2, Spoiler = 3, TireMesh = 4, Rim = 5, TireSticker = 6, LicensePlate = 2 }
+
+function COSMETICS.carKey()
+    local ok, _, _, model = pcall(VEHICLE.findMine)
+    if not ok or not model then return nil end
+    local okA, addr = pcall(function() return tostring(model.Address) end)
+    return okA and addr or nil
+end
+
+COSMETICS.DEBUG = false -- debug
+COSMETICS.HEAVY = { Spoiler = true, SpoilerColor = true, TireMesh = true, Rim = true, TireSticker = true, WheelColor = true }
+COSMETICS.lastSent = {}
+COSMETICS.FOLLOW = { Rim = "WheelColor", TireMesh = "WheelColor", Spoiler = "SpoilerColor" }
+
+function COSMETICS.spoilerBump(value)
+    task.wait(1.8)
+end
+
+function COSMETICS.apply(picks, full, bump)
+    if full then COSMETICS.lastSent = {} end
+    local list = {}
+    for _, pick in ipairs(picks) do
+        for _, prop in ipairs(pick.slot.props) do
+            if COSMETICS.lastSent[prop] ~= pick.value then
+                list[#list + 1] = { prop = prop, value = pick.value, order = COSMETICS.ORDER[prop] or 2, idx = #list + 1 }
+            end
+        end
+    end
+    table.sort(list, function(a, b)
+        if a.order ~= b.order then return a.order < b.order end
+        return a.idx < b.idx
+    end)
+    local picked = {}
+    for _, pick in ipairs(picks) do
+        for _, prop in ipairs(pick.slot.props) do picked[prop] = pick.value end
+    end
+    local need = {}
+    for _, e in ipairs(list) do
+        local f = COSMETICS.FOLLOW[e.prop]
+        if f and picked[f] then need[f] = true end
+    end
+    for _, f in ipairs({ "WheelColor", "SpoilerColor" }) do
+        if need[f] then
+            for i = #list, 1, -1 do
+                if list[i].prop == f then table.remove(list, i) end
+            end
+            list[#list + 1] = { prop = f, value = picked[f] }
+        end
+    end
+    if COSMETICS.DEBUG then
+        print(string.format("[CosDebug] apply %d props | full=%s", #list, tostring(full)))
+    end
+    local allOk = true
+    for i, e in ipairs(list) do
+        if bump and e.prop == "Spoiler" then COSMETICS.spoilerBump(e.value) end
+        local ok, ret = pcall(function() return COSMETICS.equip:FireServer(e.prop, e.value) end)
+        if ok then
+            COSMETICS.lastSent[e.prop] = e.value
+        else
+            allOk = false
+        end
+        if COSMETICS.DEBUG then
+            print(string.format("[CosDebug] #%d %s = %s | ok=%s ret=%s", i, e.prop, e.value, tostring(ok), tostring(ret)))
+        end
+        if i < #list then task.wait(COSMETICS.HEAVY[e.prop] and 0.3 or 0.08) end
+    end
+    return allOk
+end
+
+COSMETICS.REAPPLY = { 0.1, 0.7, 1.8 }
+
+task.spawn(function()
+    local wasLoop, wasActive = false, false
+    local appliedKey, car, lastCarCheck = nil, nil, 0
+    local seatedAt, passes = nil, 0
+    while _G.JB_gen == myGen do
+        local active = false
+        PERF.run("cosmeticsLoop", function()
+            local loopOn = UI.GetValue(uid("cosmeticsLoop")) and true or false
+            if loopOn ~= wasLoop then
+                wasLoop = loopOn
+                appliedKey = nil
+                notify(loopOn and "Loop ON" or "Loop OFF", COSMETICS.TITLE, 3)
+            end
+            active = loopOn or COSMETICS.bindActive
+            if active ~= wasActive then
+                wasActive = active
+                appliedKey, car, lastCarCheck, seatedAt, passes = nil, nil, 0, nil, 0
+                COSMETICS.uiOpen = COSMETICS.uiOpen or COSMETICS.findRemote("GarageSetUIOpen")
+                if COSMETICS.uiOpen then
+                    pcall(function() COSMETICS.uiOpen:FireServer(active) end)
+                end
+            end
+            if not active or PERF.solving then return end
+            COSMETICS.equip = COSMETICS.equip or COSMETICS.findRemote("GarageEquipItem")
+            if not COSMETICS.equip then return end
+
+            local now = tick()
+            if now - lastCarCheck >= 0.1 then
+                lastCarCheck = now
+                local newCar = COSMETICS.carKey()
+                if newCar ~= car then
+                    car, appliedKey, seatedAt, passes = newCar, nil, nil, 0
+                    COSMETICS.lastSent = {}
+                end
+            end
+            if not car then return end
+            if not seatedAt then
+                seatedAt, passes = now, 0
+                COSMETICS.uiOpen = COSMETICS.uiOpen or COSMETICS.findRemote("GarageSetUIOpen")
+                if COSMETICS.uiOpen then
+                    pcall(function() COSMETICS.uiOpen:FireServer(false) end)
+                    pcall(function() COSMETICS.uiOpen:FireServer(true) end)
+                end
+            end
+
+            local picks, sig = COSMETICS.getPicks()
+            local key = car .. "|" .. sig
+            local forced = COSMETICS.bindNotify
+            if passes < #COSMETICS.REAPPLY then
+                if now - seatedAt < COSMETICS.REAPPLY[passes + 1] then return end
+                passes = passes + 1
+                forced = true
+            end
+            if key == appliedKey and not forced then return end
+            local firstPass = passes >= #COSMETICS.REAPPLY and (forced or key ~= appliedKey)
+            appliedKey = key
+
+            local msg
+            if #picks == 0 then
+                msg = "Nothing selected"
+            elseif COSMETICS.apply(picks, forced, forced and passes >= #COSMETICS.REAPPLY) then
+                msg = "Applied Cosmetics"
+            else
+                msg = "Failed to apply cosmetics"
+            end
+            if COSMETICS.bindNotify or (loopOn and firstPass) then
+                COSMETICS.bindNotify = false
+                notify(msg, COSMETICS.TITLE, 4)
+            end
+        end)
+        if active then task.wait(0.1) else task.wait(0.25) end
+    end
+    if COSMETICS.uiOpen then pcall(function() COSMETICS.uiOpen:FireServer(false) end) end
+end)
+
+function VEHICLE.isMine(v)
+    local ok, mine = pcall(function()
+        return v:GetAttribute("VehicleHasDriver") == true and tonumber(v:GetAttribute("LastDriverId")) == game:GetService("Players").LocalPlayer.UserId
+    end)
+    return ok and mine
+end
+
+function VEHICLE.findMine()
+    local vehicles = PERF.ws("Vehicles")
+    if not vehicles then return nil end
+    local hrp = getHRP()
+    local okP, pos = pcall(function() return hrp.Position end)
+    for _, v in ipairs(vehicles:GetChildren()) do
+        local ref = v:FindFirstChild("Engine")
+        local near = true
+        if ref and okP and pos then
+            local okD, d = pcall(function() return (ref.Position - pos).Magnitude end)
+            near = not okD or d <= VEHICLE.FIND_RADIUS
+        end
+        if ref and near and VEHICLE.isMine(v) then
+            local roots = {}
+            for _, name in ipairs(VEHICLE.ROOT_PARTS) do
+                local part = v:FindFirstChild(name)
+                if part then roots[#roots + 1] = part end
+            end
+            local body = v:FindFirstChild("Model")
+            local hidden = body and body:FindFirstChild("InvisibleCollision")
+            if hidden then roots[#roots + 1] = hidden end
+            return ref, roots, v
+        end
+    end
+    return nil
+end
+
+function VEHICLE.getMine()
+    local c = VEHICLE.cache
+    local now = tick()
+    if c and now - c.at < 2 then return c.ref, c.roots, c.model end
+    if c and c.model and c.model.Parent and VEHICLE.isMine(c.model) then
+        c.at = now
+        return c.ref, c.roots, c.model
+    end
+    local ref, roots, model = VEHICLE.findMine()
+    VEHICLE.cache = { ref = ref, roots = roots, model = model, at = now }
+    return ref, roots, model
+end
+
+task.spawn(function()
+    local wasOn = false
+    local lastArmed = false
+    local engine, roots, car, lastFind, lostSince = nil, {}, nil, 0, nil
+    local vel = Vector3.new(0, 0, 0)
+    local last = tick()
+    local warned = false
+
+    local function key(k)
+        local ok, down = pcall(iskeypressed, k)
+        return ok and down
+    end
+
+    local prims = {}
+
+    local function primOf(part)
+        local base = tonumber(part.Address)
+        if not base or base <= 4096 then return nil end
+        local p = memory_read("uintptr_t", base + PRIMITIVE_OFFSET)
+        if not p or p <= 4096 then return nil end
+        return p
+    end
+
+    local function bindPrims()
+        prims = {}
+        for _, r in ipairs(roots) do
+            local ok, p = pcall(primOf, r)
+            prims[#prims + 1] = ok and p or false
+        end
+    end
+
+    local function writeVel(v)
+        for i, r in ipairs(roots) do
+            local p = prims[i]
+            if p then
+                if PERF.primValid(r, p) then
+                    memory_write("float", p + VELOCITY_Y_OFFSET - 4, v.X)
+                    memory_write("float", p + VELOCITY_Y_OFFSET, v.Y)
+                    memory_write("float", p + VELOCITY_Y_OFFSET + 4, v.Z)
+                end
+            else
+                r.AssemblyLinearVelocity = v
+            end
+        end
+    end
+
+    local function fly(dt)
+        local keys = VEHICLE.FLY_KEYS
+        local speed = tonumber(UI.GetValue(uid("carFlySpeed"))) or VEHICLE.FLY_DEFAULT_SPEED
+        local cam = workspace.CurrentCamera.CFrame
+        local look, right = cam.LookVector, cam.RightVector
+        local dir = Vector3.new(0, 0, 0)
+        if key(keys.fwd) then dir = dir + look end
+        if key(keys.back) then dir = dir - look end
+        if key(keys.right) then dir = dir + right end
+        if key(keys.left) then dir = dir - right end
+        local target = Vector3.new(0, 0, 0)
+        if dir.Magnitude > 0.01 then target = dir.Unit * speed end
+        if key(keys.up) then target = target + Vector3.new(0, VEHICLE.FLY_VERTICAL_SPEED, 0) end
+        if key(keys.down) then target = target - Vector3.new(0, VEHICLE.FLY_VERTICAL_SPEED, 0) end
+        local a = math.clamp(VEHICLE.FLY_ACCEL * dt, 0, 1)
+        vel = vel + (target - vel) * a
+        writeVel(vel)
+    end
+
+    local notSeatedSince, lastSearch = nil, 0
+
+    while _G.JB_gen == myGen do
+        local active = false
+        PERF.run("carFly", function()
+            local armed = UI.GetValue(uid("carFly")) and true or false
+            if armed ~= lastArmed then
+                lastArmed = armed
+                notify(armed and "Enabled" or "Disabled", VEHICLE.FLY_TITLE, 3)
+            end
+            local on = armed and keybindActive(VEHICLE.flyKeybind)
+            if on ~= wasOn then
+                wasOn = on
+                vel = Vector3.new(0, 0, 0)
+                engine, car, lastFind, lostSince, warned, notSeatedSince = nil, nil, 0, nil, false, nil
+                notify(on and "Fly ON" or "Fly OFF", VEHICLE.FLY_TITLE, 2)
+            end
+            if not on then return end
+
+            local now = tick()
+            local dt = math.min(now - last, 0.1)
+            last = now
+
+            if isSittingNow() then
+                notSeatedSince = nil
+            else
+                notSeatedSince = notSeatedSince or now
+                if now - notSeatedSince > 0.5 then
+                    engine, car, lostSince = nil, nil, nil
+                    vel = Vector3.new(0, 0, 0)
+                    return
+                end
+            end
+
+            if engine and not engine.Parent then engine, car = nil, nil end
+
+            if engine and now - lastFind > PERF.FLY_RECHECK then
+                lastFind = now
+                if not car or not car.Parent or not VEHICLE.isMine(car) then
+                    local e, r, c = VEHICLE.findMine()
+                    if e and c ~= car then
+                        engine, roots, car = e, r or {}, c
+                        bindPrims()
+                    end
+                end
+            end
+
+            if not engine and now - lastSearch >= 0.25 then
+                lastSearch = now
+                local e, r, c = VEHICLE.findMine()
+                if e then
+                    engine, roots, car = e, r or {}, c
+                    lastFind = now
+                    bindPrims()
+                end
+            end
+
+            if engine then
+                lostSince, warned = nil, false
+                active = true
+                fly(dt)
+            else
+                lostSince = lostSince or now
+                if not warned and now - lostSince > VEHICLE.FLY_LOST_GRACE then
+                    warned = true
+                    notify("Get in a vehicle first", VEHICLE.FLY_TITLE, 3)
+                end
+            end
+        end)
+        PERF.flying = wasOn
+        if active then task.wait(0.016) else task.wait(0.03) end
+        if not active then last = tick() end
+    end
+end)
+
+task.spawn(function()
+    local lastArmed = false
+    local target, lastScan, lastApply = nil, 0, 0
+    local wasOn = false
+
+    local function readNumber(addr)
+        local okT, tag = pcall(memory_read, "int", addr + 12)
+        local okD, d = pcall(memory_read, "double", addr)
+        if okT and tag == 3 and okD and type(d) == "number" then return d end
+        return nil
+    end
+
+    local function getMult()
+        local m = tonumber(UI.GetValue(uid("engineBoostMult"))) or VEHICLE.BOOST_DEFAULT
+        return math.clamp(m, 1, VEHICLE.BOOST_MAX)
+    end
+
+    local function findTarget()
+        local garages, trues = {}, {}
+        for _, e in ipairs(lockedGetgc({ "GarageEngineSpeed", "TrueEngineSpeed" })) do
+            local a = tonumber(e.addr)
+            local v = a and readNumber(a)
+            if v then
+                local k = tostring(e.key)
+                if k == "GarageEngineSpeed" then garages[#garages + 1] = { addr = a, value = v }
+                elseif k == "TrueEngineSpeed" then trues[#trues + 1] = { addr = a, value = v } end
+            end
+        end
+        local best, bestGap = nil, math.huge
+        for _, g in ipairs(garages) do
+            for _, t in ipairs(trues) do
+                local gap = math.abs(t.addr - g.addr)
+                if gap <= VEHICLE.BOOST_PAIR_RANGE and gap < bestGap then
+                    best = { garage = g.addr, orig = g.value, total = t.value, written = nil }
+                    bestGap = gap
+                end
+            end
+        end
+        return best
+    end
+
+    local function restore()
+        if not target then return end
+        local cur = readNumber(target.garage)
+        if cur and target.written and math.abs(cur - target.written) < 0.001 then
+            pcall(memory_write, "double", target.garage, target.orig)
+        end
+        target = nil
+    end
+
+    while _G.JB_gen == myGen do
+        PERF.run("engineBoost", function()
+            local armed = UI.GetValue(uid("engineBoost")) and true or false
+            if armed ~= lastArmed then
+                lastArmed = armed
+                notify(armed and "Enabled" or "Disabled", VEHICLE.BOOST_TITLE, 3)
+            end
+            local on = armed and keybindActive(VEHICLE.boostKeybind)
+            if on ~= wasOn then
+                wasOn = on
+                if not on then restore() end
+                lastScan = 0
+                notify(on and string.format("Boost ON (x%.2f)", getMult()) or "Boost OFF", VEHICLE.BOOST_TITLE, 2)
+            end
+            if not on or PERF.solving then return end
+
+            local now = tick()
+            if now - lastApply < 0.5 then return end
+            lastApply = now
+
+            if not isSittingNow() then
+                if target then restore() end
+                VEHICLE.boostDelay = VEHICLE.BOOST_RESCAN
+                return
+            end
+            if target and not readNumber(target.garage) then target = nil end
+            if not target and now - lastScan >= (VEHICLE.boostDelay or VEHICLE.BOOST_RESCAN) then
+                lastScan = now
+                target = findTarget()
+                VEHICLE.boostDelay = target and VEHICLE.BOOST_RESCAN or math.min((VEHICLE.boostDelay or VEHICLE.BOOST_RESCAN) * 2, 30)
+                if target then
+                    notify(string.format("Vehicle boosted (engine %.1f)", target.total * getMult()), VEHICLE.BOOST_TITLE, 2)
+                end
+            end
+            if target then
+                local want = target.orig + target.total * (getMult() - 1)
+                local cur = readNumber(target.garage)
+                if cur and math.abs(cur - want) > 0.001 then
+                    pcall(memory_write, "double", target.garage, want)
+                end
+                target.written = want
+            end
+        end)
+        task.wait(0.03)
+    end
+    restore()
+end)
+
+task.spawn(function()
+    local shrunk = {}
+    local car, tires = nil, {}
+    local lastFind, lastSpikeScan, lastProtect = 0, 0, 0
+    local wasOn = false
+
+    local function getTires(c)
+        local list = {}
+        for _, d in ipairs(c:GetDescendants()) do
+            if d.ClassName == "Model" and d.Name:sub(1, 5) == "Wheel" and d.Name ~= "Wheels" and d.Name ~= "WheelModels" then
+                local tm = d:FindFirstChild("TireMesh")
+                if tm and not tm:FindFirstChild("Dual1") then list[#list + 1] = tm end
+            end
+        end
+        return list
+    end
+
+    local function scanSpikes()
+        for _, m in ipairs(PERF.spikeModels) do
+            if m.Parent then
+                local hit = m:FindFirstChild("Part")
+                if hit then
+                    local ok, size = pcall(function() return hit.Size end)
+                    if ok and size and size.X > 0.01 then
+                        local addr = hit.Address
+                        if shrunk[addr] or size.X >= VEHICLE.TIRE_MIN_WIDTH then
+                            if not shrunk[addr] then shrunk[addr] = { part = hit, size = size } end
+                            pcall(function() hit.Size = LASER_TINY end)
+                        end
+                    end
+                end
+            end
+        end
+        for addr, s in pairs(shrunk) do
+            if s.part.Parent == nil then shrunk[addr] = nil end
+        end
+    end
+
+    local function restoreSpikes()
+        for _, s in pairs(shrunk) do
+            if s.part.Parent then pcall(function() s.part.Size = s.size end) end
+        end
+        shrunk = {}
+    end
+
+    local function protect(c)
+        local last = c:GetAttribute("VehicleTiresLastPop")
+        if type(last) ~= "number" or last == 0 then return end
+        c:SetAttribute("VehicleTiresLastPop", 0)
+        local max = c:GetAttribute("MaxVehicleTireHealth")
+        local hp = c:GetAttribute("VehicleTireHealth")
+        if type(max) == "number" and type(hp) == "number" and hp < max then
+            c:SetAttribute("VehicleTireHealth", max)
+        end
+    end
+
+    local function showTires()
+        for _, tm in ipairs(tires) do
+            pcall(function() tm.Transparency = 0 end)
+            pcall(function() tm.LocalTransparencyModifier = 0 end)
+        end
+    end
+
+    while _G.JB_gen == myGen do
+        local wait = 0.25
+        PERF.run("antiTirePop", function()
+            local on = UI.GetValue(uid("antiTirePop")) and true or false
+            if on ~= wasOn then
+                wasOn = on
+                if not on then
+                    restoreSpikes()
+                    car, tires = nil, {}
+                end
+                notify(on and "Enabled" or "Disabled", VEHICLE.TIRE_TITLE, 3)
+            end
+            if not on then return end
+
+            local now = tick()
+            if now - lastSpikeScan >= VEHICLE.TIRE_SPIKE_SCAN then
+                lastSpikeScan = now
+                pcall(scanSpikes)
+            end
+            if not isSittingNow() then
+                car, tires = nil, {}
+                wait = 0.1
+                return
+            end
+            if not car or not car.Parent or now - lastFind >= 2 then
+                lastFind = now
+                local _, _, c = VEHICLE.getMine()
+                if c ~= car then
+                    car = c
+                    tires = c and getTires(c) or {}
+                end
+            end
+            if car then
+                if now - lastProtect >= 0.05 then
+                    lastProtect = now
+                    pcall(protect, car)
+                end
+                showTires()
+            end
+            wait = nil
+        end)
+        task.wait(wait)
+    end
+    restoreSpikes()
+end)
+
+task.spawn(function()
+    local engine, roots, car, prims = nil, {}, nil, {}
+    local lastFind, lastCheck = 0, 0
+    local wasOn, lastArmed = false, false
+    local braking = false
+
+    local function primOf(part)
+        local base = tonumber(part.Address)
+        if not base or base <= 4096 then return false end
+        local p = memory_read("uintptr_t", base + PRIMITIVE_OFFSET)
+        if not p or p <= 4096 then return false end
+        return p
+    end
+
+    local function bind(e, r, c)
+        engine, roots, car = e, r or {}, c
+        prims = {}
+        for i, part in ipairs(roots) do
+            local ok, p = pcall(primOf, part)
+            prims[i] = ok and p or false
+        end
+    end
+
+    local function reset()
+        engine, roots, car, prims = nil, {}, nil, {}
+        braking = false
+    end
+
+    local function brakePressed()
+        for _, k in ipairs(VEHICLE.BRAKE_KEYS) do
+            local ok, down = pcall(iskeypressed, k)
+            if ok and down then return true end
+        end
+        return false
+    end
+
+    local function flyActive()
+        return UI.GetValue(uid("carFly")) and keybindActive(VEHICLE.flyKeybind)
+    end
+
+    local function readVel()
+        for i, p in ipairs(prims) do
+            if p and PERF.primValid(roots[i], p) then
+                return Vector3.new(
+                    memory_read("float", p + VELOCITY_Y_OFFSET - 4),
+                    memory_read("float", p + VELOCITY_Y_OFFSET),
+                    memory_read("float", p + VELOCITY_Y_OFFSET + 4)
+                )
+            end
+        end
+        return (roots[1] or engine).AssemblyLinearVelocity
+    end
+
+    local function writeVel(v)
+        for i, r in ipairs(roots) do
+            local p = prims[i]
+            if p then
+                if PERF.primValid(r, p) then
+                    memory_write("float", p + VELOCITY_Y_OFFSET - 4, v.X)
+                    memory_write("float", p + VELOCITY_Y_OFFSET, v.Y)
+                    memory_write("float", p + VELOCITY_Y_OFFSET + 4, v.Z)
+                end
+            else
+                pcall(function() r.AssemblyLinearVelocity = v end)
+            end
+        end
+    end
+
+    local function tryBrake()
+        local v = readVel()
+        local forward = v:Dot(engine.CFrame.LookVector)
+        if not braking and forward <= VEHICLE.BRAKE_MIN_SPEED then return end
+        braking = forward > 0.5
+        writeVel(Vector3.new(0, math.min(v.Y, 0), 0))
+    end
+
+    while _G.JB_gen == myGen do
+        local wait = 0.1
+        PERF.run("instantBrake", function()
+            local armed = UI.GetValue(uid("instantBrake")) and true or false
+            if armed ~= lastArmed then
+                lastArmed = armed
+                notify(armed and "Enabled" or "Disabled", VEHICLE.BRAKE_TITLE, 3)
+            end
+            local on = armed and keybindActive(VEHICLE.brakeKeybind)
+            if on ~= wasOn then
+                wasOn = on
+                reset()
+                notify(on and "Brake ON" or "Brake OFF", VEHICLE.BRAKE_TITLE, 2)
+            end
+            if not on then return end
+            if not isSittingNow() then
+                reset()
+                return
+            end
+            local now = tick()
+            if not engine or not engine.Parent then
+                if now - lastFind >= 0.3 then
+                    lastFind, lastCheck = now, now
+                    local ok, e, r, c = pcall(VEHICLE.findMine)
+                    if ok and e then bind(e, r, c) else reset() end
+                end
+            elseif now - lastCheck >= 3 then
+                lastCheck = now
+                if not car or not car.Parent or not VEHICLE.isMine(car) then reset() end
+            end
+            if not engine then return end
+            wait = 0.016
+            if brakePressed() and not flyActive() then
+                local ok = pcall(tryBrake)
+                if not ok then reset() end
+            else
+                braking = false
+            end
+        end)
+        task.wait(wait)
+    end
+end)
+
+task.spawn(function()
+    local engine, roots, car, prims = nil, {}, nil, {}
+    local lastFind, lastCheck = 0, 0
+    local lastArmed, correcting = false, false
+    local primParts = {}
+    local worldUp = Vector3.new(0, 1, 0)
+
+    local function primOf(part)
+        local base = tonumber(part.Address)
+        if not base or base <= 4096 then return false end
+        local p = memory_read("uintptr_t", base + PRIMITIVE_OFFSET)
+        if not p or p <= 4096 then return false end
+        return p
+    end
+
+    local function bind(e, r, c)
+        engine, roots, car = e, r or {}, c
+        prims, primParts = {}, {}
+        for _, part in ipairs(roots) do
+            local ok, p = pcall(primOf, part)
+            if ok and p then
+                prims[#prims + 1] = p
+                primParts[#primParts + 1] = part
+            end
+        end
+    end
+
+    local function reset()
+        engine, roots, car, prims = nil, {}, nil, {}
+        primParts = {}
+        correcting = false
+    end
+
+    local function release()
+        for i, p in ipairs(prims) do
+            if PERF.primValid(primParts[i], p) then
+                memory_write("float", p + VEHICLE.FLIP_ANG, 0)
+                memory_write("float", p + VEHICLE.FLIP_ANG + 8, 0)
+            end
+        end
+    end
+
+    local function step()
+        local cf = engine.CFrame
+        local up = cf.UpVector
+        if up.Y < VEHICLE.FLIP_TRIGGER or (correcting and up.Y < VEHICLE.FLIP_DONE) then
+            correcting = true
+            local axis = up:Cross(worldUp)
+            if axis.Magnitude < 0.05 then axis = cf.LookVector end
+            local w = axis.Unit * VEHICLE.FLIP_GAIN
+            for i, p in ipairs(prims) do
+                if PERF.primValid(primParts[i], p) then
+                    memory_write("float", p + VEHICLE.FLIP_ANG, w.X)
+                    memory_write("float", p + VEHICLE.FLIP_ANG + 8, w.Z)
+                    if up.Y < 0 then
+                        local vy = memory_read("float", p + VELOCITY_Y_OFFSET)
+                        if vy < VEHICLE.FLIP_LIFT then memory_write("float", p + VELOCITY_Y_OFFSET, VEHICLE.FLIP_LIFT) end
+                    end
+                end
+            end
+        elseif correcting then
+            correcting = false
+            release()
+        end
+    end
+
+    while _G.JB_gen == myGen do
+        local wait = 0.1
+        PERF.run("antiFlip", function()
+            local armed = UI.GetValue(uid("antiFlip")) and true or false
+            if armed ~= lastArmed then
+                lastArmed = armed
+                if not armed and correcting then pcall(release) end
+                reset()
+                notify(armed and "ON" or "OFF", VEHICLE.FLIP_TITLE, 3)
+            end
+            if not armed then return end
+            if not isSittingNow() then
+                reset()
+                return
+            end
+            local now = tick()
+            if not engine or not engine.Parent then
+                if now - lastFind >= 0.3 then
+                    lastFind, lastCheck = now, now
+                    local ok, e, r, c = pcall(VEHICLE.findMine)
+                    if ok and e then bind(e, r, c) else reset() end
+                end
+            elseif now - lastCheck >= 3 then
+                lastCheck = now
+                if not car or not car.Parent or not VEHICLE.isMine(car) then reset() end
+            end
+            if not engine or #prims == 0 then return end
+            wait = correcting and VEHICLE.FLIP_TICK or 0.1
+            if not pcall(step) then reset() end
+        end)
+        task.wait(wait)
+    end
+end)
+
+task.spawn(function()
+    _G.JB_AutoShootOrig = _G.JB_AutoShootOrig or {}
+    local original = _G.JB_AutoShootOrig
+    local targets = {}
+    local wasOn = false
+    local dirtyAt, lastApply, lastSigCheck, lastSig = nil, 0, 0, nil
+
+    local function readRaw(a)
+        return {
+            lo = memory_read("int", a),
+            hi = memory_read("int", a + 4),
+            tag = memory_read("int", a + 12),
+        }
+    end
+
+    local function writeRaw(a, raw)
+        memory_write("int", a, raw.lo)
+        memory_write("int", a + 4, raw.hi)
+        memory_write("int", a + 12, raw.tag)
+    end
+
+    local function equipSignature()
+        local sig = 0
+        pcall(function()
+            local folder = game:GetService("Players").LocalPlayer:FindFirstChild("Folder")
+            for _, item in ipairs(folder:GetChildren()) do
+                local c = item:GetAttribute("InventoryItemLocalEquipped")
+                if type(c) == "number" then sig = sig + c end
+            end
+        end)
+        return sig
+    end
+
+    local function scanOnce()
+        local added = 0
+        for _, e in ipairs(lockedGetgc({ "FireAuto" })) do
+            local a = tonumber(e.addr)
+            if a and tostring(e.key) == "FireAuto" then
+                local key = tostring(a)
+                if not original[key] then
+                    local ok, raw = pcall(readRaw, a)
+                    if ok and raw.tag == PERF.SHOOT_BOOL_TAG and raw.lo == 0 then
+                        original[key] = { addr = a, raw = raw, entry = e }
+                        added = added + 1
+                    end
+                end
+            end
+        end
+        return added
+    end
+
+    local function rebuild()
+        targets = {}
+        for _, o in pairs(original) do targets[#targets + 1] = o.entry end
+    end
+
+    local function scan(tries)
+        local added = 0
+        for _ = 1, tries do
+            added = scanOnce()
+            if added > 0 or next(original) then break end
+            task.wait(0.15)
+        end
+        rebuild()
+        return added
+    end
+
+    local function apply()
+        targets = PERF.gcAlive(targets)
+        if #targets > 0 then pcall(applygc, targets, { FireAuto = true }) end
+    end
+
+    local function restore()
+        local n = 0
+        for key, o in pairs(original) do
+            if o.entry and #PERF.gcAlive({ o.entry }) == 1 and pcall(writeRaw, o.addr, o.raw) then n = n + 1 end
+            original[key] = nil
+        end
+        targets = {}
+        return n
+    end
+
+    while _G.JB_gen == myGen do
+        PERF.run("autoShoot", function()
+            local on = UI.GetValue(uid("autoShoot")) and true or false
+            local now = tick()
+            if on ~= wasOn then
+                wasOn = on
+                if on then
+                    dirtyAt, lastSig = now, PERF.equipVersion
+                    notify("Enabled", PERF.SHOOT_TITLE, 3)
+                else
+                    dirtyAt = nil
+                    local n = restore()
+                    notify(n > 0 and ("Disabled, " .. n .. " weapon(s) restored") or "Disabled", PERF.SHOOT_TITLE, 3)
+                end
+            end
+            if not on then return end
+
+            if now - lastSigCheck >= 1 then
+                lastSigCheck = now
+                local sig = PERF.equipVersion
+                if sig ~= lastSig then
+                    lastSig = sig
+                    dirtyAt = now + 2
+                end
+            end
+
+            if dirtyAt and now >= dirtyAt and not PERF.solving then
+                local first = #targets == 0
+                dirtyAt = nil
+                local added = scan(first and PERF.SHOOT_TRIES or 1)
+                apply()
+                lastApply = tick()
+                if added > 0 then
+                    notify(added .. " weapon(s) set to full auto", PERF.SHOOT_TITLE, 3)
+                elseif #targets == 0 then
+                    notify("Equip a semi-auto weapon", PERF.SHOOT_TITLE, 3)
+                end
+            elseif now - lastApply >= PERF.SHOOT_REAPPLY then
+                lastApply = now
+                apply()
+            end
+        end)
+        task.wait(0.25)
+    end
+    restore()
+end)
+
+task.spawn(function()
+    local unlocked = {}
+    local firstSeen = {}
+    local wasOn = false
+
+    local function relock()
+        local n = 0
+        for key, item in pairs(unlocked) do
+            if item.Parent then
+                pcall(function() item:SetAttribute(PERF.SLOT_ATTR, true) end)
+                n = n + 1
+            end
+            unlocked[key] = nil
+        end
+        return n
+    end
+
+    while _G.JB_gen == myGen do
+        PERF.run("unlockSlots", function()
+            local on = UI.GetValue(uid("unlockSlots")) and true or false
+            if on ~= wasOn then
+                wasOn = on
+                if on then
+                    firstSeen = {}
+                    notify("Enabled", PERF.SLOT_TITLE, 3)
+                else
+                    local n = relock()
+                    notify(n > 0 and ("Disabled, " .. n .. " item(s) relocked") or "Disabled", PERF.SLOT_TITLE, 3)
+                end
+            end
+            if not on then return end
+            local folder = game:GetService("Players").LocalPlayer:FindFirstChild("Folder")
+            if not folder then return end
+            local now = tick()
+            local seen = {}
+            for _, item in ipairs(folder:GetChildren()) do
+                local key = tostring(item.Address)
+                seen[key] = firstSeen[key] or now
+                if unlocked[key] or now - seen[key] < PERF.SLOT_WATCH then
+                    if item:GetAttribute(PERF.SLOT_ATTR) == true then
+                        item:SetAttribute(PERF.SLOT_ATTR, false)
+                        if not unlocked[key] then
+                            unlocked[key] = item
+                            notify(item.Name .. " unlocked", PERF.SLOT_TITLE, 2)
+                        end
+                    end
+                end
+            end
+            firstSeen = seen
+            for key, item in pairs(unlocked) do
+                if not item.Parent then unlocked[key] = nil end
+            end
+        end)
+        task.wait(PERF.SLOT_TICK)
+    end
+    relock()
+end)
+
+task.spawn(function()
+    local lp = game:GetService("Players").LocalPlayer
+    local DEBOUNCE = 0.6
+    local wasOn, wanted, changedAt, waitNotified = false, false, 0, false
+
+    local rs = game:GetService("ReplicatedStorage")
+    local nameObjs = {}
+
+    local function warnOutdated()
+        if not PERF.nerfWarned then
+            PERF.nerfWarned = true
+            PERF.notifySafe("Offsets outdated, wait for JB Hub update ...", PERF.NERF_TITLE, 5)
+        end
+    end
+
+    local function rdPtr(a)
+        local ok, v = pcall(memory_read, "uintptr_t", a)
+        return ok and type(v) == "number" and v or nil
+    end
+
+    local function rdInt(a)
+        local ok, v = pcall(memory_read, "int", a)
+        return ok and type(v) == "number" and v or nil
+    end
+
+    local function textAt(obj)
+        local size = rdInt(obj + PERF.NERF_SIZE)
+        if not size or size < 1 or size > 15 then return nil end
+        local chars = {}
+        for i = 1, size do
+            local ok, b = pcall(memory_read, "byte", obj + PERF.NERF_DATA + i - 1)
+            if not ok or type(b) ~= "number" then return nil end
+            chars[i] = string.char(b)
+        end
+        return table.concat(chars)
+    end
+
+    local function nameObj(name)
+        local obj = nameObjs[name]
+        if obj and textAt(obj) == name then return obj end
+        nameObjs[name] = nil
+        local game_ = rs:FindFirstChild("Game")
+        local holder = game_ and game_:FindFirstChild("ItemConfig")
+        local inst = holder and holder:FindFirstChild(name)
+        obj = inst and rdPtr(tonumber(inst.Address) + PERF.NERF_NAME)
+        if obj and textAt(obj) == name then
+            nameObjs[name] = obj
+            return obj
+        end
+        return nil
+    end
+
+    local function addRef(obj, delta)
+        local r = rdInt(obj + PERF.NERF_REF)
+        if not r or r < 1 or r > 1000000 then return false end
+        return pcall(memory_write, "int", obj + PERF.NERF_REF, r + delta)
+    end
+
+    local function swapName(item, from, to)
+        local fromObj, toObj = nameObj(from), nameObj(to)
+        local slot = tonumber(item.Address) + PERF.NERF_NAME
+        local cur = rdPtr(slot)
+        if toObj and cur == toObj then return true end
+        if not fromObj or not toObj or cur ~= fromObj or not addRef(toObj, 1) then
+            warnOutdated()
+            return false
+        end
+        if not pcall(memory_write, "uintptr_t", slot, toObj) or rdPtr(slot) ~= toObj then
+            addRef(toObj, -1)
+            return false
+        end
+        addRef(fromObj, -1)
+        return true
+    end
+
+    local function isHeld(item)
+        local v = item:GetAttribute("InventoryItemLocalEquipped")
+        return type(v) == "number" and v % 2 == 1
+    end
+
+    _G.JB_NerfSwapped = _G.JB_NerfSwapped or {}
+    local swapped = _G.JB_NerfSwapped
+
+    local function apply(item)
+        local key = tostring(item.Address)
+        local name = item.Name
+        local target = PERF.NERF_SWAPS[name]
+        if not target or swapped[key] then return false end
+        local icon = item:GetAttribute(PERF.NERF_ICON_ATTR) or PERF.NERF_ICONS[name]
+        if not swapName(item, name, target) then return false end
+        swapped[key] = { name = name, icon = icon }
+        pcall(function() item:SetAttribute(PERF.NERF_ICON_ATTR, PERF.NERF_ICONS[target]) end)
+        return true
+    end
+
+    local function restore(item)
+        local key = tostring(item.Address)
+        local entry = swapped[key]
+        if not entry then return false end
+        if not swapName(item, PERF.NERF_SWAPS[entry.name], entry.name) then return false end
+        swapped[key] = nil
+        pcall(function() item:SetAttribute(PERF.NERF_ICON_ATTR, entry.icon or PERF.NERF_ICONS[entry.name]) end)
+        return true
+    end
+
+    local function sync(on)
+        local folder = lp:FindFirstChild("Folder")
+        if not folder then return 0, 0, 0 end
+        local done, pending, left = 0, 0, 0
+        for _, item in ipairs(folder:GetChildren()) do
+            local key = tostring(item.Address)
+            local needs = (on and PERF.NERF_SWAPS[item.Name] and not swapped[key]) or (not on and swapped[key])
+            if needs then
+                if isHeld(item) then
+                    pending = pending + 1
+                elseif (on and apply(item)) or (not on and restore(item)) then
+                    done = done + 1
+                else
+                    left = left + 1
+                end
+            end
+        end
+        return done, pending, left
+    end
+
+    while _G.JB_gen == myGen do
+        PERF.run("nerfSkins", function()
+            local now = tick()
+            local toggle = UI.GetValue(uid("nerfSkins")) and true or false
+            if toggle ~= wanted then
+                wanted = toggle
+                changedAt = now
+            end
+            if wanted ~= wasOn and now - changedAt >= DEBOUNCE then
+                wasOn = wanted
+                waitNotified = false
+                PERF.nerfWarned = false
+                notify(wasOn and "Enabled" or "Disabled", PERF.NERF_TITLE, 3)
+            end
+            if wanted ~= wasOn or wasOn then PERF.nerfIdle = false end
+            if not wasOn and PERF.nerfIdle then return end
+            local done, pending, left = sync(wasOn)
+            if not wasOn and pending == 0 and left == 0 then PERF.nerfIdle = true end
+            if done > 0 then
+                notify(wasOn and (done .. " weapon(s) set to Nerf") or (done .. " weapon(s) restored"), PERF.NERF_TITLE, 3)
+            end
+            if pending > 0 and not waitNotified then
+                waitNotified = true
+                notify(wasOn and "Put the weapon away to apply" or "Put the weapon away to restore", PERF.NERF_TITLE, 3)
+            elseif pending == 0 then
+                waitNotified = false
+            end
+        end)
+        task.wait(PERF.NERF_TICK)
+    end
+    local deadline = tick() + PERF.NERF_UNLOAD_WAIT
+    while tick() < deadline do
+        local _, pending = sync(false)
+        if pending == 0 then break end
+        task.wait(PERF.NERF_TICK)
+    end
+end)
+
+task.spawn(function()
+    local TITLE = "[JB Hub] Skin Changer"
+    local ATTR = "SkinName"
+    local lp = game:GetService("Players").LocalPlayer
+    local assigned, original, wasOn, lastLabel = {}, {}, false, ""
+
+    local function selection()
+        local si = (tonumber(UI.GetValue(uid("skinName"))) or 0) + 1
+        local ti = tonumber(UI.GetValue(uid("skinTarget"))) or 0
+        return PERF.SKIN_IDS[si], PERF.SKIN_LABELS[si], ti
+    end
+
+    local function assign()
+        local skin, label, ti = selection()
+        if not skin then return end
+        if ti == 0 then
+            for _, w in ipairs(PERF.SKIN_WEAPONS) do assigned[w] = skin end
+        elseif PERF.SKIN_WEAPONS[ti] then
+            assigned[PERF.SKIN_WEAPONS[ti]] = skin
+        end
+        lastLabel = label .. " on " .. (PERF.SKIN_TARGETS[ti + 1] or "?")
+    end
+
+    local function isEquipped(item)
+        local v = item:GetAttribute("InventoryItemLocalEquipped")
+        return type(v) == "number" and v % 2 == 1
+    end
+
+    local function setSkin(item, value)
+        return pcall(function() item:SetAttribute(ATTR, value) end)
+    end
+
+    local function sync(on)
+        if not on and next(original) == nil then return 0, 0 end
+        local folder = lp:FindFirstChild("Folder")
+        if not folder then return 0, 0 end
+        local changed, held, alive = 0, 0, {}
+        for _, item in ipairs(folder:GetChildren()) do
+            local key = tostring(item.Address)
+            alive[key] = true
+            local want = on and assigned[item.Name] or nil
+            local cur = item:GetAttribute(ATTR)
+            local did = false
+            if want then
+                if original[key] == nil then original[key] = { value = cur } end
+                if cur ~= want then did = setSkin(item, want) end
+            elseif original[key] then
+                if cur ~= original[key].value then did = setSkin(item, original[key].value) end
+                original[key] = nil
+            end
+            if did then
+                changed = changed + 1
+                if isEquipped(item) then held = held + 1 end
+            end
+        end
+        for key in pairs(original) do
+            if not alive[key] then original[key] = nil end
+        end
+        return changed, held
+    end
+
+    while _G.JB_gen == myGen do
+        PERF.run("skinChanger", function()
+            local on = UI.GetValue(uid("skinChanger")) and true or false
+            if on ~= wasOn then
+                wasOn = on
+                if on then
+                    assign()
+                else
+                    assigned = {}
+                end
+            end
+            if PERF.skinApplyRequested then
+                PERF.skinApplyRequested = false
+                if on then
+                    assign()
+                else
+                    notify("Enable Skin Changer first", TITLE, 3)
+                end
+            end
+            local changed, held = sync(on)
+            if changed > 0 then
+                local text = on and ("ON - " .. lastLabel) or "OFF - original skins restored"
+                if held > 0 then text = text .. " (re-equip to see it)" end
+                notify(text, TITLE, 3)
+            elseif not on and wasOn == false and changed == 0 and PERF.skinOffNotified == false then
+                PERF.skinOffNotified = true
+            end
+        end)
+        task.wait(0.3)
+    end
+    sync(false)
+end)
+
+task.spawn(function()
+    local TITLE = "[JB Hub] Punch No Cooldown"
+    local CLOSURE_TYPE = 5 -- update
+    local CLOSURE_UPVALS = 0x20 -- update
+    local UPVAL_VALUE = 0x8 -- update
+    local addr, wasOn, lastScan, retryDelay, warned, fails = nil, false, 0, 5, false, 0
+
+    local function rd(t, a)
+        local ok, v = pcall(memory_read, t, a)
+        if ok and type(v) == "number" then return v end
+    end
+
+    local function isPtr(v)
+        return v and v > 0x10000000000 and v < 0x7FFFFFFFFFFF
+    end
+
+    local function valid(a)
+        local d = a and rd("double", a)
+        return d ~= nil and (d == 0 or d > 1e9)
+    end
+
+    local function scan()
+        lastScan = tick()
+        for _, e in ipairs(lockedGetgc({ "attemptPunch" })) do
+            local closure = rd("uintptr_t", tonumber(e.addr))
+            if isPtr(closure) and rd("byte", closure + CLOSURE_TYPE) == 6 then
+                local upval = rd("uintptr_t", closure + CLOSURE_UPVALS)
+                local valueAddr = isPtr(upval) and rd("uintptr_t", upval + UPVAL_VALUE)
+                if isPtr(valueAddr) and rd("int", valueAddr + 12) == 3 then
+                    local d = rd("double", valueAddr)
+                    if d and (d == 0 or d > 1e9) then return valueAddr end
+                end
+            end
+        end
+    end
+
+    while _G.JB_gen == myGen do
+        PERF.run("punchNoCd", function()
+            local on = UI.GetValue(uid("punchNoCd")) and true or false
+            if on ~= wasOn then
+                wasOn = on
+                if on then
+                    retryDelay, lastScan, warned, fails = 5, 0, false, 0
+                else
+                    if addr then notify("OFF", TITLE, 3) end
+                    addr = nil
+                end
+            end
+            if not on then return end
+            if addr and not valid(addr) then
+                addr, lastScan, retryDelay = nil, 0, 5
+            end
+            if not addr then
+                if tick() - lastScan < retryDelay then return end
+                addr = scan()
+                if addr then
+                    retryDelay, warned, fails = 5, false, 0
+                    notify("ON", TITLE, 3)
+                else
+                    fails = fails + 1
+                    retryDelay = math.min(retryDelay * 2, 60)
+                    if fails >= 3 and not warned then
+                        warned = true
+                        PERF.notifySafe("Offsets outdated, wait for JB Hub update ...", TITLE, 5)
+                    end
+                    return
+                end
+            end
+            local d = rd("double", addr)
+            if d and d ~= 0 then pcall(memory_write, "double", addr, 0) end
+        end)
+        task.wait(UI.GetValue(uid("punchNoCd")) and 0.05 or 0.25)
+    end
+end)
+
+task.spawn(function()
+    local TITLE = "[JB Hub] Rocket Instant Lock"
+    local KEY = "SEEKING_LOCK_MIN_DURATION"
+    local FAST = 0.01
+    local NUMBER_TAG = 3
+    local cache, wasOn, lastScan, retryDelay, warned = {}, false, 0, 5, false
+
+    local function rd(t, a)
+        local ok, v = pcall(memory_read, t, a)
+        if ok and type(v) == "number" then return v end
+    end
+
+    local function valid(e)
+        return rd("uintptr_t", e.addr + 0x10) == e.keyPtr and rd("int", e.addr + 12) == NUMBER_TAG
+    end
+
+    local function restore()
+        for _, e in ipairs(cache) do
+            if valid(e) then pcall(memory_write, "double", e.addr, e.original) end
+        end
+        cache = {}
+    end
+
+    local function scan()
+        lastScan = tick()
+        local seen = {}
+        for _, e in ipairs(lockedGetgc({ KEY })) do
+            local addr = tonumber(e.addr)
+            if addr and addr > 4096 and not seen[addr] and tostring(e.key) == KEY then
+                local keyPtr = rd("uintptr_t", addr + 0x10)
+                local v = rd("double", addr)
+                if keyPtr and keyPtr > 4096 and rd("int", addr + 12) == NUMBER_TAG and v and v > FAST and v < 60 then
+                    seen[addr] = true
+                    cache[#cache + 1] = { addr = addr, keyPtr = keyPtr, original = v }
+                end
+            end
+        end
+        return #cache > 0
+    end
+
+    while _G.JB_gen == myGen do
+        PERF.run("rocketLock", function()
+            local on = UI.GetValue(uid("rocketLock")) and true or false
+            if on ~= wasOn then
+                wasOn = on
+                if on then
+                    retryDelay, lastScan, warned = 5, 0, false
+                else
+                    local had = #cache > 0
+                    restore()
+                    if had then notify("OFF", TITLE, 3) end
+                end
+            end
+            if not on then return end
+            if #cache == 0 then
+                if tick() - lastScan < retryDelay then return end
+                if scan() then
+                    retryDelay, warned = 5, false
+                    notify("ON", TITLE, 3)
+                else
+                    retryDelay = math.min(retryDelay * 2, 120)
+                    if not warned then
+                        warned = true
+                        PERF.notifySafe("Offsets outdated, wait for JB Hub update ...", TITLE, 5)
+                    end
+                    return
+                end
+            end
+            local kept = {}
+            for _, e in ipairs(cache) do
+                if valid(e) then
+                    kept[#kept + 1] = e
+                    if rd("double", e.addr) ~= FAST then pcall(memory_write, "double", e.addr, FAST) end
+                end
+            end
+            cache = kept
+        end)
+        task.wait(0.5)
+    end
+    restore()
+end)
+
+task.spawn(function()
+    local TITLE = "[JB Hub] Disable Forcefields"
+    local AURA_KEY = "AURA_BLAST_MAX_SIZE"
+    local NUMBER_TAG = 3
+    local dome, saved, aura = nil, nil, {}
+    local wasOn, lastFind, lastAuraScan, auraDelay, warned = false, 0, 0, 5, false
+
+    local function rd(t, a)
+        local ok, v = pcall(memory_read, t, a)
+        if ok and type(v) == "number" then return v end
+    end
+
+    local function findDome()
+        lastFind = tick()
+        local mil = PERF.ws("MilitaryBase")
+        local model = mil and mil:FindFirstChild("Forcefield")
+        if not model then return nil end
+        local part = model:FindFirstChild("Forcefield")
+        if part and part:IsA("BasePart") then return part end
+        for _, c in ipairs(model:GetChildren()) do
+            if c:IsA("BasePart") then return c end
+        end
+    end
+
+    local function capture(d)
+        local s = { collide = d.CanCollide, transp = d.Transparency, decals = {} }
+        for _, c in ipairs(d:GetChildren()) do
+            if c.ClassName == "Decal" then s.decals[#s.decals + 1] = { obj = c, transp = c.Transparency } end
+        end
+        return s
+    end
+
+    local function applyDome()
+        pcall(function()
+            if dome.CanCollide then dome.CanCollide = false end
+            if dome.Transparency ~= 1 then dome.Transparency = 1 end
+            for _, e in ipairs(saved.decals) do
+                if e.obj.Transparency ~= 1 then e.obj.Transparency = 1 end
+            end
+        end)
+    end
+
+    local function auraValid(e)
+        return rd("uintptr_t", e.addr + 0x10) == e.keyPtr and rd("int", e.addr + 12) == NUMBER_TAG
+    end
+
+    local function scanAura()
+        lastAuraScan = tick()
+        local seen = {}
+        for _, e in ipairs(lockedGetgc({ AURA_KEY })) do
+            local addr = tonumber(e.addr)
+            if addr and addr > 4096 and not seen[addr] and tostring(e.key) == AURA_KEY then
+                local keyPtr = rd("uintptr_t", addr + 0x10)
+                local v = rd("double", addr)
+                if keyPtr and keyPtr > 4096 and rd("int", addr + 12) == NUMBER_TAG and v and v > 0 and v < 10000 then
+                    seen[addr] = true
+                    aura[#aura + 1] = { addr = addr, keyPtr = keyPtr, original = v }
+                end
+            end
+        end
+        return #aura > 0
+    end
+
+    local function applyAura()
+        local kept = {}
+        for _, e in ipairs(aura) do
+            if auraValid(e) then
+                kept[#kept + 1] = e
+                if rd("double", e.addr) ~= 0 then pcall(memory_write, "double", e.addr, 0) end
+            end
+        end
+        aura = kept
+    end
+
+    local function restore()
+        if dome and saved then
+            pcall(function()
+                dome.CanCollide = saved.collide
+                dome.Transparency = saved.transp
+                for _, e in ipairs(saved.decals) do e.obj.Transparency = e.transp end
+            end)
+        end
+        for _, e in ipairs(aura) do
+            if auraValid(e) then pcall(memory_write, "double", e.addr, e.original) end
+        end
+        dome, saved, aura = nil, nil, {}
+    end
+
+    while _G.JB_gen == myGen do
+        PERF.run("noForcefield", function()
+            local on = UI.GetValue(uid("noForcefield")) and true or false
+            if on ~= wasOn then
+                wasOn = on
+                if on then
+                    lastFind, lastAuraScan, auraDelay, warned = 0, 0, 5, false
+                    notify("ON", TITLE, 3)
+                else
+                    local had = dome ~= nil or #aura > 0
+                    restore()
+                    if had then notify("OFF", TITLE, 3) end
+                end
+            end
+            if not on then return end
+
+            local announce = false
+            if dome and not dome.Parent then dome, saved = nil, nil end
+            if not dome and tick() - lastFind >= 5 then
+                local d = findDome()
+                if d then
+                    local ok, s = pcall(capture, d)
+                    if ok then
+                        dome, saved = d, s
+                        announce = "Military Base forcefield disabled"
+                    end
+                end
+            end
+            local mansion = PERF.ws("MansionRobbery")
+            local bossUp = mansion and mansion:FindFirstChild("ActiveBoss") ~= nil
+            if #aura == 0 and bossUp and tick() - lastAuraScan >= auraDelay then
+                if scanAura() then
+                    auraDelay = 5
+                    announce = "Mansion CEO aura blast disabled"
+                else
+                    auraDelay = math.min(auraDelay * 2, 120)
+                end
+            end
+
+            if dome then applyDome() end
+            if #aura > 0 then applyAura() end
+
+            if announce then notify(announce, TITLE, 3) end
+        end)
+        task.wait(0.5)
+    end
+    restore()
+end)
+
+task.spawn(function()
+    local TITLE = "[JB Hub] Hit Sound"
+    local ORIGINAL = 2837091387
+    local CLOSURE_PROTO = 0x18 -- update
+    local PROTO_CONSTANTS = 0x28 -- update
+    local RETRY, retryDelay = 10, 10
+    local slots, wasOn, current, lastScan = {}, false, nil, 0
+
+    local known = { [ORIGINAL] = true }
+    for _, s in ipairs(PERF.HIT_SOUNDS) do known[s[2]] = true end
+
+    local function rd(a)
+        local ok, v = pcall(memory_read, "uintptr_t", a)
+        if ok and type(v) == "number" and v > 0x10000 and v < 0x7FFFFFFFFFFF then return v end
+    end
+
+    local function readSlot(s)
+        local ok, v = pcall(memory_read, "double", s)
+        return ok and v or nil
+    end
+
+    local function scan()
+        slots, lastScan = {}, tick()
+        for _, e in ipairs(lockedGetgc({ "BulletEmitterOnLocalHitPlayer" })) do
+            local a = tonumber(e.addr)
+            local closure = a and rd(a)
+            local proto = closure and rd(closure + CLOSURE_PROTO)
+            local k = proto and rd(proto + PROTO_CONSTANTS)
+            if k then
+                for i = 0, 63 do
+                    if known[readSlot(k + i * 16)] then
+                        slots[#slots + 1] = k + i * 16
+                        break
+                    end
+                end
+            end
+        end
+        return #slots > 0
+    end
+
+    local function write(id)
+        local kept = {}
+        for _, s in ipairs(slots) do
+            if known[readSlot(s)] and pcall(memory_write, "double", s, id) then kept[#kept + 1] = s end
+        end
+        slots = kept
+        return #kept
+    end
+
+    local function selected()
+        local i = (tonumber(UI.GetValue(uid("hitSoundName"))) or 0) + 1
+        local s = PERF.HIT_SOUNDS[i] or PERF.HIT_SOUNDS[1]
+        return s[2], s[1]
+    end
+
+    while _G.JB_gen == myGen do
+        PERF.run("hitSound", function()
+            local on = UI.GetValue(uid("hitSound")) and true or false
+            if on ~= wasOn then
+                wasOn = on
+                PERF.hitWarned = false
+                if not on then
+                    write(ORIGINAL)
+                    current = nil
+                    notify("OFF", TITLE, 3)
+                end
+            end
+            if not on then return end
+            if #slots == 0 and tick() - lastScan >= retryDelay then
+                if scan() then
+                    retryDelay = RETRY
+                else
+                    retryDelay = math.min(retryDelay * 2, 300)
+                    if not PERF.hitWarned then
+                        PERF.hitWarned = true
+                        PERF.notifySafe("Offsets outdated, wait for JB Hub update ...", TITLE, 5)
+                    end
+                end
+            end
+            if #slots == 0 then return end
+            local id, label = selected()
+            if id ~= current then
+                if write(id) > 0 then
+                    current = id
+                    notify("ON - " .. label, TITLE, 3)
+                else
+                    current = nil
+                end
+            end
+        end)
+        task.wait(0.5)
+    end
+    write(ORIGINAL)
+end)
+
+task.spawn(function()
+    local TITLE = "[JB Hub] Hit Markers"
+    local P = game:GetService("Players")
+    local lp = P.LocalPlayer
+    local cam = workspace.CurrentCamera
+    local DUR, TH = 0.38, 2
+    local cfg = { marker = "Cross", kill = true }
+    local COL, SHADOW = {}, {}
+    for k, c in pairs({ hit = { 255, 255, 255 }, head = { 255, 196, 60 }, kill = { 255, 70, 70 }, gold = { 255, 255, 85 }, white = { 255, 255, 255 } }) do
+        COL[k] = Color3.fromRGB(c[1], c[2], c[3])
+        SHADOW[k] = Color3.fromRGB(math.floor(c[1] / 4), math.floor(c[2] / 4), math.floor(c[3] / 4))
+    end
+    local BLACK = Color3.fromRGB(0, 0, 0)
+
+    local objs = {}
+    local function new(kind, props)
+        local d = Drawing.new(kind)
+        for k, v in pairs(props) do pcall(function() d[k] = v end) end
+        d.Visible = false
+        objs[#objs + 1] = d
+        return d
+    end
+
+    local GLYPH_SRC = {
+        ["A"] = ".###./#...#/#...#/#####/#...#/#...#/#...#", ["B"] = "####./#...#/####./#...#/#...#/#...#/####.",
+        ["C"] = ".###./#...#/#..../#..../#..../#...#/.###.", ["D"] = "####./#...#/#...#/#...#/#...#/#...#/####.",
+        ["E"] = "#####/#..../###../#..../#..../#..../#####", ["F"] = "#####/#..../###../#..../#..../#..../#....",
+        ["G"] = ".####/#..../#..##/#...#/#...#/#...#/.####", ["H"] = "#...#/#...#/#####/#...#/#...#/#...#/#...#",
+        ["I"] = "###/.#./.#./.#./.#./.#./###", ["J"] = "....#/....#/....#/....#/....#/#...#/.###.",
+        ["K"] = "#...#/#..#./###../#..#./#...#/#...#/#...#", ["L"] = "#..../#..../#..../#..../#..../#..../#####",
+        ["M"] = "#...#/##.##/#.#.#/#...#/#...#/#...#/#...#", ["N"] = "#...#/##..#/#.#.#/#..##/#...#/#...#/#...#",
+        ["O"] = ".###./#...#/#...#/#...#/#...#/#...#/.###.", ["P"] = "####./#...#/####./#..../#..../#..../#....",
+        ["Q"] = ".###./#...#/#...#/#...#/#...#/#..#./.##.#", ["R"] = "####./#...#/####./#...#/#...#/#...#/#...#",
+        ["S"] = ".####/#..../.###./....#/....#/#...#/.###.", ["T"] = "#####/..#../..#../..#../..#../..#../..#..",
+        ["U"] = "#...#/#...#/#...#/#...#/#...#/#...#/.###.", ["V"] = "#...#/#...#/#...#/#...#/#...#/.#.#./..#..",
+        ["W"] = "#...#/#...#/#...#/#...#/#.#.#/##.##/#...#", ["X"] = "#...#/.#.#./..#../.#.#./#...#/#...#/#...#",
+        ["Y"] = "#...#/.#.#./..#../..#../..#../..#../..#..", ["Z"] = "#####/....#/...#./..#../.#.../#..../#####",
+        ["0"] = ".###./#...#/#..##/#.#.#/##..#/#...#/.###.", ["1"] = "..#../.##../..#../..#../..#../..#../#####",
+        ["2"] = ".###./#...#/....#/..##./.#.../#...#/#####", ["3"] = ".###./#...#/....#/..##./....#/#...#/.###.",
+        ["4"] = "...##/..#.#/.#..#/#...#/#####/....#/....#", ["5"] = "#####/#..../####./....#/....#/#...#/.###.",
+        ["6"] = "..##./.#.../#..../####./#...#/#...#/.###.", ["7"] = "#####/#...#/....#/...#./..#../..#../..#..",
+        ["8"] = ".###./#...#/#...#/.###./#...#/#...#/.###.", ["9"] = ".###./#...#/#...#/.####/....#/...#./.##..",
+        ["a"] = "...../...../.###./....#/.####/#...#/.####", ["b"] = "#..../#..../#.##./##..#/#...#/#...#/####.",
+        ["c"] = "...../...../.###./#...#/#..../#...#/.###.", ["d"] = "....#/....#/.##.#/#..##/#...#/#...#/.####",
+        ["e"] = "...../...../.###./#...#/#####/#..../.####", ["f"] = "..##/.#../####/.#../.#../.#../.#..",
+        ["g"] = "...../...../.####/#...#/#...#/.####/....#/####.", ["h"] = "#..../#..../#.##./##..#/#...#/#...#/#...#", ["i"] = "#/./#/#/#/#/#",
+        ["j"] = "....#/...../....#/....#/....#/....#/#...#/.###.", ["k"] = "#.../#.../#..#/#.#./##../#.#./#..#", ["l"] = "#./#./#./#./#./#./.#",
+        ["m"] = "...../...../##.#./#.#.#/#.#.#/#...#/#...#", ["n"] = "...../...../####./#...#/#...#/#...#/#...#",
+        ["o"] = "...../...../.###./#...#/#...#/#...#/.###.", ["p"] = "...../...../#.##./##..#/#...#/####./#..../#....",
+        ["q"] = "...../...../.##.#/#..##/#...#/.####/....#/....#", ["r"] = "...../...../#.##./##..#/#..../#..../#....",
+        ["s"] = "...../...../.####/#..../.###./....#/####.", ["t"] = ".#../.#../####/.#../.#../.#../..##",
+        ["u"] = "...../...../#...#/#...#/#...#/#...#/.####", ["v"] = "...../...../#...#/#...#/#...#/.#.#./..#..",
+        ["w"] = "...../...../#...#/#...#/#.#.#/#.#.#/.####", ["x"] = "...../...../#...#/.#.#./..#../.#.#./#...#",
+        ["y"] = "...../...../#...#/#...#/#...#/.####/....#/####.", ["z"] = "...../...../#####/...#./..#../.#.../#####",
+        [" "] = ".../.../.../.../.../.../...", ["."] = "././././././#", ["!"] = "#/#/#/#/#/./#",
+        ["_"] = "...../...../...../...../...../...../...../#####", ["-"] = "...../...../...../#####/...../...../.....",
+        ["+"] = "...../..#../..#../#####/..#../..#../.....", ["?"] = ".###./#...#/....#/...#./..#../...../..#.."
+    }
+    local GLYPH = {}
+    for ch, src in pairs(GLYPH_SRC) do
+        local rows = {}
+        for r in src:gmatch("[^/]+") do rows[#rows + 1] = r end
+        local runs = {}
+        for y, r in ipairs(rows) do
+            local x = 1
+            while x <= #r do
+                if r:sub(x, x) == "#" then
+                    local s0 = x
+                    while x <= #r and r:sub(x, x) == "#" do x = x + 1 end
+                    local merged = false
+                    for _, m in ipairs(runs) do
+                        if m[1] == s0 - 1 and m[3] == x - s0 and m[2] + m[4] == y - 1 then
+                            m[4] = m[4] + 1
+                            merged = true
+                            break
+                        end
+                    end
+                    if not merged then runs[#runs + 1] = { s0 - 1, y - 1, x - s0, 1 } end
+                else
+                    x = x + 1
+                end
+            end
+        end
+        GLYPH[ch] = { w = #rows[1], runs = runs }
+    end
+
+    local function label()
+        return { str = "", sq = {}, sh = {}, runs = {}, pw = 0 }
+    end
+
+    local function build(o)
+        o.pstr = o.str
+        local runs, cx = {}, 0
+        for ch in o.str:gmatch(".") do
+            local g = GLYPH[ch] or GLYPH["?"]
+            for _, r in ipairs(g.runs) do runs[#runs + 1] = { cx + r[1], r[2], r[3], r[4] } end
+            cx = cx + g.w + 1
+        end
+        o.runs, o.pw = runs, math.max(cx - 1, 0)
+        for i = #o.sq + 1, #runs do
+            o.sh[i] = new("Square", { Filled = true, Transparency = 1, ZIndex = 65 })
+            o.sq[i] = new("Square", { Filled = true, Transparency = 1, ZIndex = 66 })
+        end
+        for i = #runs + 1, #o.sq do o.sq[i].Visible = false o.sh[i].Visible = false end
+        o.key, o.col, o.a, o.vis = nil, nil, nil, false
+    end
+
+    local function hide(o)
+        if o.vis then
+            for i = 1, #o.sq do o.sq[i].Visible = false o.sh[i].Visible = false end
+            o.vis = false
+        end
+    end
+
+    local function draw(o, x, y, size, ck, a)
+        a = math.floor(a * 20 + 0.5) / 20
+        if o.pstr ~= o.str then build(o) end
+        local u = math.max(1, math.floor(size / 8 + 0.5))
+        local x0, y0 = math.floor(x - o.pw * u / 2 + 0.5), math.floor(y - 4 * u + 0.5)
+        local key = x0 * 100000 + y0 * 10 + u
+        local moved, recol, refade = key ~= o.key, o.col ~= ck, o.a ~= a
+        for i, r in ipairs(o.runs) do
+            local q, h = o.sq[i], o.sh[i]
+            if moved then
+                q.Position = Vector2.new(x0 + r[1] * u, y0 + r[2] * u)
+                q.Size = Vector2.new(r[3] * u, r[4] * u)
+                h.Position = Vector2.new(x0 + (r[1] + 1) * u, y0 + (r[2] + 1) * u)
+                h.Size = Vector2.new(r[3] * u, r[4] * u)
+            end
+            if recol then q.Color = COL[ck] h.Color = SHADOW[ck] end
+            if refade then q.Transparency = a h.Transparency = a end
+            if not o.vis then q.Visible = true h.Visible = true end
+        end
+        o.key, o.col, o.a, o.vis = key, ck, a, true
+    end
+
+    local lines, shades = {}, {}
+    for i = 1, 4 do
+        shades[i] = new("Line", { Color = BLACK, Thickness = TH + 2, Transparency = 1, ZIndex = 60 })
+        lines[i] = new("Line", { Thickness = TH, Transparency = 1, ZIndex = 61 })
+    end
+    local burst = new("Circle", { Filled = false, NumSides = 48, Thickness = TH, Transparency = 1, ZIndex = 61 })
+    local line1, line2 = label(), label()
+    local pool = {}
+    for i = 1, 12 do pool[i] = { l = label(), live = false, t0 = 0 } end
+
+    local mouse
+    pcall(function() mouse = lp:GetMouse() end)
+    local function anchor()
+        if mouse then
+            local ok, x, y = pcall(function() return mouse.X, mouse.Y end)
+            if ok and type(x) == "number" then return x, y end
+        end
+        local v = cam.ViewportSize
+        return v.X / 2, v.Y / 2
+    end
+
+    local function out3(x) return 1 - (1 - x) ^ 3 end
+    local function clamp(x) return x < 0 and 0 or (x > 1 and 1 or x) end
+    local function ascii(s) return (tostring(s or ""):gsub("[^\32-\126]", "")) end
+    local DIAG = { { 1, 1 }, { 1, -1 }, { -1, 1 }, { -1, -1 } }
+
+    local mk = { t0 = -1, kind = "hit" }
+    local banner = { t0 = -1, streak = 0, last = -10 }
+    local shownMarker = false
+
+    local function myName()
+        local ok, d = pcall(function() return lp.DisplayName end)
+        local n = ok and ascii(d) or ""
+        if n == "" then n = ascii(lp.Name) end
+        return n
+    end
+
+    local function fire(kind, dmg, name)
+        local now = tick()
+        if cfg.show then
+            if not (mk.kind == "kill" and kind ~= "kill" and now - mk.t0 < DUR * 1.8) then mk.kind = kind end
+            mk.t0 = now
+        end
+        if cfg.show and dmg and dmg > 0 then
+            local slot
+            for _, p in ipairs(pool) do if not p.live then slot = p break end end
+            if not slot then
+                slot = pool[1]
+                for _, p in ipairs(pool) do if p.t0 < slot.t0 then slot = p end end
+            end
+            local a = math.rad(math.random(-75, -15))
+            slot.live, slot.t0, slot.kind, slot.dx, slot.dy = true, now, kind, math.cos(a), math.sin(a)
+            slot.l.str = tostring(math.floor(dmg + 0.5))
+        end
+        if kind == "kill" and cfg.kill then
+            banner.streak = now - banner.last < 5 and banner.streak + 1 or 1
+            banner.last, banner.t0 = now, now
+            local target = ascii(name)
+            if target == "" then target = "Player" end
+            line1.str = target .. " was slain by " .. myName()
+            local streaks = { "", "Double Kill!", "Triple Kill!" }
+            line2.str = streaks[banner.streak] or ("Killing Spree x" .. banner.streak)
+        end
+    end
+
+    local function drawMarker(now, ax, ay)
+        local kind, rust = mk.kind, cfg.marker == "Rust"
+        local D = DUR * (kind == "kill" and 1.8 or 1) * (rust and 0.7 or 1)
+        local t = now - mk.t0
+        if mk.t0 < 0 or t > D then
+            if shownMarker then
+                for i = 1, 4 do lines[i].Visible = false shades[i].Visible = false end
+                burst.Visible = false
+                shownMarker = false
+            end
+            return
+        end
+        shownMarker = true
+        local col = COL[kind]
+        local th = TH + (kind == "kill" and 1 or 0) - (rust and 1 or 0)
+        local alpha = t < D * 0.45 and 1 or clamp(1 - (t - D * 0.45) / (D * 0.55))
+        local pop = rust and 0 or (kind == "kill" and 0.8 or 0.55)
+        local z = (1 + pop * (1 - out3(clamp(t / (D * 0.22))))) * (kind == "kill" and 1.3 or 1)
+        local g, l = 7 * z, 9 * z
+        if rust then g, l = 3 * z, 5 * z end
+        for i, v in ipairs(DIAG) do
+            local f = Vector2.new(ax + v[1] * g * 0.7071, ay + v[2] * g * 0.7071)
+            local e = Vector2.new(ax + v[1] * (g + l) * 0.7071, ay + v[2] * (g + l) * 0.7071)
+            local L, Sh = lines[i], shades[i]
+            Sh.From, Sh.To, Sh.Thickness, Sh.Transparency, Sh.Visible = f, e, th + 2, alpha * 0.55, true
+            L.From, L.To, L.Thickness, L.Color, L.Transparency, L.Visible = f, e, th, col, alpha, true
+        end
+        --if kind == "kill" then
+        --    local q = clamp(t / (D * 0.8))
+        --    burst.Position, burst.Radius, burst.Color = Vector2.new(ax, ay), 10 + 26 * out3(q), col
+        --    burst.Transparency, burst.Visible = clamp(1 - q), q < 1
+        --elseif burst.Visible then
+        --    burst.Visible = false
+        --end
+    end
+
+    local function drawTexts(now, ax, ay)
+        for _, p in ipairs(pool) do
+            if p.live then
+                local t = now - p.t0
+                local life = p.kind == "kill" and 1.1 or 0.85
+                if t > life then
+                    p.live = false
+                    hide(p.l)
+                else
+                    local k = t / life
+                    local base = p.kind == "kill" and 22 or (p.kind == "head" and 20 or 17)
+                    local r = 26 + 22 * out3(k)
+                    draw(p.l, ax + p.dx * r, ay + p.dy * r, base * (1 + 0.5 * (1 - out3(clamp(t / 0.12)))), p.kind, k < 0.55 and 1 or clamp(1 - (k - 0.55) / 0.45))
+                end
+            end
+        end
+        local t = now - banner.t0
+        if banner.t0 < 0 or t > 2.6 or not cfg.kill then
+            hide(line1)
+            hide(line2)
+            return
+        end
+        local a = (t < 2.2 and 1 or clamp(1 - (t - 2.2) / 0.4)) * clamp(t / 0.08)
+        local vp = cam.ViewportSize
+        local kx, ky = math.floor(vp.X / 2), math.floor(vp.Y * 0.68)
+        draw(line1, kx, ky, 16, "white", a)
+        if line2.str ~= "" then draw(line2, kx, ky + 22, 16, "gold", a) else hide(line2) end
+    end
+
+    local counts = {}
+    local function headshot(delta)
+        local w = "?"
+        local c = lp.Character
+        if c then for _, x in ipairs(c:GetChildren()) do if x.ClassName == "Tool" then w = x.Name break end end end
+        if w:lower():find("shotgun") then return false end
+        local m = counts[w]
+        if not m then m = {} counts[w] = m end
+        local key = math.floor(delta + 0.5)
+        m[key] = (m[key] or 0) + 1
+        local mode, best, total = nil, 0, 0
+        for k, v in pairs(m) do
+            total = total + v
+            if v > best then mode, best = k, v end
+        end
+        return total >= 2 and mode and key >= mode * 1.4
+    end
+
+    local track, ready, lastPrune = {}, false, 0
+    local function scan(now)
+        local list = {}
+        for _, pl in ipairs(P:GetPlayers()) do
+            if pl ~= lp and pl.Character then list[#list + 1] = { pl.Character, pl.DisplayName or pl.Name } end
+        end
+        pcall(function()
+            for _, m in ipairs(game:GetService("CollectionService"):GetTagged(GUARD_TAG)) do list[#list + 1] = { m, "Guard" } end
+        end)
+        for _, e in ipairs(list) do
+            local model, name = e[1], e[2]
+            pcall(function()
+                local key = model.Address
+                local st = track[key]
+                local hrp = model:FindFirstChild("HumanoidRootPart")
+                local hum = model:FindFirstChild("Humanoid")
+                local bb = hrp and hrp:FindFirstChild("DamageBillboard")
+                local tl = bb and bb:FindFirstChild("TextLabel")
+                local n = tl and tonumber(tl.Text)
+                local hp = hum and hum.Health or 100
+                if not st then
+                    st = { bb = bb and bb.Address, n = n or 0, hitT = -10, dead = hp <= 0 }
+                    track[key] = st
+                    if not ready then st.seen = now return end
+                end
+                st.seen = now
+                local delta
+                if bb and n then
+                    local id = bb.Address
+                    if id ~= st.bb then delta = n st.bb = id
+                    elseif n > st.n then delta = n - st.n end
+                    st.n = n
+                elseif not bb then
+                    st.bb, st.n = nil, 0
+                end
+                if hp > 0 then st.dead = false end
+                if delta and delta > 0 then
+                    st.hitT = now
+                    local kind = headshot(delta) and "head" or "hit"
+                    if hp <= 0 and not st.dead then kind = "kill" st.dead = true end
+                    fire(kind, delta, name)
+                elseif hp <= 0 and not st.dead and now - st.hitT < 1 then
+                    st.dead = true
+                    fire("kill", 0, name)
+                end
+            end)
+        end
+        ready = true
+        if now - lastPrune > 5 then
+            lastPrune = now
+            for k, st in pairs(track) do if now - st.seen > 5 then track[k] = nil end end
+        end
+    end
+
+    local wasOn, lastRefresh, linger = false, 0, false
+    local wasMarker, wasKill = false, false
+    while _G.JB_gen == myGen do
+        local now = tick()
+        local markerOn = UI.GetValue(uid("hitMarker")) and true or false
+        local killOn = UI.GetValue(uid("hitKill")) and true or false
+        if markerOn ~= wasMarker then
+            wasMarker = markerOn
+            notify(markerOn and "ON" or "OFF", TITLE, 3)
+        end
+        if killOn ~= wasKill then
+            wasKill = killOn
+            notify(killOn and "ON" or "OFF", "[JB Hub] Kill Message", 3)
+        end
+        local on = markerOn or killOn
+        if on ~= wasOn then
+            wasOn = on
+            if on then ready, track = false, {} end
+        end
+        if on or linger then
+            if now - lastRefresh > 0.2 then
+                lastRefresh = now
+                cfg.marker = PERF.HITFX_MARKERS[(tonumber(UI.GetValue(uid("hitMarkerStyle"))) or 0) + 1] or "Cross"
+                cfg.kill = UI.GetValue(uid("hitKill")) and true or false
+                cfg.show = UI.GetValue(uid("hitMarker")) and true or false
+            end
+            PERF.run("hitMarker", function()
+                if on then scan(now) end
+                local ax, ay = anchor()
+                drawMarker(now, ax, ay)
+                drawTexts(now, ax, ay)
+            end)
+            linger = now - math.max(mk.t0, banner.t0) < 3
+            if not on and not linger then
+                for _, o in ipairs(objs) do pcall(function() o.Visible = false end) end
+                for _, p in ipairs(pool) do p.live = false p.l.vis = false end
+                line1.vis, line2.vis, mk.t0, banner.t0 = false, false, -1, -1
+            end
+            task.wait(PERF.FRAME)
+        else
+            task.wait(0.25)
+        end
+    end
+    for _, o in ipairs(objs) do pcall(function() o:Remove() end) end
+end)
+
+task.spawn(function()
+    local targets, saved, decoyPtr = {}, {}, nil
+    local wasOn = false
+    local lastCheck = 0
+
+    local function resolveKey()
+        if PERF.stunKeyResolved then return end
+        local lp = game:GetService("Players").LocalPlayer
+        local list = {}
+        local ps = lp:FindFirstChild("PlayerScripts")
+        if ps and ps:FindFirstChild("LocalScript") then list[#list + 1] = ps.LocalScript end
+        local sp = game:GetService("StarterPlayer"):FindFirstChild("StarterPlayerScripts")
+        if sp and sp:FindFirstChild("LocalScript") then list[#list + 1] = sp.LocalScript end
+        for _, script in ipairs(list) do
+            local ok, src = pcall(decompile, script)
+            if ok and type(src) == "string" then
+                local at = src:find("= p%d+ or [%w_]+%.Time%.Stunned") or src:find("Time.Stunned", 1, true)
+                if at then
+                    local key
+                    for k in src:sub(math.max(1, at - 600), at):gmatch("function [%w_]+%.([%w_]+)%(") do key = k end
+                    if key then
+                        PERF.TASER_STUN_KEY = key
+                        PERF.stunKeyResolved = true
+                        return
+                    end
+                end
+            end
+        end
+    end
+
+    local function scan()
+        pcall(resolveKey)
+        targets, saved, decoyPtr = {}, {}, nil
+        local found, decoys = {}, {}
+        for _, e in ipairs(lockedGetgc({ PERF.TASER_STUN_KEY, PERF.TASER_DECOY_KEY })) do
+            local a = tonumber(e.addr)
+            local k = tostring(e.key)
+            if a then
+                if k == PERF.TASER_STUN_KEY then
+                    found[#found + 1] = a
+                elseif k == PERF.TASER_DECOY_KEY then
+                    decoys[#decoys + 1] = a
+                end
+            end
+        end
+        if #found == 0 or #decoys == 0 then return false end
+        local okd, ptr = pcall(memory_read, "uintptr_t", decoys[1] + PERF.TASER_KEY_PTR)
+        if not okd or not ptr or ptr < 4096 then return false end
+        decoyPtr = ptr
+        for _, a in ipairs(found) do
+            local ok, p = pcall(memory_read, "uintptr_t", a + PERF.TASER_KEY_PTR)
+            if ok and p and p > 4096 and p ~= decoyPtr then
+                targets[#targets + 1] = a
+                saved[#saved + 1] = p
+            end
+        end
+        return #targets > 0
+    end
+
+    local function patch()
+        local n = 0
+        for i, a in ipairs(targets) do
+            pcall(memory_write, "uintptr_t", a + PERF.TASER_KEY_PTR, decoyPtr)
+            local ok, now = pcall(memory_read, "uintptr_t", a + PERF.TASER_KEY_PTR)
+            if ok and now == decoyPtr then n = n + 1 end
+        end
+        return n
+    end
+
+    local function restore()
+        local n = 0
+        for i, a in ipairs(targets) do
+            local ok, now = pcall(memory_read, "uintptr_t", a + PERF.TASER_KEY_PTR)
+            if ok and now == decoyPtr then
+                pcall(memory_write, "uintptr_t", a + PERF.TASER_KEY_PTR, saved[i])
+                n = n + 1
+            end
+        end
+        targets, saved = {}, {}
+        return n
+    end
+
+    while _G.JB_gen == myGen do
+        PERF.run("antiTaser", function()
+            local on = UI.GetValue(uid("antiTaser")) and true or false
+            if on ~= wasOn then
+                wasOn = on
+                if on then
+                    if scan() then
+                        notify("Enabled, " .. patch() .. "/" .. #targets .. " handler(s) blocked", PERF.TASER_TITLE, 3)
+                    else
+                        PERF.notifySafe("Stun handler not found, wait for JB Hub update ...", PERF.TASER_TITLE, 4)
+                    end
+                    lastCheck = tick()
+                else
+                    notify("Disabled, " .. restore() .. " handler(s) restored", PERF.TASER_TITLE, 3)
+                end
+            end
+            if on and #targets > 0 and tick() - lastCheck >= PERF.TASER_CHECK then
+                lastCheck = tick()
+                for i, a in ipairs(targets) do
+                    local ok, now = pcall(memory_read, "uintptr_t", a + PERF.TASER_KEY_PTR)
+                    if ok and now == saved[i] then
+                        pcall(memory_write, "uintptr_t", a + PERF.TASER_KEY_PTR, decoyPtr)
+                    end
+                end
+            end
+        end)
+        task.wait(0.25)
+    end
+    restore()
+end)
+
+task.spawn(function()
+    local lighting = game:GetService("Lighting")
+    local atmosOriginal = {}
+    local skyWas, skyIndex, lastReapply = false, -1, 0
+
+    local function atmosAddress()
+        local a = lighting:FindFirstChildOfClass("Atmosphere")
+        return a and tonumber(a.Address)
+    end
+
+    local function readAtmos(a)
+        local t = {}
+        for name, off in pairs(PERF.ATMOS) do
+            local n = (name == "Color" or name == "Decay") and 3 or 1
+            t[name] = {}
+            for i = 0, n - 1 do t[name][i + 1] = memory_read("float", a + off + i * 4) end
+        end
+        return t
+    end
+
+    local function writeAtmos(a, set)
+        for name, off in pairs(PERF.ATMOS) do
+            local v = set[name]
+            if v ~= nil then
+                if type(v) == "number" then v = { v } end
+                for i, x in ipairs(v) do memory_write("float", a + off + (i - 1) * 4, x) end
+            end
+        end
+    end
+
+    local function applySky(preset)
+        local a = atmosAddress()
+        if not a then return false end
+        if not atmosOriginal[a] then atmosOriginal[a] = readAtmos(a) end
+        writeAtmos(a, preset or atmosOriginal[a])
+        return true
+    end
+
+    pcall(applySky, nil)
+
+    while _G.JB_gen == myGen do
+        PERF.run("skyColor", function()
+            if PERF.timeOn or PERF.matrixOn then lastReapply = 0 return end
+            local skyOn = UI.GetValue(uid("skyColor")) and true or false
+            local idx = (tonumber(UI.GetValue(uid("skyColorPreset"))) or 0) + 1
+            local dirty = false
+            if skyOn ~= skyWas then
+                skyWas, skyIndex, dirty = skyOn, idx, true
+                notify(skyOn and ("Enabled, " .. (PERF.SKY_NAMES[idx] or "?")) or "Disabled, original sky restored", PERF.SKY_TITLE, 3)
+            elseif skyOn and idx ~= skyIndex then
+                skyIndex, dirty = idx, true
+                notify("Color: " .. (PERF.SKY_NAMES[idx] or "?"), PERF.SKY_TITLE, 2)
+            end
+            local now = tick()
+            if dirty or (skyOn and now - lastReapply >= PERF.WORLD_REAPPLY) then
+                lastReapply = now
+                applySky(skyOn and PERF.SKY_PRESETS[idx] or nil)
+            end
+        end)
+        task.wait(PERF.WORLD_TICK)
+    end
+
+    pcall(applySky, nil)
+end)
+
+task.spawn(function()
+    local TITLE = "[JB Hub] Water Customizer"
+    local OFF = PERF.WATER_OFF
+    local saved, wasOn, lastColor, lastSea, lastApply = {}, false, -1, -1, 0
+
+    local terrainCache, terrainAt = nil, 0
+    local function terrainAddr()
+        if terrainCache and tick() - terrainAt < 10 then return terrainCache end
+        local t = workspace:FindFirstChildOfClass("Terrain")
+        terrainCache, terrainAt = t and tonumber(t.Address), tick()
+        return terrainCache
+    end
+
+    local function rf(a)
+        local ok, v = pcall(memory_read, "float", a)
+        return ok and v or nil
+    end
+
+    local function wf(a, v)
+        if v then pcall(memory_write, "float", a, v) end
+    end
+
+    local function save(t)
+        if saved[t] then return saved[t] end
+        saved[t] = {
+            color = { rf(t + OFF.Color), rf(t + OFF.Color + 4), rf(t + OFF.Color + 8) },
+            transparency = rf(t + OFF.Transparency),
+            reflectance = rf(t + OFF.Reflectance),
+            waveSize = rf(t + OFF.WaveSize),
+            waveSpeed = rf(t + OFF.WaveSpeed),
+        }
+        return saved[t]
+    end
+
+    local function seaValues(sea)
+        local s = math.clamp(sea / 100, 0, 1)
+        return s, (s ^ 1.5) * 100
+    end
+
+    local function apply(t, colorIdx, sea)
+        local o = save(t)
+        local p = PERF.WATER_PRESETS[colorIdx] or o
+        local c = p.color or o.color
+        wf(t + OFF.Color, c[1])
+        wf(t + OFF.Color + 4, c[2])
+        wf(t + OFF.Color + 8, c[3])
+        wf(t + OFF.Transparency, p.transparency or o.transparency)
+        wf(t + OFF.Reflectance, p.reflectance or o.reflectance)
+        local size, speed = seaValues(sea)
+        wf(t + OFF.WaveSize, size)
+        wf(t + OFF.WaveSpeed, speed)
+    end
+
+    local function restore()
+        for t, o in pairs(saved) do
+            wf(t + OFF.Color, o.color[1])
+            wf(t + OFF.Color + 4, o.color[2])
+            wf(t + OFF.Color + 8, o.color[3])
+            wf(t + OFF.Transparency, o.transparency)
+            wf(t + OFF.Reflectance, o.reflectance)
+            wf(t + OFF.WaveSize, o.waveSize)
+            wf(t + OFF.WaveSpeed, o.waveSpeed)
+        end
+    end
+
+    while _G.JB_gen == myGen do
+        PERF.run("waterCustom", function()
+            if PERF.matrixOn then lastApply = 0 return end
+            local on = UI.GetValue(uid("waterCustom")) and true or false
+            if not on and not wasOn then return end
+            local colorIdx = (tonumber(UI.GetValue(uid("waterColor"))) or 0) + 1
+            local sea = tonumber(UI.GetValue(uid("waterSea"))) or 32
+            local t = terrainAddr()
+            if not t then return end
+            local now = tick()
+            if on ~= wasOn then
+                wasOn = on
+                if on then
+                    apply(t, colorIdx, sea)
+                    notify("ON - " .. (PERF.WATER_NAMES[colorIdx] or "?") .. ", sea " .. sea, TITLE, 3)
+                else
+                    restore()
+                    notify("OFF - original water restored", TITLE, 3)
+                end
+                lastColor, lastSea, lastApply = colorIdx, sea, now
+                return
+            end
+            if not on then return end
+            if colorIdx ~= lastColor then
+                notify("Color: " .. (PERF.WATER_NAMES[colorIdx] or "?"), TITLE, 2)
+            end
+            if colorIdx ~= lastColor or sea ~= lastSea or now - lastApply >= PERF.WORLD_REAPPLY then
+                lastColor, lastSea, lastApply = colorIdx, sea, now
+                apply(t, colorIdx, sea)
+            end
+        end)
+        task.wait(PERF.WORLD_TICK)
+    end
+    restore()
+end)
+
+task.spawn(function()
+    local TC = PERF.TIME
+    local lighting = game:GetService("Lighting")
+    local sunSaved, moodSaved = {}, {}
+    local wasOn, cycleHour, lastPreset, lastT, addrAt = false, nil, -1, tick(), 0
+    local lightAddr, atmosAddr, ccAddr
+    local guard = { on = false, vecs = {}, s = 0 }
+
+    local function rf(a)
+        local ok, v = pcall(memory_read, "float", a)
+        return ok and v or nil
+    end
+
+    local function wf(a, v)
+        if a and v then pcall(memory_write, "float", a, v) end
+    end
+
+    local function addrOf(inst)
+        local ok, a = pcall(function() return tonumber(inst.Address) end)
+        return ok and a or nil
+    end
+
+    local function refreshAddrs()
+        if tick() - addrAt < 2 and lightAddr then return end
+        addrAt = tick()
+        lightAddr, atmosAddr, ccAddr = addrOf(lighting), nil, nil
+        for _, c in ipairs(lighting:GetChildren()) do
+            if not atmosAddr and c.ClassName == "Atmosphere" then atmosAddr = addrOf(c) end
+            if not ccAddr and c.ClassName == "ColorCorrectionEffect" then ccAddr = addrOf(c) end
+        end
+    end
+
+    local function lerp(a, b, t) return a + (b - a) * t end
+
+    local function moodAt(h)
+        h = h % 24
+        for i = 1, #TC.KEYS - 1 do
+            local k1, k2 = TC.KEYS[i], TC.KEYS[i + 1]
+            if h >= k1.h and h <= k2.h then
+                local t = (h - k1.h) / (k2.h - k1.h)
+                local m = { bright = lerp(k1.bright, k2.bright, t), density = lerp(k1.density, k2.density, t), haze = lerp(k1.haze, k2.haze, t), tint = {}, color = {}, decay = {} }
+                for j = 1, 3 do
+                    m.tint[j] = lerp(k1.tint[j], k2.tint[j], t)
+                    m.color[j] = lerp(k1.color[j], k2.color[j], t)
+                    m.decay[j] = lerp(k1.decay[j], k2.decay[j], t)
+                end
+                return m
+            end
+        end
+        return TC.KEYS[1]
+    end
+
+    local function saveBlock(store, a, first, count)
+        if not a or store[a] then return end
+        local t = {}
+        for i = 0, count - 1 do t[i] = rf(a + first + i * 4) end
+        store[a] = { first = first, values = t }
+    end
+
+    local function restoreStore(store)
+        for a, s in pairs(store) do
+            for i, v in pairs(s.values) do wf(a + s.first + i * 4, v) end
+        end
+    end
+
+    task.spawn(function()
+        while _G.JB_gen == myGen do
+            if guard.on and lightAddr then
+                for _, v in ipairs(guard.vecs) do
+                    local a = lightAddr + v[1]
+                    local cx, cy = rf(a), rf(a + 4)
+                    if not cx or not cy or math.abs(cx - v[2]) > 0.0005 or math.abs(cy - v[3]) > 0.0005 then
+                        wf(a, v[2]) wf(a + 4, v[3]) wf(a + 8, v[4])
+                    end
+                end
+                local ok, b = pcall(memory_read, "byte", lightAddr + TC.SOURCE)
+                if ok and b ~= guard.s then pcall(memory_write, "byte", lightAddr + TC.SOURCE, guard.s) end
+                task.wait()
+            else
+                task.wait(PERF.WORLD_TICK)
+            end
+        end
+    end)
+
+    local function restoreAll()
+        guard.on = false
+        restoreStore(sunSaved)
+        restoreStore(moodSaved)
+        sunSaved, moodSaved = {}, {}
+    end
+
+    local function writeVec(off, x, y, z)
+        saveBlock(sunSaved, lightAddr + off, 0, 3)
+        wf(lightAddr + off, x) wf(lightAddr + off + 4, y) wf(lightAddr + off + 8, z)
+    end
+
+    local function apply(h)
+        local th = (h - 6) / 12 * math.pi
+        local x, y, z = math.cos(th), math.sin(th), TC.TILT
+        local len = math.sqrt(x * x + y * y + z * z)
+        x, y, z = x / len, y / len, z / len
+        if lightAddr then
+            local day = y > -0.05
+            local lx, ly, lz = x, y, z
+            if not day then lx, ly, lz = -x, -y, -z end
+            writeVec(TC.SUN, x, y, z)
+            writeVec(TC.MOON, -x, -y, -z)
+            writeVec(TC.LIGHT, lx, ly, lz)
+            guard.s = day and 0 or 1
+            pcall(memory_write, "byte", lightAddr + TC.SOURCE, guard.s)
+            local vecs = { { TC.LIGHT, lx, ly, lz }, { TC.SUN, x, y, z }, { TC.MOON, -x, -y, -z } }
+            if not PERF.matrixOn then
+                local f = math.clamp((y + 0.1) / 0.6, 0, 1)
+                local r = lerp(TC.DUSK_TINT[1], TC.NOON_TINT[1], f)
+                local g = lerp(TC.DUSK_TINT[2], TC.NOON_TINT[2], f)
+                local b = lerp(TC.DUSK_TINT[3], TC.NOON_TINT[3], f)
+                writeVec(TC.CS_TOP, r, g, b)
+                writeVec(TC.CS_BOT, r, g, b)
+                vecs[#vecs + 1] = { TC.CS_TOP, r, g, b }
+                vecs[#vecs + 1] = { TC.CS_BOT, r, g, b }
+            end
+            guard.vecs, guard.on = vecs, true
+        end
+        if PERF.matrixOn then return end
+        local m = moodAt(h)
+        if atmosAddr then
+            saveBlock(moodSaved, atmosAddr, PERF.ATMOS.Color, 9)
+            for j = 1, 3 do
+                wf(atmosAddr + PERF.ATMOS.Color + (j - 1) * 4, m.color[j])
+                wf(atmosAddr + PERF.ATMOS.Decay + (j - 1) * 4, m.decay[j])
+            end
+            wf(atmosAddr + PERF.ATMOS.Density, m.density)
+            wf(atmosAddr + PERF.ATMOS.Haze, m.haze)
+        end
+        if ccAddr then
+            local cco = PERF.MATRIX.CC_OFF
+            saveBlock(moodSaved, ccAddr, cco.Tint, 4)
+            for j = 1, 3 do wf(ccAddr + cco.Tint + (j - 1) * 4, m.tint[j]) end
+            wf(ccAddr + cco.Brightness, m.bright)
+        end
+    end
+
+    local function fmtHour(h)
+        h = h % 24
+        return string.format("%02d:%02d", math.floor(h), math.floor((h % 1) * 60))
+    end
+
+    while _G.JB_gen == myGen do
+        local on = UI.GetValue(uid("timeChanger")) and true or false
+        PERF.timeOn = on
+        if on or wasOn then
+            PERF.run("timeChanger", function()
+                local now = tick()
+                local dt = math.min(now - lastT, 0.1)
+                lastT = now
+                local idx = (tonumber(UI.GetValue(uid("timePreset"))) or 0) + 1
+                local fixed = TC.HOURS[idx]
+                local hour = fixed or tonumber(UI.GetValue(uid("timeHour"))) or 12
+                local cycle = UI.GetValue(uid("timeCycle")) and true or false
+                local speed = tonumber(UI.GetValue(uid("timeSpeed"))) or 1
+                if on ~= wasOn then
+                    wasOn = on
+                    if on then
+                        cycleHour = hour
+                        notify("Enabled, " .. (TC.PRESETS[idx] or "?") .. " " .. fmtHour(hour), TC.TITLE, 3)
+                    else
+                        restoreAll()
+                        notify("Disabled, real time restored", TC.TITLE, 3)
+                        return
+                    end
+                elseif idx ~= lastPreset then
+                    notify((TC.PRESETS[idx] or "?") .. (fixed and (" " .. fmtHour(fixed)) or ", use the slider"), TC.TITLE, 2)
+                end
+                lastPreset = idx
+                if cycle then
+                    cycleHour = ((cycleHour or hour) + speed * dt) % 24
+                else
+                    cycleHour = hour
+                end
+                refreshAddrs()
+                apply(cycleHour)
+            end)
+        else
+            lastT = tick()
+        end
+        task.wait(on and 0 or PERF.WORLD_TICK)
+    end
+    restoreAll()
+end)
+
+task.spawn(function()
+    local MX = PERF.MATRIX
+    local lighting = game:GetService("Lighting")
+    local players = game:GetService("Players")
+    local saved, floats = {}, {}
+    local wasOn, scanning, lastScan, lastApply = false, false, 0, 0
+
+    local function rf(a)
+        local ok, v = pcall(memory_read, "float", a)
+        return ok and v or nil
+    end
+
+    local function wf(a, v)
+        if a and v then pcall(memory_write, "float", a, v) end
+    end
+
+    local function rb(a)
+        local ok, v = pcall(memory_read, "byte", a)
+        return ok and v or nil
+    end
+
+    local function wb(a, v)
+        if a and v then pcall(memory_write, "byte", a, v) end
+    end
+
+    local function addrOf(inst)
+        local ok, a = pcall(function() return tonumber(inst.Address) end)
+        return ok and a or nil
+    end
+
+    local function buildFloats()
+        local list = {}
+        local function add(a, offs, values)
+            if not a then return end
+            for name, v in pairs(values) do
+                local off = offs[name]
+                if off then
+                    if type(v) == "table" then
+                        for j = 1, #v do list[#list + 1] = { a + off + (j - 1) * 4, v[j] } end
+                    else
+                        list[#list + 1] = { a + off, v }
+                    end
+                end
+            end
+        end
+        for _, c in ipairs(lighting:GetChildren()) do
+            if c.ClassName == "Atmosphere" then
+                add(addrOf(c), PERF.ATMOS, MX.ATMOS)
+            elseif c.ClassName == "ColorCorrectionEffect" then
+                add(addrOf(c), MX.CC_OFF, MX.CC)
+            end
+        end
+        add(addrOf(workspace:FindFirstChildOfClass("Terrain")), PERF.WATER_OFF, MX.WATER)
+        for _, f in ipairs(list) do f[3] = rf(f[1]) end
+        return list
+    end
+
+    local function matrixColor(r, g, b, s)
+        local lum = 0.3 * r + 0.59 * g + 0.11 * b
+        if s and math.min(s.X, s.Y, s.Z) <= 1.2 and math.max(s.X, s.Y, s.Z) <= 40 then return 40, 255, 110 end
+        if lum < 70 then return 0, 6, 2 end
+        local gg = math.clamp(math.floor(lum * 0.42), 12, 110)
+        return 0, gg, math.floor(gg * 0.3)
+    end
+
+    local function recolor(d)
+        local a = addrOf(d)
+        if not a or saved[a] then return end
+        local c = a + MX.COLOR
+        local r, g, b = rb(c), rb(c + 1), rb(c + 2)
+        if not r or not g or not b then return end
+        local okS, s = pcall(function() return d.Size end)
+        local okP, pa = pcall(function() return tonumber(d.Parent.Address) end)
+        saved[a] = { r, g, b, d, okP and pa or nil }
+        local nr, ng, nb = matrixColor(r, g, b, okS and s or nil)
+        wb(c, nr) wb(c + 1, ng) wb(c + 2, nb)
+    end
+
+    local function scan()
+        local chars = {}
+        for _, pl in ipairs(players:GetPlayers()) do chars[pl.Name] = true end
+        local ok, kids = pcall(function() return workspace:GetChildren() end)
+        if not ok then return end
+        local done = 0
+        for _, top in ipairs(kids) do
+            if not PERF.matrixOn or _G.JB_gen ~= myGen then return end
+            if not chars[top.Name] and top.ClassName ~= "Terrain" and top.ClassName ~= "Camera" then
+                if MX.PARTS[top.ClassName] then recolor(top) end
+                local okD, desc = pcall(function() return top:GetDescendants() end)
+                if okD then
+                    for _, d in ipairs(desc) do
+                        if not PERF.matrixOn then return end
+                        if MX.PARTS[d.ClassName] then recolor(d) end
+                        done = done + 1
+                        if done % MX.CHUNK == 0 then task.wait() end
+                    end
+                end
+            end
+        end
+    end
+
+    local function restoreAll()
+        for _, f in ipairs(floats) do wf(f[1], f[3]) end
+        floats = {}
+        local n = 0
+        for a, c in pairs(saved) do
+            local okL, live = pcall(function() return c[5] ~= nil and tonumber(c[4].Parent.Address) == c[5] end)
+            if okL and live then
+                local p = a + MX.COLOR
+                wb(p, c[1]) wb(p + 1, c[2]) wb(p + 2, c[3])
+            end
+            n = n + 1
+            if n % 4000 == 0 then task.wait() end
+        end
+        saved = {}
+    end
+
+    while _G.JB_gen == myGen do
+        local on = UI.GetValue(uid("matrixMode")) and true or false
+        PERF.matrixOn = on
+        if on ~= wasOn then
+            wasOn = on
+            PERF.run("matrixMode", function()
+                if on then
+                    floats = buildFloats()
+                    for _, f in ipairs(floats) do wf(f[1], f[2]) end
+                    lastScan, lastApply = 0, tick()
+                    notify("Enabled, wake up...", MX.TITLE, 3)
+                else
+                    restoreAll()
+                    notify("Disabled, world restored", MX.TITLE, 3)
+                end
+            end)
+        end
+        if on then
+            local now = tick()
+            if now - lastApply >= PERF.WORLD_REAPPLY then
+                lastApply = now
+                for _, f in ipairs(floats) do wf(f[1], f[2]) end
+            end
+            if not scanning and now - lastScan >= MX.RESCAN then
+                scanning = true
+                task.spawn(function()
+                    pcall(scan)
+                    lastScan = tick()
+                    scanning = false
+                end)
+            end
+        end
+        task.wait(PERF.WORLD_TICK)
+    end
+    PERF.matrixOn = false
+    restoreAll()
+end)
+
+function PERF.robHud(keep)
+local T = "[RobHUD]"
+local P = game:GetService("Players")
+local RS = game:GetService("ReplicatedStorage")
+local mouse = P.LocalPlayer:GetMouse()
+
+local NAMES = {
+    [1] = "Bank", [2] = "Jewelry", [3] = "Museum", [4] = "Power Plant", [5] = "Passenger Train",
+    [6] = "Cargo Train", [7] = "Cargo Ship", [8] = "Cargo Plane", [9] = "Gas Station",
+    [10] = "Donut", [11] = "Grocery", [12] = "Money Truck", [14] = "Tomb", [15] = "Casino",
+    [16] = "Mansion", [17] = "Oil Rig"
+}
+local C = {
+    bg = Color3.fromRGB(8, 10, 15), line = Color3.fromRGB(34, 38, 48), text = Color3.fromRGB(225, 229, 238),
+    sub = Color3.fromRGB(200, 205, 215), dim = Color3.fromRGB(110, 118, 132), red = Color3.fromRGB(255, 60, 70),
+    blue = Color3.fromRGB(30, 110, 255), white = Color3.new(1, 1, 1), dark = Color3.fromRGB(8, 10, 15),
+    open = Color3.fromRGB(90, 220, 130), active = Color3.fromRGB(255, 190, 70), closed = Color3.fromRGB(255, 85, 85)
+}
+local STATE = { [1] = { "OPEN", C.open }, [2] = { "ACTIVE", C.active }, [3] = { "CLOSED", C.closed } }
+local TABS = { { 0, "ALL", C.blue }, { 1, "OPEN", C.open }, { 3, "CLOSED", C.closed } }
+local soft = Drawing.Fonts.ProximaSoftBold or Drawing.Fonts.UI or 0
+local mono = Drawing.Fonts.Monospace or soft
+local brand = Drawing.Fonts.Fortnite or soft
+
+local W, HEAD, TABH, ROW, ROWS, FOOT, BH, BW = 370, 36, 28, 26, 6, 24, 64, 68
+local LIST = ROW * ROWS
+local H = HEAD + TABH + LIST + FOOT
+local vp = workspace.CurrentCamera.ViewportSize
+local px, py = vp.X - W - 24, math.floor(vp.Y * 0.3)
+
+local objs, cache = {}, {}
+PERF.robHudObjs = objs
+local function new(kind, props)
+    local d = Drawing.new(kind)
+    for k, v in pairs(props) do pcall(function() d[k] = v end) end
+    d.Visible = false
+    objs[#objs + 1] = d
+    cache[d] = { Visible = false }
+    return d
+end
+local function set(d, k, v)
+    local c = cache[d]
+    if c[k] ~= v then c[k] = v d[k] = v end
+end
+local function setPos(d, x, y)
+    local c = cache[d]
+    if c.px ~= x or c.py ~= y then c.px, c.py = x, y d.Position = Vector2.new(x, y) end
+end
+local function setSize(d, w, h)
+    local c = cache[d]
+    if c.sw ~= w or c.sh ~= h then c.sw, c.sh = w, h d.Size = Vector2.new(w, h) end
+end
+local function show(list, on)
+    for _, d in ipairs(list) do set(d, "Visible", on) end
+end
+
+local panel, badge = {}, {}
+local function P_(kind, props) local d = new(kind, props) panel[#panel + 1] = d return d end
+local function B_(kind, props) local d = new(kind, props) badge[#badge + 1] = d return d end
+
+local bg = P_("Square", { Filled = true, Color = C.bg, Transparency = 0.93, ZIndex = 20, Corner = 6 })
+local border = P_("Square", { Filled = false, Color = C.line, Thickness = 1, Transparency = 1, ZIndex = 21, Corner = 6 })
+local accL = P_("Square", { Filled = true, Color = C.red, Transparency = 1, ZIndex = 22 })
+local accR = P_("Square", { Filled = true, Color = C.blue, Transparency = 1, ZIndex = 22 })
+local title = P_("Text", { Text = "ROBBERY STATE", Font = brand, Size = 17, Color = C.text, Outline = false, Center = false, Transparency = 1, ZIndex = 23 })
+local count = P_("Text", { Text = "", Font = mono, Size = 12, Color = C.open, Outline = false, Center = false, Transparency = 1, ZIndex = 23 })
+local mini = P_("Text", { Text = "-", Font = mono, Size = 14, Color = C.dim, Outline = false, Center = false, Transparency = 1, ZIndex = 23 })
+local sep1 = P_("Square", { Filled = true, Color = C.line, Transparency = 1, ZIndex = 22 })
+local sep2 = P_("Square", { Filled = true, Color = C.line, Transparency = 1, ZIndex = 22 })
+local tabT, tabU = {}, {}
+for i, t in ipairs(TABS) do
+    tabT[i] = P_("Text", { Text = t[2], Font = mono, Size = 12, Color = C.dim, Outline = false, Center = false, Transparency = 1, ZIndex = 23 })
+    tabU[i] = P_("Square", { Filled = true, Color = t[3], Transparency = 1, ZIndex = 23 })
+end
+local rows = {}
+for i = 1, ROWS + 1 do
+    rows[i] = {
+        hover = P_("Square", { Filled = true, Color = C.white, Transparency = 0, ZIndex = 21, Corner = 4 }),
+        bell = P_("Circle", { Filled = true, Radius = 3, NumSides = 12, Color = C.blue, Transparency = 0, ZIndex = 23 }),
+        halo = P_("Circle", { Filled = true, Radius = 4, NumSides = 20, Color = C.open, Transparency = 0, ZIndex = 22 }),
+        dot = P_("Circle", { Filled = true, Radius = 4, NumSides = 16, Color = C.open, Transparency = 0, ZIndex = 23 }),
+        name = P_("Text", { Text = "", Font = soft, Size = 14, Color = C.sub, Outline = false, Center = false, Transparency = 0, ZIndex = 23 }),
+        pill = P_("Square", { Filled = true, Color = C.open, Transparency = 0, ZIndex = 22, Corner = 3 }),
+        tag = P_("Text", { Text = "", Font = mono, Size = 11, Color = C.open, Outline = false, Center = true, Transparency = 0, ZIndex = 23 }),
+        time = P_("Text", { Text = "", Font = mono, Size = 11, Color = C.dim, Outline = false, Center = true, Transparency = 0, ZIndex = 23 }),
+        bounty = P_("Text", { Text = "", Font = mono, Size = 11, Color = C.red, Outline = false, Center = true, Transparency = 0, ZIndex = 23 }),
+        chip = P_("Square", { Filled = true, Color = C.blue, Transparency = 0, ZIndex = 22, Corner = 4 }),
+        chipB = P_("Square", { Filled = false, Color = C.blue, Thickness = 1, Transparency = 0, ZIndex = 22, Corner = 4 }),
+        meta = P_("Text", { Text = "", Font = mono, Size = 11, Color = C.active, Outline = false, Center = true, Transparency = 0, ZIndex = 23 })
+    }
+end
+local track = P_("Square", { Filled = true, Color = C.line, Transparency = 0.6, ZIndex = 22, Corner = 2 })
+local thumb = P_("Square", { Filled = true, Color = C.dim, Transparency = 1, ZIndex = 23, Corner = 2 })
+local empty = P_("Text", { Text = "Nothing here right now", Font = mono, Size = 12, Color = C.dim, Outline = false, Center = true, Transparency = 1, ZIndex = 23 })
+local foot = P_("Text", { Text = "row: notify  |  ppl: players  |  drag: scroll", Font = mono, Size = 11, Color = C.dim, Outline = false, Center = false, Transparency = 1, ZIndex = 23 })
+
+local PW, PROW, PMAX = 236, 24, 8
+local pop = {
+    bg = P_("Square", { Filled = true, Color = C.bg, Transparency = 0.95, ZIndex = 30, Corner = 6 }),
+    border = P_("Square", { Filled = false, Color = C.line, Thickness = 1, Transparency = 1, ZIndex = 31, Corner = 6 }),
+    accL = P_("Square", { Filled = true, Color = C.red, Transparency = 1, ZIndex = 32 }),
+    accR = P_("Square", { Filled = true, Color = C.blue, Transparency = 1, ZIndex = 32 }),
+    title = P_("Text", { Text = "", Font = brand, Size = 14, Color = C.text, Outline = false, Center = false, Transparency = 1, ZIndex = 33 }),
+    total = P_("Text", { Text = "", Font = mono, Size = 12, Color = C.red, Outline = false, Center = false, Transparency = 1, ZIndex = 33 }),
+    close = P_("Text", { Text = "x", Font = mono, Size = 12, Color = C.dim, Outline = false, Center = false, Transparency = 1, ZIndex = 33 }),
+    sep = P_("Square", { Filled = true, Color = C.line, Transparency = 1, ZIndex = 32 }),
+    wait = P_("Text", { Text = "Nobody nearby", Font = mono, Size = 11, Color = C.dim, Outline = false, Center = false, Transparency = 1, ZIndex = 33 }),
+    rows = {}
+}
+for i = 1, PMAX do
+    pop.rows[i] = {
+        ring = P_("Circle", { Filled = true, Radius = 11, NumSides = 20, Color = C.line, Transparency = 1, ZIndex = 32 }),
+        img = P_("Image", { Transparency = 1, ZIndex = 33, Rounding = 9 }),
+        name = P_("Text", { Text = "", Font = soft, Size = 13, Color = C.sub, Outline = false, Center = false, Transparency = 1, ZIndex = 33 }),
+        bounty = P_("Text", { Text = "", Font = mono, Size = 11, Color = C.red, Outline = false, Center = false, Transparency = 1, ZIndex = 33 })
+    }
+end
+
+local bBg = B_("Square", { Filled = true, Color = C.bg, Transparency = 0.95, ZIndex = 20, Corner = 10 })
+local bBorder = B_("Square", { Filled = false, Color = C.line, Thickness = 1, Transparency = 1, ZIndex = 21, Corner = 10 })
+local bGlowR = B_("Square", { Filled = true, Color = C.red, Transparency = 0, ZIndex = 21, Corner = 4 })
+local bGlowB = B_("Square", { Filled = true, Color = C.blue, Transparency = 0, ZIndex = 21, Corner = 4 })
+local bBarR = B_("Square", { Filled = true, Color = C.red, Transparency = 1, ZIndex = 22, Corner = 2 })
+local bBarB = B_("Square", { Filled = true, Color = C.blue, Transparency = 1, ZIndex = 22, Corner = 2 })
+local bShadow = B_("Text", { Text = "JB", Font = brand, Size = 24, Color = Color3.new(0, 0, 0), Outline = false, Center = true, Transparency = 0.55, ZIndex = 22 })
+local bJB = B_("Text", { Text = "JB", Font = brand, Size = 24, Color = C.text, Outline = false, Center = true, Transparency = 1, ZIndex = 23 })
+local bHub = B_("Text", { Text = "H U B", Font = brand, Size = 12, Color = C.dim, Outline = false, Center = true, Transparency = 1, ZIndex = 23 })
+local function strobe(t, phase)
+    local c = (t + phase) % 1.4
+    local a = 0
+    for _, s in ipairs({ 0, 0.18 }) do
+        local d = c - s
+        if d >= 0 and d < 0.16 then a = math.max(a, math.sin(d / 0.16 * math.pi)) end
+    end
+    return a
+end
+
+local static = { bg, border, accL, accR, title, count, mini, sep1, sep2, foot }
+for i = 1, #TABS do static[#static + 1] = tabT[i] end
+local dynamic = { empty, track, thumb }
+for i = 1, #TABS do dynamic[#dynamic + 1] = tabU[i] end
+for _, o in ipairs(rows) do for _, d in pairs(o) do dynamic[#dynamic + 1] = d end end
+local popStatic = { pop.bg, pop.border, pop.accL, pop.accR, pop.title, pop.close, pop.sep }
+local popAll = { pop.bg, pop.border, pop.accL, pop.accR, pop.title, pop.close, pop.sep, pop.wait }
+for _, o in ipairs(pop.rows) do popAll[#popAll + 1] = o.ring popAll[#popAll + 1] = o.img popAll[#popAll + 1] = o.name popAll[#popAll + 1] = o.bounty end
+popAll[#popAll + 1] = pop.total
+for _, d in ipairs(popAll) do dynamic[#dynamic + 1] = d end
+show(static, true)
+task.wait()
+task.wait()
+local cw12, cw11 = 7, 6.5
+pcall(function() if tabT[1].TextBounds.X > 0 then cw12 = tabT[1].TextBounds.X / #tabT[1].Text end end)
+pcall(function() if foot.TextBounds.X > 0 then cw11 = foot.TextBounds.X / #foot.Text end end)
+
+local data, last, notifyOn = {}, {}, {}
+local filter, scroll, scrollT = 0, 0, 0
+local collapsed, pulseUntil = false, 0
+local bxs, bys = 0, 0
+local since = {}
+local STAMP = {
+    [17] = { "OilRig", { [2] = "LastStartedTime", [3] = "LastClosedTime" } },
+    [16] = { "MansionRobbery", { [2] = "MansionRobberyIntroCutsceneBornAt", [3] = "LastClosedTime" } },
+    [15] = { "Casino", { [1] = "CasinoRobberyActiveChangedAt", [2] = "CasinoRobberyActiveChangedAt", [3] = "CasinoRobberyActiveChangedAt" } },
+    [14] = { "RobberyTomb", { [1] = "TombRobberyStatusChangedAt", [2] = "TombRobberyStatusChangedAt", [3] = "TombRobberyStatusChangedAt" } }
+}
+local CROWD = {
+    [1] = "Bank", [2] = "Jewelry", [3] = "Museum", [4] = "PowerPlant", [9] = "Gas",
+    [10] = "Donut", [11] = "Grocery", [14] = "Tomb", [15] = "Casino", [16] = "Mansion", [17] = "OilRig"
+}
+local CROWD_RANGE = 150
+local crowdWho, popupId, metaRect = {}, nil, {}
+local nameCache, avatarCache = {}, {}
+local HS = game:GetService("HttpService")
+
+local function get(url)
+    local ok, body = pcall(PERF.timed, "hud.http", function() return game:HttpGet(url) end)
+    if ok and type(body) == "string" then return body end
+    local ok2, body2 = pcall(httpget, url)
+    if ok2 and type(body2) == "string" then return body2 end
+    return nil
+end
+
+local ACCENT = {
+    [192] = "A", [193] = "A", [194] = "A", [195] = "A", [196] = "A", [197] = "A", [199] = "C", [200] = "E", [201] = "E", [202] = "E", [203] = "E",
+    [204] = "I", [205] = "I", [206] = "I", [207] = "I", [209] = "N", [210] = "O", [211] = "O", [212] = "O", [213] = "O", [214] = "O", [216] = "O",
+    [217] = "U", [218] = "U", [219] = "U", [220] = "U", [221] = "Y", [223] = "ss", [224] = "a", [225] = "a", [226] = "a", [227] = "a", [228] = "a",
+    [229] = "a", [231] = "c", [232] = "e", [233] = "e", [234] = "e", [235] = "e", [236] = "i", [237] = "i", [238] = "i", [239] = "i", [241] = "n",
+    [242] = "o", [243] = "o", [244] = "o", [245] = "o", [246] = "o", [248] = "o", [249] = "u", [250] = "u", [251] = "u", [252] = "u", [253] = "y", [255] = "y"
+}
+local function cleanName(name, fallback)
+    local out, kept, dropped = {}, 0, 0
+    for ch in string.gmatch(name, "[%z\1-\127\194-\244][\128-\191]*") do
+        local b1 = string.byte(ch, 1)
+        if b1 < 128 then
+            if b1 >= 32 then out[#out + 1] = ch kept = kept + 1 end
+        else
+            local cp
+            if #ch == 2 then cp = (b1 - 192) * 64 + (string.byte(ch, 2) - 128) end
+            local rep = cp and ACCENT[cp]
+            if rep then out[#out + 1] = rep kept = kept + 1 else dropped = dropped + 1 end
+        end
+    end
+    local res = (table.concat(out):gsub("^%s+", ""):gsub("%s+$", ""):gsub("%s%s+", " "))
+    if #res < 2 or dropped > kept then return fallback end
+    return res
+end
+
+local avatarTry = {}
+local function fetchProfile(uid, fallback)
+    local t = avatarTry[uid]
+    if t and (t.busy or avatarCache[uid] or t.n >= 5 or tick() < t.next) then return end
+    if not t then
+        t = { n = 0, next = 0 }
+        avatarTry[uid] = t
+        nameCache[uid] = nameCache[uid] or fallback
+    end
+    t.busy = true
+    task.spawn(function()
+        if not t.named then
+            local raw = get("https://users.roblox.com/v1/users/" .. uid)
+            local ok, info = pcall(function() return HS:JSONDecode(raw) end)
+            if ok and type(info) == "table" and type(info.displayName) == "string" and info.displayName ~= "" then
+                nameCache[uid] = cleanName(info.displayName, fallback)
+                t.named = true
+            end
+        end
+        local meta = get("https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=" .. uid .. "&size=48x48&format=Png&isCircular=true")
+        local okM, m = pcall(function() return HS:JSONDecode(meta) end)
+        local d = okM and type(m) == "table" and type(m.data) == "table" and m.data[1]
+        local url = type(d) == "table" and d.imageUrl
+        if type(url) == "string" and url ~= "" then
+            local png = get(url)
+            if png and png:sub(2, 4) == "PNG" then avatarCache[uid] = png end
+        end
+        t.n = t.n + 1
+        t.next = tick() + 2 * t.n
+        t.busy = false
+    end)
+end
+
+local function attr(inst, name)
+    local ok, v = pcall(function() return inst:GetAttribute(name) end)
+    return ok and v or nil
+end
+
+local wsCache = {}
+local function ws(name)
+    local c = wsCache[name]
+    local now = tick()
+    if c then
+        if c.inst then
+            local ok, p = pcall(function() return c.inst.Parent end)
+            if ok and p then return c.inst end
+        elseif now < c.at then
+            return nil
+        end
+    end
+    local inst = PERF.timed("hud.ws", function() return workspace:FindFirstChild(name) end)
+    wsCache[name] = { inst = inst, at = now + 20 + math.random() * 20 }
+    return inst
+end
+
+local markerPos, markerAt = {}, 0
+local function markers()
+    if tick() - markerAt < 30 and next(markerPos) then return markerPos end
+    markerAt = tick()
+    local folder = ws("RobberyMarkers")
+    for id, name in pairs(CROWD) do
+        local m = folder and folder:FindFirstChild(name)
+        local ok, p = pcall(function() return m.Position end)
+        if ok and p then markerPos[id] = p end
+    end
+    return markerPos
+end
+
+local function stampOf(id, state)
+    local s = STAMP[id]
+    if s and s[2][state] then
+        local m = ws(s[1])
+        local v = m and tonumber(attr(m, s[2][state]))
+        if v and v > 1e9 then return math.floor(v) end
+    end
+    return since[id]
+end
+
+local ZONES = {
+    [1] = { "Banks", "Region" }, [2] = { "Jewelrys", "Region" }, [3] = { "Museum.Region" },
+    [4] = { "PowerPlant.InnerRegions" }, [9] = { "GasStations", "Region" }, [10] = { "DonutShop", "Region" },
+    [14] = { "RobberyTomb.Regions" }, [15] = { "Casino.Regions" }, [16] = { "MansionRobbery.Regions" }, [17] = { "OilRig.ActiveRobberyRegion" }
+}
+local PARTS = { Part = true, MeshPart = true, UnionOperation = true, WedgePart = true, CornerWedgePart = true, TrussPart = true }
+local zoneBoxes, zoneAt = {}, 0
+
+local function resolve(path)
+    local inst
+    for seg in string.gmatch(path, "[^%.]+") do
+        if not inst then inst = ws(seg) else inst = inst:FindFirstChild(seg) end
+        if not inst then return nil end
+    end
+    return inst
+end
+
+local function toBox(part)
+    local okC, cf = pcall(function() return part.CFrame end)
+    local okS, sz = pcall(function() return part.Size end)
+    if not okC or not okS or not cf or not sz then return nil end
+    local n = {}
+    for v in string.gmatch(tostring(cf), "[%-%d%.e]+") do n[#n + 1] = tonumber(v) end
+    if #n < 12 then return nil end
+    return { n[1], n[2], n[3], n[4], n[5], n[6], n[7], n[8], n[9], n[10], n[11], n[12], sz.X / 2 + 0.5, sz.Y / 2 + 0.5, sz.Z / 2 + 0.5 }
+end
+
+local autoRegions, autoState = nil, 0
+local SKIP_PARENT = { AerialSpawn = true, RedGoal = true, BlueGoal = true }
+local function autoScan()
+    autoState = 1
+    task.spawn(function()
+        local list = {}
+        local okC, kids = pcall(function() return workspace:GetChildren() end)
+        local n = 0
+        for _, k in ipairs(okC and kids or {}) do
+            local ok, all = pcall(function() return k:GetDescendants() end)
+            if ok then
+                for _, d in ipairs(all) do
+                    if d.Name == "Region" and PARTS[d.ClassName] then
+                        local okP, pn = pcall(function() return d.Parent.Name end)
+                        if not (okP and SKIP_PARENT[pn]) then list[#list + 1] = d end
+                    end
+                    n = n + 1
+                    if n >= 500 then n = 0 task.wait() end
+                end
+            end
+            n = n + 25
+            if n >= 500 then n = 0 task.wait() end
+        end
+        autoRegions = list
+        zoneAt = 0
+    end)
+end
+
+local function zones()
+    if tick() - zoneAt < 90 then return zoneBoxes end
+    zoneAt = tick()
+    local old = zoneBoxes
+    zoneBoxes = {}
+    local used = {}
+    for id, z in pairs(ZONES) do
+        local root = resolve(z[1])
+        if root then
+            local list = {}
+            local function add(d)
+                if PARTS[d.ClassName] and (not z[2] or d.Name == z[2]) then
+                    local okP, pn = pcall(function() return d.Parent.Name end)
+                    if not (okP and SKIP_PARENT[pn]) then
+                        local b = toBox(d)
+                        if b then list[#list + 1] = b used[d] = true end
+                    end
+                end
+            end
+            add(root)
+            local ok, desc = pcall(function() return root:GetDescendants() end)
+            if ok then for i, d in ipairs(desc) do add(d) if i % 300 == 0 then task.wait() end end end
+            if #list > 0 then zoneBoxes[id] = list end
+        end
+    end
+    if autoState == 0 then autoScan() end
+    if autoRegions then
+        local pos = markers()
+        for id in pairs(CROWD) do
+            local mp = pos[id]
+            if not zoneBoxes[id] and mp then
+                local list = {}
+                for _, d in ipairs(autoRegions) do
+                    if not used[d] then
+                        local okP, rp = pcall(function() return d.Position end)
+                        if okP and rp and math.sqrt((rp.X - mp.X) ^ 2 + (rp.Z - mp.Z) ^ 2) <= 90 then
+                            local b = toBox(d)
+                            if b then list[#list + 1] = b end
+                        end
+                    end
+                end
+                if #list > 0 then zoneBoxes[id] = list end
+            end
+        end
+    end
+    for id, l in pairs(old) do if not zoneBoxes[id] then zoneBoxes[id] = l end end
+    return zoneBoxes
+end
+
+local function billboardName(hrp)
+    local bb = hrp:FindFirstChild("PlayerBillboard")
+    local fr = bb and bb:FindFirstChild("Frame")
+    local tl = fr and fr:FindFirstChild("TextLabel")
+    local ok, t = pcall(function() return tl.Text end)
+    if ok and type(t) == "string" and t ~= "" then return t end
+    return nil
+end
+
+local function inBox(b, x, y, z)
+    local dx, dy, dz = x - b[1], y - b[2], z - b[3]
+    return math.abs(b[4] * dx + b[7] * dy + b[10] * dz) <= b[13]
+        and math.abs(b[5] * dx + b[8] * dy + b[11] * dz) <= b[14]
+        and math.abs(b[6] * dx + b[9] * dy + b[12] * dz) <= b[15]
+end
+
+local bountyOf, bountyRaw = {}, nil
+local bountyOff = 0xA8 -- update
+local function readMem(a)
+    local ok, x = pcall(memory_read, "uintptr_t", a)
+    return ok and x or nil
+end
+local function readStd(a)
+    local size, cap = readMem(a + 16), readMem(a + 24)
+    if not size or not cap or size < 2 or size > 200000 or cap < size then return nil end
+    local p = cap > 15 and readMem(a) or a
+    if not p or p < 4096 then return nil end
+    local okF, first = pcall(memory_read, "byte", p)
+    if not okF or first ~= 91 then return nil end
+    local parts = {}
+    for i = 0, size - 1, 4 do
+        local okI, w = pcall(memory_read, "int", p + i)
+        if not okI or type(w) ~= "number" then return nil end
+        if w < 0 then w = w + 4294967296 end
+        for b = 0, 3 do
+            if i + b < size then parts[#parts + 1] = string.char(math.floor(w / 256 ^ b) % 256) end
+        end
+    end
+    return table.concat(parts)
+end
+local function readBountyRaw()
+    local bv = RS:FindFirstChild("BountyData")
+    if not bv then return nil end
+    local okA, base = pcall(function() return tonumber(bv.Address) end)
+    if okA and base then
+        if bountyOff then
+            local s2 = readStd(base + bountyOff)
+            if s2 then return s2 end
+        end
+        for off = 0x40, 0x300, 8 do
+            local s2 = readStd(base + off)
+            if s2 then bountyOff = off return s2 end
+        end
+    end
+    local okV, v = pcall(function() return bv.Value end)
+    if okV and type(v) == "string" then return v end
+    return nil
+end
+
+local function bounties()
+    local raw = readBountyRaw()
+    if type(raw) ~= "string" or raw == bountyRaw then return end
+    if raw:sub(1, 1) ~= "[" or raw:sub(-1) ~= "]" then return end
+    bountyRaw = raw
+    local map, n = {}, 0
+    for obj in string.gmatch(raw, "{[^{}]*}") do
+        local uid = tonumber(string.match(obj, '"UserId"%s*:%s*(%d+)'))
+        local val = tonumber(string.match(obj, '"Bounty"%s*:%s*(%d+)'))
+        if uid and val then map[uid] = val n = n + 1 end
+    end
+    bountyOf = map
+end
+
+local TEAMRANK = { Criminal = 1, Police = 2, Prisoner = 3 }
+local TEAMCOL = { Police = C.blue, Criminal = C.closed, Prisoner = C.active }
+local function teamOf(pl)
+    local okT, t = pcall(function() return pl.Team.Name end)
+    if okT and type(t) == "string" and t ~= "" then return t end
+    local tv = pl:FindFirstChild("TeamValue")
+    local ok, v = pcall(function() return tv.Value end)
+    return ok and type(v) == "string" and v or ""
+end
+
+local function folderSet(path)
+    local set = {}
+    local f = resolve(path)
+    local ok, kids = pcall(function() return f:GetChildren() end)
+    if ok and kids then
+        for _, c in ipairs(kids) do
+            set[c.Name] = true
+            local okV, v = pcall(function() return c.Value end)
+            if okV and typeof(v) == "Instance" then set[v.Name] = true end
+        end
+    end
+    return set
+end
+
+local seen = {}
+local function crowd()
+    PERF.timed("hud.bounties", bounties)
+    local out, who, bty = {}, {}, {}
+    local zb = PERF.timed("hud.zones", zones)
+    local pos = PERF.timed("hud.markers", markers)
+    local ids = {}
+    for id in pairs(CROWD) do
+        if zb[id] or pos[id] then ids[#ids + 1] = id out[id] = 0 who[id] = {} bty[id] = 0 end
+    end
+    local listed = { [16] = folderSet("MansionRobbery.InRobberyFolder"), [17] = folderSet("OilRig.PlayersInRobberyFolder") }
+    local now = tick()
+    local alive = {}
+    for pi, pl in ipairs(P:GetPlayers()) do
+        if pi % 5 == 0 then task.wait() end
+        local okU, uid = pcall(function() return pl.UserId end)
+        uid = okU and uid or 0
+        alive[uid] = true
+        local ch = pl.Character
+        local hrp = ch and ch:FindFirstChild("HumanoidRootPart")
+        local ok, hp = pcall(function() return hrp.Position end)
+        local hits
+        if ok and hp then
+            hits = {}
+            local x, y, z = hp.X, hp.Y, hp.Z
+            for _, id in ipairs(ids) do
+                local hit = false
+                if zb[id] then
+                    for _, b in ipairs(zb[id]) do
+                        if inBox(b, x, y, z) then hit = true break end
+                    end
+                else
+                    hit = (hp - pos[id]).Magnitude <= CROWD_RANGE
+                end
+                if hit then hits[#hits + 1] = id end
+            end
+            local dn = billboardName(hrp)
+            seen[uid] = { hits = hits, at = now, dname = dn or (seen[uid] and seen[uid].dname) }
+        elseif seen[uid] and now - seen[uid].at < 20 then
+            hits = seen[uid].hits
+        else
+            hits = {}
+        end
+        for lid, set in pairs(listed) do
+            if set[pl.Name] and out[lid] then
+                local dup = false
+                for _, h in ipairs(hits) do if h == lid then dup = true break end end
+                if not dup then hits[#hits + 1] = lid end
+            end
+        end
+        local b = bountyOf[uid] or 0
+        local dn = seen[uid] and seen[uid].dname
+        for _, id in ipairs(hits) do
+            if out[id] then
+                out[id] = out[id] + 1
+                bty[id] = bty[id] + b
+                table.insert(who[id], { uid = uid, name = pl.Name, dname = dn and cleanName(dn, pl.Name) or nil, bounty = b, team = teamOf(pl) })
+            end
+        end
+    end
+    for uid in pairs(seen) do if not alive[uid] then seen[uid] = nil end end
+    for _, l in pairs(who) do
+        table.sort(l, function(a, b2)
+            local ra, rb = TEAMRANK[a.team] or 4, TEAMRANK[b2.team] or 4
+            if ra ~= rb then return ra < rb end
+            if a.bounty ~= b2.bounty then return a.bounty > b2.bounty end
+            return a.name < b2.name
+        end)
+    end
+    crowdWho = who
+    local mansion = ws("MansionRobbery")
+    local inLift = mansion and tonumber(attr(mansion, "NumPlayersInElevator"))
+    return out, bty, inLift
+end
+
+local function money(n)
+    if n >= 1e6 then return string.format("$%.1fM", n / 1e6) end
+    if n >= 1e4 then return string.format("$%dk", math.floor(n / 1000)) end
+    if n >= 1e3 then return string.format("$%.1fk", n / 1000) end
+    return "$" .. n
+end
+
+local function moneyFull(n)
+    local s2 = tostring(math.floor(n))
+    local out = s2:reverse():gsub("(%d%d%d)", "%1,"):reverse()
+    if out:sub(1, 1) == "," then out = out:sub(2) end
+    return "$" .. out
+end
+
+local function fmt(sec)
+    if not sec or sec < 0 then return "--:--" end
+    local h, m, s2 = math.floor(sec / 3600), math.floor(sec / 60) % 60, sec % 60
+    if h > 0 then return string.format("%d:%02d:%02d", h, m, s2) end
+    return string.format("%d:%02d", m, s2)
+end
+
+local function refresh()
+    local folder = RS:FindFirstChild("RobberyState")
+    if not folder then return end
+    local list = {}
+    local ppl, bty, lift = crowd()
+    for _, c in ipairs(folder:GetChildren()) do
+        local id = tonumber(c.Name)
+        local okV, v = pcall(function() return c.Value end)
+        if id and NAMES[id] and okV and STATE[v] then
+            if last[id] and last[id] ~= v then
+                since[id] = os.time()
+                if v == 1 then
+                    pulseUntil = tick() + 10
+                    if notifyOn[id] then notify(NAMES[id] .. " is open", "[JB Hub] Robbery State", 4) end
+                end
+            end
+            last[id] = v
+            list[#list + 1] = { id = id, name = NAMES[id], state = v, t = stampOf(id, v), ppl = ppl[id], bounty = bty[id], lift = id == 16 and lift or nil }
+        end
+    end
+    table.sort(list, function(a, b)
+        if a.state ~= b.state then return a.state < b.state end
+        return a.name < b.name
+    end)
+    data = list
+    if popupId and last[popupId] == 3 then popupId = nil end
+end
+
+local function inside(x, y, w, h, mx, my) return mx >= x and mx <= x + w and my >= y and my <= y + h end
+
+local blocked = false
+local function setBlock(b)
+    if b ~= blocked then
+        blocked = b
+        pcall(setrobloxinput, not b)
+    end
+end
+
+local wasDown, drag, thumbDrag, listDrag, badgeDrag = false, nil, nil, nil, nil
+local lastRefresh, lastT = 0, tick()
+_G.RobHUDGen = (_G.RobHUDGen or 0) + 1
+local gen = _G.RobHUDGen
+notify("Robbery State loaded", "[JB Hub] Robbery State", 3)
+task.spawn(function()
+    while _G.RobHUDGen == gen and keep() do
+        pcall(PERF.timed, "hud.refresh", refresh)
+        task.wait(1)
+    end
+end)
+ 
+local function frame()
+    local now = tick()
+    local dt = math.min(now - lastT, 0.1)
+    lastT = now
+
+    local mx, my = mouse.X, mouse.Y
+    local down = ismouse1pressed()
+    local clicked = down and not wasDown
+    local released = wasDown and not down
+    wasDown = down
+
+    local counts = { [1] = 0, [2] = 0, [3] = 0 }
+    local view = {}
+    for _, r in ipairs(data) do
+        counts[r.state] = counts[r.state] + 1
+        if filter == 0 or r.state == filter or (filter == 1 and r.state == 2) then view[#view + 1] = r end
+    end
+
+    if collapsed then
+        local bx, by = bxs, bys
+        local hov = inside(bx, by, BW, BH, mx, my)
+        setBlock(hov or badgeDrag ~= nil)
+        if clicked and hov then
+            badgeDrag = { mx - bx, my - by, mx, my, false }
+        end
+        if badgeDrag then
+            if math.abs(mx - badgeDrag[3]) + math.abs(my - badgeDrag[4]) > 4 then badgeDrag[5] = true end
+            if badgeDrag[5] then
+                bx = math.clamp(mx - badgeDrag[1], 0, vp.X - BW)
+                by = math.clamp(my - badgeDrag[2], 0, vp.Y - BH)
+                bxs, bys = bx, by
+            end
+            if released then
+                if not badgeDrag[5] then
+                    collapsed = false
+                    px = math.clamp(bxs + BW - W, 0, vp.X - W)
+                    py = math.clamp(bys, 0, vp.Y - H)
+                end
+                badgeDrag = nil
+            end
+        end
+        if collapsed then
+            show(static, false)
+            show(dynamic, false)
+            show(badge, true)
+            local hot = now < pulseUntil
+            local speed = hot and 2.2 or 1
+            local r = strobe(now * speed, 0)
+            local b = strobe(now * speed, 0.7)
+            local base = hot and 0.35 or 0.2
+            set(bBg, "Transparency", hov and 0.97 or 0.95)
+            setPos(bBg, bx, by) setSize(bBg, BW, BH)
+            set(bBorder, "Color", hov and C.dim or C.line)
+            setPos(bBorder, bx, by) setSize(bBorder, BW, BH)
+            local half = (BW - 30) / 2
+            local barY = by + BH - 13
+            set(bBarR, "Transparency", math.floor((base + (1 - base) * r) * 20) / 20)
+            set(bBarB, "Transparency", math.floor((base + (1 - base) * b) * 20) / 20)
+            setPos(bBarR, bx + 14, barY) setSize(bBarR, half, 4)
+            setPos(bBarB, bx + 16 + half, barY) setSize(bBarB, half, 4)
+            local gMax = hot and 0.45 or 0.28
+            set(bGlowR, "Transparency", math.floor(gMax * r * 20) / 20)
+            set(bGlowB, "Transparency", math.floor(gMax * b * 20) / 20)
+            setPos(bGlowR, bx + 11, barY - 4) setSize(bGlowR, half + 6, 12)
+            setPos(bGlowB, bx + 13 + half, barY - 4) setSize(bGlowB, half + 6, 12)
+            local okJ, jh = pcall(function() return bJB.TextBounds.Y end)
+            local okH, hh = pcall(function() return bHub.TextBounds.Y end)
+            jh = (okJ and jh and jh > 0) and jh or 20
+            hh = (okH and hh and hh > 0) and hh or 12
+            local area = BH - 18
+            local top = by + 4 + math.floor((area - (jh + hh + 2)) / 2)
+            setPos(bShadow, bx + BW / 2 + 1, top + 2)
+            setPos(bJB, bx + BW / 2, top)
+            setPos(bHub, bx + BW / 2, top + jh + 2)
+            set(bHub, "Color", hov and C.sub or C.dim)
+        end
+    end
+
+    if not collapsed then
+        show(badge, false)
+        show(static, true)
+        local maxScroll = math.max(0, #view * ROW - LIST)
+        local listY = py + HEAD + TABH
+        local trackX, trackH = px + W - 8, LIST - 8
+        local thumbH = #view * ROW > LIST and math.max(24, trackH * LIST / (#view * ROW)) or trackH
+        local thumbY = listY + 4 + (maxScroll > 0 and (trackH - thumbH) * (scroll / maxScroll) or 0)
+        local popH = popupId and crowdWho[popupId] and (34 + math.max(math.min(#crowdWho[popupId], PMAX), 1) * PROW + 8) or 0
+        local popX = px - PW - 8
+        if popX < 0 then popX = px + W + 8 end
+        local overPop = popH > 0 and inside(popX, math.clamp(py, 0, vp.Y - popH), PW, popH, mx, my)
+        setBlock(inside(px, py, W, H, mx, my) or overPop or drag ~= nil or thumbDrag ~= nil or listDrag ~= nil)
+
+        if clicked then
+            if inside(px + W - 24, py + 8, 18, 20, mx, my) then
+                collapsed = true
+                bxs, bys = px + W - BW, py
+                scrollT, listDrag, thumbDrag = 0, nil, nil
+            elseif inside(px, py, W, HEAD, mx, my) then
+                drag = { mx - px, my - py }
+            elseif maxScroll > 0 and inside(trackX - 4, thumbY, 11, thumbH, mx, my) then
+                thumbDrag = my - thumbY
+            elseif maxScroll > 0 and inside(trackX - 4, listY, 11, LIST, mx, my) then
+                scrollT = math.clamp((my - listY - thumbH / 2) / (trackH - thumbH), 0, 1) * maxScroll
+            elseif inside(px, py + HEAD, W, TABH, mx, my) then
+                local x = px + 12
+                for _, t in ipairs(TABS) do
+                    local label = t[2] .. " " .. (t[1] == 0 and #data or (t[1] == 1 and counts[1] + counts[2] or counts[t[1]]))
+                    local w = #label * cw12
+                    if mx >= x - 4 and mx <= x + w + 4 then filter = t[1] scrollT = 0 break end
+                    x = x + w + 14
+                end
+            elseif inside(px, listY, W - 14, LIST, mx, my) then
+                listDrag = { x = mx, y = my, from = scrollT, moved = false }
+            end
+        end
+        if listDrag then
+            if math.abs(my - listDrag.y) > 4 then listDrag.moved = true end
+            if listDrag.moved then scrollT = listDrag.from - (my - listDrag.y) end
+            if released then
+                if not listDrag.moved then
+                    local r = view[math.floor((listDrag.y - listY + scroll) / ROW) + 1]
+                    local mr = r and metaRect[r.id]
+                    if mr and listDrag.x >= mr[1] - 4 and listDrag.x <= mr[1] + mr[2] + 4 then
+                        popupId = popupId ~= r.id and r.id or nil
+                    elseif r then
+                        notifyOn[r.id] = not notifyOn[r.id]
+                    end
+                end
+                listDrag = nil
+            end
+        end
+        if not down then drag, thumbDrag = nil, nil end
+        if inside(px, py, W, H, mx, my) then
+            local dir = (iskeypressed(0x28) and 1 or 0) - (iskeypressed(0x26) and 1 or 0)
+            if dir ~= 0 then scrollT = scrollT + dir * 320 * dt end
+        end
+        if drag then
+            px = math.clamp(mx - drag[1], 0, vp.X - W)
+            py = math.clamp(my - drag[2], 0, vp.Y - H)
+        end
+        if thumbDrag and maxScroll > 0 then
+            scrollT = math.clamp((my - thumbDrag - listY - 4) / (trackH - thumbH), 0, 1) * maxScroll
+        end
+        scrollT = math.clamp(scrollT, 0, maxScroll)
+        scroll = scroll + (scrollT - scroll) * math.min(1, dt * 14)
+        if math.abs(scrollT - scroll) < 0.5 then scroll = scrollT end
+        listY = py + HEAD + TABH
+        trackX = px + W - 8
+        thumbY = listY + 4 + (maxScroll > 0 and (trackH - thumbH) * (scroll / maxScroll) or 0)
+
+        setPos(bg, px, py) setSize(bg, W, H)
+        setPos(border, px, py) setSize(border, W, H)
+        setPos(accL, px + 6, py) setSize(accL, W / 2 - 6, 2)
+        setPos(accR, px + W / 2, py) setSize(accR, W / 2 - 6, 2)
+        setPos(title, px + 14, py + 10)
+        set(count, "Text", (counts[1] + counts[2]) .. " open")
+        setPos(count, px + W - 36 - #count.Text * cw12, py + 13)
+        set(mini, "Color", inside(px + W - 24, py + 8, 18, 20, mx, my) and C.text or C.dim)
+        setPos(mini, px + W - 19, py + 11)
+        setPos(sep1, px + 10, py + HEAD) setSize(sep1, W - 20, 1)
+        setPos(sep2, px + 10, py + HEAD + TABH - 1) setSize(sep2, W - 20, 1)
+
+        local x = px + 12
+        for i, t in ipairs(TABS) do
+            local label = t[2] .. " " .. (t[1] == 0 and #data or (t[1] == 1 and counts[1] + counts[2] or counts[t[1]]))
+            local w = #label * cw12
+            local active = filter == t[1]
+            local hov = inside(x - 4, py + HEAD, w + 8, TABH, mx, my)
+            set(tabT[i], "Text", label)
+            set(tabT[i], "Color", active and C.text or (hov and C.sub or C.dim))
+            setPos(tabT[i], x, py + HEAD + 8)
+            set(tabU[i], "Visible", active)
+            setPos(tabU[i], x, py + HEAD + TABH - 3) setSize(tabU[i], w, 2)
+            x = x + w + 14
+        end
+
+        local first = math.floor(scroll / ROW)
+        local off = scroll - first * ROW
+        for k = 1, ROWS + 1 do
+            local o, r = rows[k], view[first + k]
+            local y = listY + (k - 1) * ROW - off
+            local a = 0
+            if r then
+                a = 1
+                if y < listY then a = 1 - (listY - y) / ROW end
+                if y + ROW > listY + LIST then a = 1 - (y + ROW - listY - LIST) / ROW end
+                a = math.clamp(a, 0, 1)
+            end
+            local vis = a > 0.02
+            for k2, d in pairs(o) do if k2 ~= "chip" and k2 ~= "chipB" and k2 ~= "bounty" then set(d, "Visible", vis) end end
+            local chipOn, bText = false, ""
+            if vis then
+                local st = STATE[r.state]
+                local hov = not drag and not thumbDrag and inside(px, math.max(y, listY), W - 14, ROW, mx, my) and inside(px, listY, W, LIST, mx, my)
+                set(o.hover, "Transparency", hov and 0.06 * a or 0)
+                setPos(o.hover, px + 6, y + 2) setSize(o.hover, W - 22, ROW - 4)
+                set(o.bell, "Filled", notifyOn[r.id] and true or false)
+                set(o.bell, "Color", notifyOn[r.id] and C.blue or C.dim)
+                set(o.bell, "Transparency", (notifyOn[r.id] and 1 or 0.5) * a)
+                setPos(o.bell, px + 14, y + ROW / 2)
+                local live = r.state ~= 3
+                local speed = r.state == 2 and 1.6 or 0.8
+                local ph = (now * speed) % 1
+                local beat = live and (0.5 + 0.5 * math.sin(now * speed * math.pi * 2)) or 0
+                set(o.dot, "Color", st[2])
+                set(o.dot, "Transparency", (live and 1 or 0.55) * a)
+                set(o.dot, "Radius", math.floor(((hov and 5 or 4) + (r.state == 2 and beat * 0.8 or 0)) * 2 + 0.5) / 2)
+                setPos(o.dot, px + 28, y + ROW / 2)
+                set(o.halo, "Color", st[2])
+                set(o.halo, "Radius", math.floor((4 + ph * (hov and 8 or 6)) * 2) / 2)
+                set(o.halo, "Transparency", live and math.floor((1 - ph) * (hov and 0.55 or 0.4) * a * 20) / 20 or 0)
+                setPos(o.halo, px + 28, y + ROW / 2)
+                set(o.name, "Text", r.name)
+                set(o.name, "Color", hov and C.text or C.sub)
+                set(o.name, "Transparency", a)
+                setPos(o.name, px + 40, y + 6)
+                local pillW, colW, chipW = 54, 48, 50
+                local pillX = px + W - 22 - pillW
+                local timeX = pillX - 8 - colW
+                local chipX = timeX - 8 - chipW
+                local bountyX = chipX - 6 - colW
+                set(o.pill, "Color", st[2])
+                set(o.pill, "Transparency", 0.16 * a)
+                setPos(o.pill, pillX, y + 5) setSize(o.pill, pillW, ROW - 10)
+                set(o.tag, "Text", st[1])
+                set(o.tag, "Color", st[2])
+                set(o.tag, "Transparency", a)
+                setPos(o.tag, pillX + pillW / 2, y + ROW / 2)
+                local tt = fmt(r.t and (os.time() - r.t) or nil)
+                set(o.time, "Text", tt)
+                set(o.time, "Transparency", a)
+                setPos(o.time, timeX + colW / 2, y + ROW / 2)
+                local meta, mcol = "", C.active
+                if r.id == 16 and r.state == 1 then
+                    do
+                        local n = math.clamp(r.lift or 0, 0, 3)
+                        meta = n .. "/3"
+                        mcol = n == 0 and C.dim or (n == 3 and C.closed or C.active)
+                    end
+                elseif r.state ~= 3 and r.ppl and r.ppl > 0 then
+                    meta = r.ppl .. " ppl"
+                    chipOn = true
+                end
+                local opened = popupId == r.id
+                local overChip = chipOn and not drag and not thumbDrag and inside(chipX, y + 4, chipW, ROW - 8, mx, my) and inside(px, listY, W, LIST, mx, my)
+                if chipOn then
+                    mcol = (opened or overChip) and C.white or C.sub
+                    set(o.chip, "Transparency", (opened and 0.4 or (overChip and 0.28 or 0.14)) * a)
+                    set(o.chipB, "Transparency", (opened and 1 or (overChip and 0.9 or 0.55)) * a)
+                    setPos(o.chip, chipX, y + 5) setSize(o.chip, chipW, ROW - 10)
+                    setPos(o.chipB, chipX, y + 5) setSize(o.chipB, chipW, ROW - 10)
+                end
+                set(o.meta, "Text", meta)
+                set(o.meta, "Color", mcol)
+                set(o.meta, "Transparency", a)
+                setPos(o.meta, chipX + chipW / 2, y + ROW / 2)
+                metaRect[r.id] = chipOn and { chipX + 4, chipW - 8 } or nil
+                if chipOn and r.bounty and r.bounty > 0 then
+                    bText = money(r.bounty)
+                    set(o.bounty, "Text", bText)
+                    set(o.bounty, "Transparency", a)
+                    setPos(o.bounty, bountyX + colW / 2, y + ROW / 2)
+                end
+            end
+            set(o.bounty, "Visible", bText ~= "")
+            set(o.chip, "Visible", chipOn)
+            set(o.chipB, "Visible", chipOn)
+        end
+        set(empty, "Visible", #view == 0)
+        setPos(empty, px + W / 2, listY + LIST / 2 - 6)
+        set(track, "Visible", maxScroll > 0)
+        setPos(track, trackX, listY + 4) setSize(track, 3, trackH)
+        set(thumb, "Visible", maxScroll > 0)
+        set(thumb, "Color", (thumbDrag or inside(trackX - 4, thumbY, 11, thumbH, mx, my)) and C.blue or C.dim)
+        setPos(thumb, trackX, thumbY) setSize(thumb, 3, thumbH)
+        setPos(foot, px + 14, py + H - FOOT + 5)
+
+        local list = popupId and crowdWho[popupId]
+        if list then
+            local n = math.min(#list, PMAX)
+            local ph = 34 + math.max(n, 1) * PROW + 8
+            local qx = px - PW - 8
+            if qx < 0 then qx = px + W + 8 end
+            local qy = math.clamp(py, 0, vp.Y - ph)
+            show(popStatic, true)
+            setPos(pop.bg, qx, qy) setSize(pop.bg, PW, ph)
+            setPos(pop.border, qx, qy) setSize(pop.border, PW, ph)
+            setPos(pop.accL, qx + 6, qy) setSize(pop.accL, PW / 2 - 6, 2)
+            setPos(pop.accR, qx + PW / 2, qy) setSize(pop.accR, PW / 2 - 6, 2)
+            set(pop.title, "Text", string.upper(NAMES[popupId] or "?") .. "  " .. #list)
+            setPos(pop.title, qx + 12, qy + 9)
+            local tot = 0
+            for _, e in ipairs(list) do tot = tot + (e.bounty or 0) end
+            local tt = tot > 0 and moneyFull(tot) or ""
+            set(pop.total, "Visible", tot > 0)
+            set(pop.total, "Text", tt)
+            setPos(pop.total, math.floor(qx + PW - 26 - #tt * cw11), qy + 10)
+            local overClose = inside(qx + PW - 20, qy + 6, 14, 18, mx, my)
+            set(pop.close, "Color", overClose and C.text or C.dim)
+            setPos(pop.close, qx + PW - 16, qy + 9)
+            if clicked and overClose then popupId = nil end
+            setPos(pop.sep, qx + 10, qy + 30) setSize(pop.sep, PW - 20, 1)
+            set(pop.wait, "Visible", n == 0)
+            setPos(pop.wait, qx + 12, qy + 40)
+            for i = 1, PMAX do
+                local o, e = pop.rows[i], list[i]
+                local vis = e ~= nil
+                set(o.ring, "Visible", vis)
+                set(o.name, "Visible", vis)
+                set(o.bounty, "Visible", vis and (e.bounty or 0) > 0)
+                if vis then
+                    fetchProfile(e.uid, e.name)
+                    local ry = qy + 36 + (i - 1) * PROW
+                    local tc = TEAMCOL[e.team] or C.sub
+                    set(o.ring, "Color", tc)
+                    setPos(o.ring, qx + 22, ry + PROW / 2)
+                    set(o.name, "Color", tc)
+                    local png = avatarCache[e.uid]
+                    if png and cache[o.img].uid ~= e.uid then
+                        cache[o.img].uid = e.uid
+                        pcall(PERF.timed, "hud.avatarSet", function() o.img.Data = png end)
+                    end
+                    set(o.img, "Visible", png and cache[o.img].uid == e.uid or false)
+                    setPos(o.img, qx + 13, ry + PROW / 2 - 9) setSize(o.img, 18, 18)
+                    local bt = (e.bounty or 0) > 0 and moneyFull(e.bounty) or ""
+                    local room = math.floor((PW - 50 - (#bt > 0 and #bt * cw11 + 8 or 0)) / 7)
+                    local nm = e.dname or nameCache[e.uid] or e.name
+                    if #nm > room then nm = nm:sub(1, math.max(room - 2, 3)) .. ".." end
+                    set(o.name, "Text", nm)
+                    setPos(o.name, qx + 38, ry + 5)
+                    set(o.bounty, "Text", bt)
+                    setPos(o.bounty, math.floor(qx + PW - 12 - #bt * cw11), ry + 7)
+                else
+                    set(o.img, "Visible", false)
+                end
+            end
+        else
+            show(popAll, false)
+        end
+    end
+end
+ 
+local fails = 0
+while _G.RobHUDGen == gen and keep() do
+    if PERF.run("robHud", frame) then fails = 0 else fails = fails + 1 end
+    task.wait(PERF.FRAME)
+end
+setBlock(false)
+return fails < 300
+end
+
+task.spawn(function()
+    local function keep()
+        return _G.JB_gen == myGen and UI.GetValue(uid("robHud")) and true or false
+    end
+    while _G.JB_gen == myGen do
+        if keep() then
+            local ok, res = pcall(PERF.robHud, keep)
+            for _, d in ipairs(PERF.robHudObjs or {}) do pcall(function() d:Remove() end) end
+            PERF.robHudObjs = nil
+            pcall(setrobloxinput, true)
+            task.wait((ok and res ~= false) and 0.5 or 5)
+        else
+            task.wait(0.25)
+        end
+    end
+end)
+
+task.spawn(function()
+    local list, index = nil, 0
+    local folders, spikes, homesFound = {}, {}, {}
+    while _G.JB_gen == myGen do
+        local needNpc = (UI.GetValue(uid("killNpcs")) or UI.GetValue(uid("guards")) or UI.GetValue(uid("npcHitbox")) or (tonumber(UI.GetValue(uid("guardMode"))) or 0) ~= 0) and true or false
+        local needSpike = UI.GetValue(uid("antiTirePop")) and true or false
+        local needHome = UI.GetValue(uid("noturret")) and true or false
+        if not needNpc and not needSpike and not needHome then
+            list = nil
+            PERF.worldReady = false
+            task.wait(0.5)
+        else
+            if not list and tick() >= (PERF.worldNextScan or 0) then
+                local ok, children = pcall(function() return workspace:GetChildren() end)
+                list, index = ok and children or {}, 0
+                folders, spikes, homesFound = {}, {}, {}
+            end
+            local budget = list and (not PERF.worldReady and PERF.WORLD_CHUNK_FIRST or (needNpc and PERF.WORLD_CHUNK_NPC or PERF.WORLD_CHUNK_SPIKE)) or 0
+            while budget > 0 do
+                index = index + 1
+                local c = list[index]
+                if c == nil then
+                    PERF.npcFolders, PERF.spikeModels, PERF.homeModels = folders, spikes, homesFound
+                    PERF.worldReady = true
+                    PERF.worldNextScan = tick() + 2
+                    list = nil
+                    break
+                end
+                budget = budget - 1
+                pcall(function()
+                    if needNpc then
+                        local a = c:FindFirstChild("NPCs")
+                        local b = c:FindFirstChild("GuardsFolder")
+                        if a then folders[#folders + 1] = a end
+                        if b then folders[#folders + 1] = b end
+                    end
+                    if needSpike and c.Name == "Model" and c:FindFirstChild("Box") then
+                        spikes[#spikes + 1] = c
+                    end
+                    if needHome and c:FindFirstChild("Turret") then
+                        homesFound[#homesFound + 1] = c
+                    end
+                end)
+            end
+            task.wait(PERF.FRAME)
+        end
+    end
+end)
+
+task.spawn(function()
+    local ids = { "swordNoCd", "swordLunge", "instant", "norecoil", "nospread", "autoShoot" }
+    local values, index, itemSeen, primed = {}, 0, {}, false
+    while _G.JB_gen == myGen do
+        local need = false
+        for _, id in ipairs(ids) do
+            if UI.GetValue(uid(id)) then need = true break end
+        end
+        if need then
+            PERF.run("equipWatch", function()
+                local folder = game:GetService("Players").LocalPlayer:FindFirstChild("Folder")
+                if not folder then return end
+                local items = folder:GetChildren()
+                for _, it in ipairs(items) do
+                    local name = it.Name
+                    if not itemSeen[name] then
+                        itemSeen[name] = true
+                        if primed then PERF.equipVersion = PERF.equipVersion + 1 end
+                    end
+                end
+                primed = true
+                if #items == 0 then return end
+                index = index % #items + 1
+                local item = items[index]
+                local key = tostring(item.Address)
+                local v = item:GetAttribute("InventoryItemLocalEquipped")
+                if values[key] ~= nil and values[key] ~= v then
+                    PERF.equipRaw = PERF.equipRaw + 1
+                    local name = item.Name
+                    if not PERF.equipSeen[name] then
+                        PERF.equipSeen[name] = true
+                        PERF.equipVersion = PERF.equipVersion + 1
+                    end
+                end
+                values[key] = v
+            end)
+            task.wait(PERF.EQUIP_WATCH_TICK)
+        else
+            values, index, itemSeen, primed = {}, 0, {}, false
+            task.wait(0.5)
+        end
+    end
+end)
+
+task.spawn(function()
+    local players = game:GetService("Players")
+    local lp = players.LocalPlayer
+    local ZERO = Vector3.new(0, 0, 0)
+    local T, C = PERF.TASE, PERF.CUFF
+
+    local CFG = {
+        DEBUG = false,
+        TASE_RANGE = T.RANGE,
+        LATENCY = 0.035,
+        PING_LEAD = 0.5,
+        VEL_WINDOW = 0.25,
+        MAX_TARGET_SPEED = 120,
+        TIP_WAIT = 0.6,
+        EQUIP_SETTLE = 0.15,
+        TASER_SETTLE = 0.45,
+        PREARM = 0.6,
+        UNEQUIP_TIMEOUT = 0.6,
+        EQUIP_TIMEOUT = 0.6,
+        EQUIP_BACKOFF = 2,
+        RESYNC_GAP = 0.1,
+        CUFF_RELEASE = 1,
+        TASER_RELEASE = 2,
+        HIT_COOLDOWN = 7,
+        BLOCKED_WAIT = 0.3,
+        UNLOCK_SETTLE = 0.2,
+        CURSOR_GUARD_WAIT = 1,
+        CAM_TURN_DOT = 0.9995,
+        MISS_BLOCK = 6,
+        MISS_MOVE = 4,
+        STILL_SPEED = 3,
+        CUFF_EQUIP_RANGE = C.EQUIP_RANGE,
+        CUFF_KEEP_RANGE = 32,
+        CUFF_H = C.MAX_H,
+        CUFF_V = C.MAX_V,
+        KEY_E = C.KEY_E,
+        TAP = C.TAP,
+        RESULT_TIMEOUT = C.RESULT_TIMEOUT,
+        HOLD_TIMEOUT = C.HOLD_TIMEOUT,
+        ARREST_WAIT = 0.5,
+        EJECT_ARREST_WAIT = 1,
+        EJECT_TIMEOUT = 4,
+        RETRY = C.RETRY,
+        ARRESTED_IGNORE = 30,
+        FAIL_STREAK = 3,
+        FAIL_IGNORE = 10,
+        RAG_CACHE = 0.15,
+        SEAT_CACHE = 0.2,
+        SEAT_HOLD = 0.6,
+        VEHICLE_RADIUS = 20,
+        VEHICLE_REFRESH = 0.25,
+        SEAT_INDEX_REFRESH = 5,
+        SEAT_DIST = 2.5,
+    }
+
+    local MANAGED = { Taser = true, Handcuffs = true }
+    local SEAT_NAMES = { Seat = true, Passenger = true, DriverSeat = true, VehicleSeat = true }
+
+    local state = {
+        active = false,
+        readyAt = 0,
+        blockedUntil = 0,
+        cursorBlockUntil = 0,
+        equipFailUntil = 0,
+        unlockedAt = 0,
+        hybridWarned = false,
+        tracks = {},
+        rag = {},
+        seat = {},
+        seatIndex = {},
+        vehList = {},
+        vehAt = 0,
+        retryAt = {},
+        arrested = {},
+        failStreak = {},
+        missBlock = {},
+        teamCache = {},
+        inHand = nil,
+        owned = nil,
+        prevItem = nil,
+        switching = false,
+        equippedAt = 0,
+        needCuffAt = 0,
+        needTaserAt = 0,
+        me = { vel = ZERO },
+        tipPart = nil,
+        camEntry = nil,
+        prefEntry = nil,
+        camOriginal = nil,
+        cuffConfig = nil,
+        cuffOriginal = nil,
+        shots = 0, hits = 0, attempts = 0, arrests = 0,
+    }
+
+    local lastLog = {}
+    local function dbg(key, msg)
+        if not CFG.DEBUG or lastLog[key] == msg then return end
+        lastLog[key] = msg
+        print(string.format("[JB Police %.2f] %s", tick() % 1000, msg))
+    end
+
+    local function event(msg)
+        if CFG.DEBUG then print(string.format("[JB Police %.2f] %s", tick() % 1000, msg)) end
+    end
+
+    local function keyOf(inst)
+        local ok, a = pcall(function() return inst.Address end)
+        return ok and tostring(a) or nil
+    end
+
+    local function item(name)
+        local f = lp:FindFirstChild("Folder")
+        return f and f:FindFirstChild(name)
+    end
+
+    local function teamOf(p)
+        local name = p.Name
+        local now = tick()
+        local c = state.teamCache[name]
+        if not c or now - c.t > 0.5 then
+            c = { t = now, team = tostring(p.Team) }
+            state.teamCache[name] = c
+        end
+        return c.team
+    end
+
+    local function markArrested(name, duration, reason)
+        local now = tick()
+        if now >= (state.arrested[name] or 0) then
+            event(string.format("%s ignored %ds (%s)", name, duration, reason))
+        end
+        state.arrested[name] = math.max(state.arrested[name] or 0, now + duration)
+        state.failStreak[name] = nil
+    end
+
+    local function isOdd(it)
+        local v = it and it:GetAttribute("InventoryItemLocalEquipped")
+        return type(v) == "number" and v % 2 == 1
+    end
+
+    local function heldList()
+        local list = {}
+        local f = lp:FindFirstChild("Folder")
+        if f then
+            for _, it in ipairs(f:GetChildren()) do
+                if isOdd(it) then list[#list + 1] = it end
+            end
+        end
+        return list
+    end
+
+    local function syncHand()
+        local list = heldList()
+        local name = #list == 1 and list[1].Name or (#list > 1 and "CONFLICT" or nil)
+        if name ~= state.inHand then
+            state.inHand = name
+            event("hand = " .. tostring(name))
+            if state.owned and not state.switching and name ~= state.owned then
+                event("user took over, ownership dropped")
+                state.owned, state.prevItem = nil, nil
+            end
+        end
+        return list
+    end
+
+    local function held(it)
+        local list = syncHand()
+        return it ~= nil and #list == 1 and list[1].Name == it.Name
+    end
+
+    local function waitParity(it, odd, timeout)
+        local start = tick()
+        while tick() - start < timeout do
+            if isOdd(it) == odd then return true end
+            task.wait(0.03)
+        end
+        return false
+    end
+
+    local function fireEquip(it, value)
+        pcall(function() it.InventoryEquipRemote:FireServer(value) end)
+    end
+
+    local function unequip(it)
+        local start = tick()
+        fireEquip(it, false)
+        local ok = waitParity(it, false, CFG.UNEQUIP_TIMEOUT)
+        event(string.format("unequip %s %s (%.2fs)", it.Name, ok and "OK" or "TIMEOUT", tick() - start))
+        return ok
+    end
+
+    local function equipRaw(it)
+        local start = tick()
+        fireEquip(it, true)
+        if waitParity(it, true, CFG.EQUIP_TIMEOUT) then
+            event(string.format("equip %s OK (%.2fs)", it.Name, tick() - start))
+            return true
+        end
+        fireEquip(it, false)
+        task.wait(CFG.RESYNC_GAP)
+        fireEquip(it, true)
+        local ok = waitParity(it, true, CFG.EQUIP_TIMEOUT)
+        event(string.format("equip %s %s after resync (%.2fs)", it.Name, ok and "OK" or "TIMEOUT", tick() - start))
+        return ok
+    end
+
+    local function equip(it)
+        if held(it) then return true, false end
+        for _, other in ipairs(heldList()) do
+            if other.Name ~= it.Name and not unequip(other) then return false, false end
+        end
+        if not isOdd(it) and not equipRaw(it) then return false, false end
+        syncHand()
+        return true, true
+    end
+
+    local function takeItem(it)
+        syncHand()
+        if held(it) then
+            if state.owned == nil then state.owned, state.prevItem = it.Name, nil end
+            return true, false
+        end
+        if tick() < state.equipFailUntil then return false, false end
+        if state.owned == nil then
+            local cur = state.inHand
+            state.prevItem = (cur and cur ~= "CONFLICT" and not MANAGED[cur]) and cur or nil
+        end
+        state.switching = true
+        local ok, switched = equip(it)
+        state.switching = false
+        if ok then
+            state.owned = it.Name
+            if switched then state.equippedAt = tick() end
+        else
+            state.equipFailUntil = tick() + CFG.EQUIP_BACKOFF
+            event(string.format("equip %s failed, backoff %.1fs", it.Name, CFG.EQUIP_BACKOFF))
+        end
+        return ok, switched
+    end
+
+    local function release(reason)
+        if not state.owned then return end
+        local owned, prevName = state.owned, state.prevItem
+        local prev = prevName and item(prevName)
+        local cur = item(owned)
+        state.switching = true
+        if prev then
+            equip(prev)
+        elseif cur and isOdd(cur) then
+            unequip(cur)
+        end
+        state.switching = false
+        state.owned, state.prevItem = nil, nil
+        syncHand()
+        event(string.format("release %s -> %s (%s)", owned, tostring(prevName or "nothing"), reason))
+    end
+
+    local function circleHelp()
+        local gui = lp:FindFirstChild("PlayerGui")
+        local a = gui and gui:FindFirstChild("CircleAction")
+        local b = a and a:FindFirstChild("CircleAction")
+        local h = b and b:FindFirstChild("Help")
+        local ok, t = pcall(function() return h and h.Text end)
+        return ok and t or nil
+    end
+
+    local function isEjectPrompt(text)
+        return type(text) == "string" and string.find(string.lower(text), "eject", 1, true) ~= nil
+    end
+
+    local function isRagdolled(name, char)
+        local now = tick()
+        local c = state.rag[name]
+        if c and now - c.at < CFG.RAG_CACHE then return c.v end
+        local ok, w = pcall(function() return char:FindFirstChild("RagdollWaist", true) end)
+        local v = ok and w ~= nil
+        state.rag[name] = { v = v, at = now }
+        return v
+    end
+
+    local function vehicleList()
+        local now = tick()
+        if now - state.vehAt < CFG.VEHICLE_REFRESH then return state.vehList end
+        local list = {}
+        local vehicles = PERF.ws("Vehicles")
+        if vehicles then
+            for _, v in ipairs(vehicles:GetChildren()) do
+                local ref = v:FindFirstChild("Engine") or v:FindFirstChild("Seat")
+                local ok, p = pcall(function() return ref.Position end)
+                if ok and p then list[#list + 1] = { model = v, pos = p, key = keyOf(v) } end
+            end
+        end
+        state.vehList, state.vehAt = list, now
+        return list
+    end
+
+    local function vehicleSeats(entry)
+        local now = tick()
+        local c = state.seatIndex[entry.key]
+        if c and now - c.at < CFG.SEAT_INDEX_REFRESH then return c.seats end
+        local seats = {}
+        pcall(function()
+            for _, d in ipairs(entry.model:GetDescendants()) do
+                local cls = d.ClassName
+                if cls == "Seat" or cls == "VehicleSeat" or (SEAT_NAMES[d.Name] and (cls == "Part" or cls == "MeshPart")) then
+                    seats[#seats + 1] = d
+                end
+            end
+        end)
+        state.seatIndex[entry.key] = { at = now, seats = seats }
+        return seats
+    end
+
+    local function rawSeated(hrp)
+        local v = false
+        pcall(function()
+            local pos = hrp.Position
+            local hk = keyOf(hrp)
+            for _, e in ipairs(vehicleList()) do
+                if (e.pos - pos).Magnitude <= CFG.VEHICLE_RADIUS then
+                    for _, seat in ipairs(vehicleSeats(e)) do
+                        local w = seat:FindFirstChild("SeatWeld")
+                        local okW, p1 = pcall(function() return w and w.Part1 end)
+                        if okW and p1 and keyOf(p1) == hk then
+                            v = true
+                            break
+                        end
+                        local okS, sp = pcall(function() return seat.Position end)
+                        if okS and sp and (sp - pos).Magnitude <= CFG.SEAT_DIST then
+                            v = true
+                            break
+                        end
+                    end
+                end
+                if v then break end
+            end
+        end)
+        return v
+    end
+
+    local function isSeated(name, hrp, force)
+        local now = tick()
+        local c = state.seat[name]
+        if not force and c and now - c.at < CFG.SEAT_CACHE then return c.v end
+        local raw = rawSeated(hrp)
+        local v = raw
+        if not raw and not force and c and c.v and now - (c.lastTrue or 0) < CFG.SEAT_HOLD then v = true end
+        state.seat[name] = { v = v, at = now, lastTrue = raw and now or (c and c.lastTrue) }
+        return v
+    end
+
+    local function updateMotion(track, pos, now)
+        local s = track.samples
+        if not s then
+            s = {}
+            track.samples = s
+        end
+        local last = s[#s]
+        if last and (pos - last.pos).Magnitude > 60 then
+            s = {}
+            track.samples = s
+            last = nil
+        end
+        if not last or (pos - last.pos).Magnitude > 0.001 or now - last.t > 0.1 then
+            s[#s + 1] = { t = now, pos = pos }
+        end
+        while #s > 2 and now - s[1].t > CFG.VEL_WINDOW do table.remove(s, 1) end
+        local first, newest = s[1], s[#s]
+        if first and newest ~= first and newest.t - first.t >= 0.05 then
+            track.vel = (newest.pos - first.pos) * (1 / (newest.t - first.t))
+        else
+            track.vel = ZERO
+        end
+    end
+
+    task.spawn(function()
+        while _G.JB_gen == myGen do
+            if not state.active then
+                state.tracks = {}
+                task.wait(0.25)
+            else
+                pcall(function()
+                    local now = tick()
+                    local myName = lp.Name
+                    local root = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
+                    if root then updateMotion(state.me, root.Position, now) end
+                    local alive = {}
+                    for _, p in ipairs(players:GetPlayers()) do
+                        local name = p.Name
+                        if name ~= myName then
+                            local char = p.Character
+                            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                            if hrp and string.find(teamOf(p), "Criminal", 1, true) then
+                                alive[name] = true
+                                local rk = keyOf(hrp)
+                                local track = state.tracks[name]
+                                if not track or track.rootKey ~= rk then
+                                    track = { name = name, vel = ZERO, rootKey = rk }
+                                    state.tracks[name] = track
+                                end
+                                track.char, track.root = char, hrp
+                                updateMotion(track, hrp.Position, now)
+                            end
+                        end
+                    end
+                    for name in pairs(state.tracks) do
+                        if not alive[name] then
+                            state.tracks[name] = nil
+                            state.rag[name] = nil
+                            state.seat[name] = nil
+                            state.missBlock[name] = nil
+                            state.failStreak[name] = nil
+                        end
+                    end
+                end)
+                task.wait(PERF.FRAME)
+            end
+        end
+    end)
+
+    local function gather(root)
+        local list = {}
+        local myPos = root.Position
+        local now = tick()
+        for name, track in pairs(state.tracks) do
+            local ok, valid = pcall(function()
+                local char, hrp = track.char, track.root
+                local hum = char:FindFirstChild("Humanoid")
+                if not hum or hum.Health <= 0 or hrp.Parent == nil then return false end
+                local d = hrp.Position - myPos
+                track.h = math.sqrt(d.X * d.X + d.Z * d.Z)
+                track.v = math.abs(d.Y)
+                track.dist = d.Magnitude
+                if char:GetAttribute("HasHandcuffs") == true then
+                    markArrested(name, CFG.ARRESTED_IGNORE, "HasHandcuffs")
+                end
+                track.cuffed = now < (state.arrested[name] or 0)
+                local near = not track.cuffed and track.dist <= CFG.TASE_RANGE + 5
+                track.rag = near and isRagdolled(name, char) or false
+                track.seated = near and isSeated(name, hrp) or false
+                return true
+            end)
+            if ok and valid then list[#list + 1] = track end
+        end
+        table.sort(list, function(a, b) return a.dist < b.dist end)
+        return list
+    end
+
+    local function markSearched(list, help)
+        if help ~= "Search" then return end
+        for _, t in ipairs(list) do
+            if not t.cuffed and t.h <= CFG.CUFF_H and t.v <= CFG.CUFF_V then
+                markArrested(t.name, CFG.ARRESTED_IGNORE, "Search prompt")
+                t.cuffed = true
+                return
+            end
+        end
+    end
+
+    local function missBlocked(t)
+        local m = state.missBlock[t.name]
+        if not m then return false end
+        if tick() >= m.untilT or (t.root.Position - m.pos).Magnitude >= CFG.MISS_MOVE then
+            state.missBlock[t.name] = nil
+            return false
+        end
+        return true
+    end
+
+    local function findTip(root)
+        local tp = state.tipPart
+        if tp and tp.Parent and (tp.Position - root.Position).Magnitude < 8 then return tp end
+        state.tipPart = nil
+        local items = PERF.ws("Items")
+        if not items then return nil end
+        local best, bestDist
+        for _, m in ipairs(items:GetChildren()) do
+            if m.Name == "Taser" then
+                local sk = m:FindFirstChild("Skeleton")
+                local part = sk and sk:FindFirstChild("Tip")
+                if part then
+                    local d = (part.Position - root.Position).Magnitude
+                    if d < 8 and (not bestDist or d < bestDist) then best, bestDist = part, d end
+                end
+            end
+        end
+        state.tipPart = best
+        return best
+    end
+
+    local function currentLead()
+        local ok, ping = pcall(GetPingValue)
+        ping = ok and tonumber(ping) or 0
+        return CFG.LATENCY + ping / 1000 * CFG.PING_LEAD
+    end
+
+    local function aimAt(track, root, myChar, range, lead)
+        local tipPart = findTip(root)
+        local tip = tipPart and tipPart.Position
+        if not tip then
+            local head = myChar:FindFirstChild("Head")
+            tip = head and head.Position
+        end
+        if not tip then return nil, "no tip" end
+        local target = track.root.Position + track.vel * lead
+        if (target - tip).Magnitude > range then return nil, "out of range" end
+        local pos, onScreen = WorldToScreen(target - state.me.vel * lead)
+        if not onScreen then return nil, "off screen" end
+        return pos
+    end
+
+    local function findCameraEntries()
+        local anchors, candidates, pref = {}, {}, nil
+        for _, e in ipairs(lockedGetgc({ "Locked", "updateMouseLock", "SetRecoilSpring", "weaponCamLock" })) do
+            local key = tostring(e.key)
+            if key == "updateMouseLock" or key == "SetRecoilSpring" then
+                anchors[#anchors + 1] = tonumber(e.addr) or 0
+            elseif key == "Locked" and e.type == "boolean" then
+                candidates[#candidates + 1] = e
+            elseif key == "weaponCamLock" and e.type == "boolean" and not pref then
+                pref = e
+            end
+        end
+        local best, bestDist
+        for _, e in ipairs(candidates) do
+            local a = tonumber(e.addr) or 0
+            for _, anchor in ipairs(anchors) do
+                local d = math.abs(a - anchor)
+                if not bestDist or d < bestDist then best, bestDist = e, d end
+            end
+        end
+        if not (best and bestDist <= 4096) then best = nil end
+        return best, pref
+    end
+
+    local function readBool(e)
+        if not e then return nil end
+        local ok, v = pcall(memory_read, "int", tonumber(e.addr))
+        if not ok or type(v) ~= "number" then return nil end
+        return v ~= 0
+    end
+
+    local function camLive()
+        return readBool(state.camEntry)
+    end
+
+    local function camSet(value)
+        local e = state.camEntry
+        if not e then return false end
+        local ok, n = pcall(applygc, { e }, "Locked", value)
+        return ok and (tonumber(n) or 0) > 0
+    end
+
+    local function enforceUnlock()
+        if not state.camEntry then return end
+        if camLive() == true then
+            camSet(false)
+            state.unlockedAt = tick()
+        end
+    end
+
+    local function restoreCamLock()
+        if not state.camEntry then return nil end
+        local want = readBool(state.prefEntry)
+        if want == nil then want = state.camOriginal end
+        if want ~= nil then camSet(want) end
+        state.camOriginal = nil
+        return want
+    end
+
+    local function camTurned(a, b)
+        local ok, dot = pcall(function() return a.LookVector:Dot(b.LookVector) end)
+        return ok and dot < CFG.CAM_TURN_DOT
+    end
+
+    local function tryFire(taser, track, root, myChar, range)
+        if tick() < state.cursorBlockUntil then return false end
+        local okR, rmb = pcall(ismouse2pressed)
+        if okR and rmb then return false end
+        enforceUnlock()
+        local settle = state.unlockedAt + CFG.UNLOCK_SETTLE - tick()
+        if settle > 0 then task.wait(settle) end
+        if camLive() == true then return false end
+        local lead = currentLead()
+        local pos, why = aimAt(track, root, myChar, range, lead)
+        if not pos then
+            dbg("solve_" .. track.name, track.name .. " not fired: " .. tostring(why))
+            return false
+        end
+        local cam = workspace.CurrentCamera
+        local camBefore = cam.CFrame
+        mousemoveabs(math.floor(pos.X + 0.5), math.floor(pos.Y + 0.5))
+        task.wait(PERF.FRAME)
+        if camTurned(camBefore, cam.CFrame) then
+            state.cursorBlockUntil = tick() + CFG.CURSOR_GUARD_WAIT
+            event("cursor turned the camera, shot aborted")
+            return false
+        end
+        lead = currentLead()
+        pos = aimAt(track, root, myChar, range, lead)
+        if not pos then return false end
+        mousemoveabs(math.floor(pos.X + 0.5), math.floor(pos.Y + 0.5))
+        local before = taser:GetAttribute("LastUsedAt")
+        mouse1click()
+        local start = tick()
+        while tick() - start < 0.5 do
+            local after = taser:GetAttribute("LastUsedAt")
+            if after ~= before then
+                local cd = (taser:GetAttribute("NextUse") or 0) - after
+                state.readyAt = tick() + math.max(cd, 0)
+                state.shots = state.shots + 1
+                local hit = cd >= CFG.HIT_COOLDOWN
+                if hit then
+                    state.hits = state.hits + 1
+                    state.missBlock[track.name] = nil
+                elseif track.vel.Magnitude < CFG.STILL_SPEED then
+                    state.missBlock[track.name] = { pos = track.root.Position, untilT = tick() + CFG.MISS_BLOCK }
+                end
+                event(string.format("%s %s | %.0f studs | vel %.0f | %d/%d", hit and "HIT" or "MISS", track.name, track.dist, track.vel.Magnitude, state.hits, state.shots))
+                return true
+            end
+            task.wait(PERF.FRAME)
+        end
+        state.readyAt = tick() + 0.3
+        return true
+    end
+
+    local function findCuffConfig()
+        local entries = {}
+        for _, e in ipairs(lockedGetgc({ "ArrestDistance", "Duration", "ContentionDuration", "VerticalDistMult" })) do
+            local v = tonumber(tostring(e.value))
+            local a = tonumber(e.addr)
+            if v and a then entries[#entries + 1] = { key = tostring(e.key), value = v, addr = a, raw = e } end
+        end
+        for _, anchor in ipairs(entries) do
+            if anchor.key == "ArrestDistance" and anchor.value == 10 then
+                local picked, original, hasMult = {}, {}, false
+                for _, key in ipairs({ "Duration", "ContentionDuration" }) do
+                    local best, bestDist
+                    for _, e in ipairs(entries) do
+                        local d = math.abs(e.addr - anchor.addr)
+                        if e.key == key and d <= 512 and (not bestDist or d < bestDist) then best, bestDist = e, d end
+                    end
+                    if best then
+                        picked[#picked + 1] = best.raw
+                        original[key] = best.value
+                    end
+                end
+                for _, e in ipairs(entries) do
+                    if e.key == "VerticalDistMult" and math.abs(e.addr - anchor.addr) <= 512 then hasMult = true end
+                end
+                if #picked > 0 and hasMult then return picked, original end
+            end
+        end
+        return nil
+    end
+
+    local function scanCuffConfig()
+    end
+
+    local function restoreConfig()
+        if not state.cuffConfig then return end
+        local o = state.cuffOriginal
+        pcall(applygc, state.cuffConfig, {
+            Duration = (o.Duration and o.Duration ~= 0) and o.Duration or 0.5,
+            ContentionDuration = (o.ContentionDuration and o.ContentionDuration ~= 0) and o.ContentionDuration or 1,
+        })
+        state.cuffConfig, state.cuffOriginal = nil, nil
+    end
+
+    local function tryArrest(t)
+        state.attempts = state.attempts + 1
+        local instant = state.cuffConfig ~= nil
+        local start = tick()
+        keypress(CFG.KEY_E)
+        if instant then
+            task.wait(CFG.TAP)
+            keyrelease(CFG.KEY_E)
+        end
+        local success = false
+        local limit = instant and CFG.RESULT_TIMEOUT or CFG.HOLD_TIMEOUT
+        while tick() - start < limit do
+            task.wait(PERF.FRAME)
+            if _G.JB_gen ~= myGen then break end
+            if t.char:GetAttribute("HasHandcuffs") == true or circleHelp() == "Search" then
+                success = true
+                break
+            end
+        end
+        if not instant then keyrelease(CFG.KEY_E) end
+        state.retryAt[t.name] = tick() + CFG.RETRY
+        if success then
+            state.arrests = state.arrests + 1
+            t.cuffed = true
+            markArrested(t.name, CFG.ARRESTED_IGNORE, "arrested")
+            notify(t.name .. " arrested", C.TITLE, 2)
+        else
+            local streak = (state.failStreak[t.name] or 0) + 1
+            state.failStreak[t.name] = streak
+            if streak >= CFG.FAIL_STREAK then
+                markArrested(t.name, CFG.FAIL_IGNORE, streak .. " failed arrests in a row")
+            end
+        end
+    end
+
+    local function taserTargets(list, range)
+        local cands = {}
+        for _, t in ipairs(list) do
+            if t.dist <= range + 5 and not t.rag and not t.cuffed and not t.seated
+                and t.vel.Magnitude <= CFG.MAX_TARGET_SPEED and not missBlocked(t) then
+                cands[#cands + 1] = t
+            end
+        end
+        return cands
+    end
+
+    local function decide(list, taserOn, cuffOn, range, help)
+        local now = tick()
+        local inZone = {}
+        if cuffOn then
+            for _, t in ipairs(list) do
+                if t.h <= CFG.CUFF_H and t.v <= CFG.CUFF_V and not t.cuffed then inZone[#inZone + 1] = t end
+            end
+            if isEjectPrompt(help) then
+                for _, t in ipairs(inZone) do
+                    if now >= (state.retryAt[t.name] or 0) then return "eject", t, false end
+                end
+            end
+        end
+
+        local cands = taserOn and taserTargets(list, range) or {}
+        local hasCands = #cands > 0
+        if hasCands and now >= state.readyAt and now >= state.blockedUntil then return "tase", cands, true end
+
+        local holdTarget
+        for _, t in ipairs(inZone) do
+            if now >= (state.retryAt[t.name] or 0) and not t.seated then
+                return "cuff", t, hasCands
+            end
+            holdTarget = holdTarget or t
+        end
+
+        if hasCands and state.readyAt - now <= CFG.PREARM then return "arm", cands[1], true end
+        if holdTarget then return "hold", holdTarget, hasCands end
+
+        if cuffOn then
+            for _, t in ipairs(list) do
+                if t.h <= CFG.CUFF_EQUIP_RANGE and t.v <= CFG.CUFF_EQUIP_RANGE and not t.cuffed then
+                    return "precuff", t, hasCands
+                end
+            end
+        end
+        return "idle", nil, hasCands
+    end
+
+    local function doCuff(t, arrestWait)
+        local cuffs = item("Handcuffs")
+        if not cuffs then return end
+        if not takeItem(cuffs) then return end
+        local settle = state.equippedAt + CFG.EQUIP_SETTLE - tick()
+        if settle > 0 then task.wait(settle) end
+        local deadline = tick() + (arrestWait or CFG.ARREST_WAIT)
+        while circleHelp() ~= "Arrest" and tick() < deadline do task.wait(0.03) end
+        local help = circleHelp()
+        if help == "Search" then
+            markArrested(t.name, CFG.ARRESTED_IGNORE, "Search prompt")
+            return
+        end
+        if help ~= "Arrest" then return end
+        if t.char:GetAttribute("HasHandcuffs") == true then
+            markArrested(t.name, CFG.ARRESTED_IGNORE, "HasHandcuffs")
+            return
+        end
+        tryArrest(t)
+    end
+
+    local function doEject(t)
+        local cuffs = item("Handcuffs")
+        if not cuffs then return end
+        if not takeItem(cuffs) then return end
+        local settle = state.equippedAt + CFG.EQUIP_SETTLE - tick()
+        if settle > 0 then task.wait(settle) end
+        if not isEjectPrompt(circleHelp()) then return end
+        local wasSeated = isSeated(t.name, t.root, true)
+        local ejected = false
+        local start = tick()
+        keypress(CFG.KEY_E)
+        while tick() - start < CFG.EJECT_TIMEOUT do
+            task.wait(PERF.FRAME)
+            if _G.JB_gen ~= myGen then break end
+            local cur = circleHelp()
+            if cur == "Arrest" or (wasSeated and not isSeated(t.name, t.root, true)) then
+                ejected = true
+                break
+            end
+            if tick() - start > 0.3 and not isEjectPrompt(cur) then break end
+        end
+        keyrelease(CFG.KEY_E)
+        event(string.format("EJECT %s %s (%.2fs)", ejected and "OK" or "FAIL", t.name, tick() - start))
+        if not ejected then
+            state.retryAt[t.name] = tick() + CFG.RETRY
+            return
+        end
+        t.seated = false
+        doCuff(t, CFG.EJECT_ARREST_WAIT)
+    end
+
+    local function armTaser()
+        local taser = item("Taser")
+        if not taser then return nil end
+        local ok, switched = takeItem(taser)
+        if not ok then return nil end
+        if switched then state.tipPart = nil end
+        return taser
+    end
+
+    local function doTase(cands, root, myChar, range)
+        local taser = armTaser()
+        if not taser then return false end
+        if tick() < state.equippedAt + CFG.TASER_SETTLE then
+            local start = tick()
+            while not findTip(root) and tick() - start < CFG.TIP_WAIT do task.wait(0.03) end
+            local settle = state.equippedAt + CFG.TASER_SETTLE - tick()
+            if settle > 0 then task.wait(settle) end
+        end
+        for _, t in ipairs(cands) do
+            if not t.cuffed and tryFire(taser, t, root, myChar, range) then return true end
+        end
+        return false
+    end
+
+    local function anyWithin(list, range)
+        for _, t in ipairs(list) do
+            if not t.cuffed and t.h <= range and t.v <= range then return true end
+        end
+        return false
+    end
+
+    local function isDead(myChar)
+        local hum = myChar and myChar:FindFirstChild("Humanoid")
+        if not hum then return true end
+        local ok, hp = pcall(function() return hum.Health end)
+        return not ok or type(hp) ~= "number" or hp <= 0
+    end
+
+    local lastTaserArmed, lastCuffArmed = false, false
+    local wasTaser, wasCuff, wasDead = false, false, false
+
+    while _G.JB_gen == myGen do
+        local waitTime = 0.05
+        PERF.run("police", function()
+            local taserArmed = UI.GetValue(uid("autoTaser")) and true or false
+            local cuffArmed = UI.GetValue(uid("autoCuff")) and true or false
+            if taserArmed ~= lastTaserArmed then
+                lastTaserArmed = taserArmed
+                notify(taserArmed and "Enabled" or "Disabled", T.TITLE, 3)
+            end
+            if cuffArmed ~= lastCuffArmed then
+                lastCuffArmed = cuffArmed
+                notify(cuffArmed and "Enabled" or "Disabled", C.TITLE, 3)
+            end
+            local taserOn = taserArmed and keybindActive(PERF.taseKeybind)
+            local cuffOn = cuffArmed and keybindActive(PERF.cuffKeybind)
+            state.active = taserOn or cuffOn
+
+            if taserOn ~= wasTaser then
+                wasTaser = taserOn
+                if taserOn then
+                    state.readyAt, state.blockedUntil, state.cursorBlockUntil, state.shots, state.hits = 0, 0, 0, 0, 0
+                    state.camEntry, state.prefEntry = findCameraEntries()
+                    state.camOriginal = camLive()
+                    if state.camEntry then
+                        camSet(false)
+                        state.unlockedAt = tick()
+                    end
+                    notify("Auto Taser ON", T.TITLE, 2)
+                else
+                    if state.owned == "Taser" then release("taser disabled") end
+                    local restored = restoreCamLock()
+                    state.camEntry, state.prefEntry = nil, nil
+                    notify(string.format("Auto Taser OFF (%d/%d hits)%s", state.hits, state.shots, restored == true and ", camera lock restored" or ""), T.TITLE, 2)
+                end
+            end
+            if cuffOn ~= wasCuff then
+                wasCuff = cuffOn
+                if cuffOn then
+                    state.retryAt, state.failStreak, state.attempts, state.arrests = {}, {}, 0, 0
+                    scanCuffConfig()
+                    notify("Auto Cuff ON" .. (state.cuffConfig and " (instant)" or ""), C.TITLE, 2)
+                else
+                    if state.owned == "Handcuffs" then release("cuff disabled") end
+                    pcall(keyrelease, CFG.KEY_E)
+                    restoreConfig()
+                    notify(string.format("Auto Cuff OFF (%d/%d arrests)", state.arrests, state.attempts), C.TITLE, 2)
+                end
+            end
+
+            if not taserOn and not cuffOn then
+                waitTime = 0.25
+                return
+            end
+            if not PERF.isHybrid() then
+                if not state.hybridWarned then
+                    state.hybridWarned = true
+                    notify("Hybrid Mode required - enable it in Matcha", T.TITLE, 4)
+                end
+                waitTime = 0.5
+                return
+            end
+            state.hybridWarned = false
+            if PERF.solving then
+                waitTime = 0.2
+                return
+            end
+            if taserOn then enforceUnlock() end
+
+            local myChar = lp.Character
+            local root = myChar and myChar:FindFirstChild("HumanoidRootPart")
+            local dead = not root or isDead(myChar)
+            if dead ~= wasDead then
+                wasDead = dead
+                if dead then
+                    state.owned, state.prevItem, state.inHand, state.tipPart = nil, nil, nil, nil
+                    state.equippedAt, state.equipFailUntil = 0, 0
+                    pcall(keyrelease, CFG.KEY_E)
+                end
+            end
+            if dead then
+                waitTime = 0.25
+                return
+            end
+            syncHand()
+            if not isrbxactive() or not string.find(tostring(lp.Team), "Police", 1, true) then
+                waitTime = 0.2
+                return
+            end
+            if isSeated("__me", root) then
+                waitTime = 0.2
+                return
+            end
+
+            local help = circleHelp()
+            local range = tonumber(UI.GetValue(uid("autoTaserRange"))) or CFG.TASE_RANGE
+            local list = gather(root)
+            markSearched(list, help)
+            local action, arg, taserTarget = decide(list, taserOn, cuffOn, range, help)
+            dbg("action", "action = " .. action)
+
+            local now = tick()
+            if action == "cuff" or action == "hold" or action == "precuff" or action == "eject" then state.needCuffAt = now end
+            if state.owned == "Handcuffs" and cuffOn and anyWithin(list, CFG.CUFF_KEEP_RANGE) and action ~= "tase" and action ~= "arm" then
+                state.needCuffAt = now
+            end
+            if taserTarget then state.needTaserAt = now end
+
+            if action == "tase" then
+                if not doTase(arg, root, myChar, range) then state.blockedUntil = tick() + CFG.BLOCKED_WAIT end
+                waitTime = 0.03
+            elseif action == "cuff" then
+                doCuff(arg)
+                waitTime = 0.03
+            elseif action == "eject" then
+                doEject(arg)
+                waitTime = 0.03
+            elseif action == "arm" then
+                local taser = item("Taser")
+                if taser and not held(taser) then armTaser() end
+            elseif action == "precuff" or action == "hold" then
+                local cuffs = item("Handcuffs")
+                if cuffs and not held(cuffs) then takeItem(cuffs) end
+            end
+
+            now = tick()
+            if state.owned == "Handcuffs" and (not cuffOn or now - state.needCuffAt >= CFG.CUFF_RELEASE) then
+                release("cuffs not needed")
+            elseif state.owned == "Taser" and (not taserOn or now - state.needTaserAt >= CFG.TASER_RELEASE) then
+                release("no taser target")
+            end
+        end)
+        task.wait(waitTime)
+    end
+    state.active = false
+    pcall(keyrelease, C.KEY_E)
+    pcall(release, "unloaded")
+    pcall(restoreCamLock)
+    pcall(restoreConfig)
+end)
+
+task.spawn(function()
+    local was = {}
+    while _G.JB_gen == myGen do
+        PERF.run("hybridGate", function()
+            for _, id in ipairs(PERF.HYBRID_IDS) do
+                local on = UI.GetValue(uid(id)) and true or false
+                if on and not was[id] and not PERF.requireHybrid("[JB Hub] " .. id) then
+                    pcall(function() UI.SetValue(uid(id), false) end)
+                    on = false
+                end
+                was[id] = on
+            end
+        end)
+        task.wait(0.1)
+    end
+end)
+
+task.spawn(function()
+    local LIST = {
+        { "Auto-Solve Puzzle", function() return PERF.holdKb.puzzle end },
+        { "Get Casino Code", function() return PERF.holdKb.casino end },
+        { "Open Casino Door", function() return PERF.holdKb.casinoOpen end },
+        { "Auto Vault", function() return PERF.holdKb.vault end },
+        { "Apply Cosmetics", function() return PERF.holdKb.cosmetics end },
+        { "PlasmaPistol Killaura", function() return PERF.kaKeybind end },
+        { "Kill All NPCs", function() return PERF.killKeybind end },
+        { "Vehicle Fly", function() return VEHICLE.flyKeybind end },
+        { "Engine Boost", function() return VEHICLE.boostKeybind end },
+        { "Instant Brake", function() return VEHICLE.brakeKeybind end },
+        { "Instant Auto Cuff", function() return PERF.cuffKeybind end },
+        { "Auto Taser", function() return PERF.taseKeybind end },
+    }
+    local last, primed = {}, false
+    while _G.JB_gen == myGen do
+        PERF.run("keyGuard", function()
+            local cur = {}
+            for i, e in ipairs(LIST) do
+                local kb = e[2]()
+                local ok, k = pcall(function() return kb:GetKey() end)
+                cur[i] = { kb = kb, key = (ok and type(k) == "number") and k or nil }
+            end
+            for i, c in ipairs(cur) do
+                if primed and c.key and c.key ~= 0 and c.key ~= last[i] then
+                    for j, o in ipairs(cur) do
+                        if j ~= i and o.key == c.key then
+                            local okN, name = pcall(function() return c.kb:GetKeyName() end)
+                            local back = last[i] or 0
+                            pcall(function() c.kb:SetKey(back) end)
+                            c.key = back
+                            notify("Key " .. string.upper(okN and tostring(name) or "?") .. " is already used by " .. LIST[j][1], "[JB Hub] " .. LIST[i][1], 4)
+                            break
+                        end
+                    end
+                end
+                last[i] = c.key
+            end
+            primed = true
+        end)
+        task.wait(0.3)
+    end
+end)
+
+task.spawn(function()
+    if not PERF.profile then return end
+    PERF.profileHooks()
+    local c = PERF.cnt
+    local last = os.clock()
+    local lastReport, startAt = last, last
+    local frames, maxGap, worstWho = 0, 0, ""
+    local b33, b100, b250 = 0, 0, 0
+    local memStart, memLast
+    local function luaMem()
+        local ok, kb = pcall(gcinfo)
+        if ok and type(kb) == "number" then return kb end
+        local ok2, kb2 = pcall(collectgarbage, "count")
+        return ok2 and type(kb2) == "number" and kb2 or nil
+    end
+    local function fmtTop(map, n, unit)
+        local rows = {}
+        for k, v in pairs(map) do rows[#rows + 1] = { k, v } end
+        table.sort(rows, function(a, b) return a[2] > b[2] end)
+        local out = {}
+        for i = 1, math.min(n, #rows) do out[#out + 1] = string.format("%s %s%s", rows[i][1], unit == "ms" and string.format("%.0f", rows[i][2] * 1000) or tostring(rows[i][2]), unit or "") end
+        return #out > 0 and table.concat(out, ", ") or "-"
+    end
+    memStart = luaMem()
+    while _G.JB_gen == myGen and not SPLASH.done do task.wait(0.1) end
+    task.wait(0.2)
+    memStart = luaMem()
+    memLast = memStart
+    last, lastReport, startAt = os.clock(), os.clock(), os.clock()
+    PERF.profileLog({ string.format("[JBProfile] started %s | every %ds | log: JB Hub/profile.log", os.date and os.date("%H:%M:%S") or "", PERF.PROFILE_EVERY) })
+    while _G.JB_gen == myGen do
+        task.wait(PERF.FRAME)
+        local now = os.clock()
+        local gap = now - last
+        last = now
+        frames = frames + 1
+        PERF.frameNo = PERF.frameNo + 1
+        if gap > 0.033 then b33 = b33 + 1 end
+        if gap > 0.1 then b100 = b100 + 1 end
+        if gap > 0.25 then b250 = b250 + 1 end
+        if gap > maxGap then
+            maxGap = gap
+            worstWho = fmtTop(PERF.frameWork, 3, "ms")
+        end
+        PERF.frameWork = {}
+        if now - lastReport >= PERF.PROFILE_EVERY then
+            local window = now - lastReport
+            lastReport = now
+            local mem = luaMem()
+            local lines = {}
+            lines[#lines + 1] = string.format("[JBProfile] ===== %.0fs | loop %d Hz | worst gap %.0fms (%s) | stalls >33ms %d, >100ms %d, >250ms %d",
+                now - startAt, frames / window, maxGap * 1000, worstWho, b33, b100, b250)
+            lines[#lines + 1] = string.format("[JBProfile] lua mem %s KB (%s since last, %s since start) | drawings created %d (total %d) | notify %d",
+                mem and string.format("%.0f", mem) or "?", (mem and memLast) and string.format("%+.0f", mem - memLast) or "?", (mem and memStart) and string.format("%+.0f", mem - memStart) or "?", c.draw, c.drawTotal, c.notify)
+            lines[#lines + 1] = string.format("[JBProfile] getgc %d calls %.0fms total max %.0fms | memory read %d/s write %d/s | by: %s",
+                c.gc, c.gcTime * 1000, c.gcMax * 1000, math.floor(c.memr / window), math.floor(c.memw / window), fmtTop(c.memBy, 5))
+            if c.draw > 0 then lines[#lines + 1] = "[JBProfile] drawings created by: " .. fmtTop(c.drawBy, 6) end
+            if c.notify > 0 then lines[#lines + 1] = "[JBProfile] notify by: " .. fmtTop(c.notifyBy, 6) end
+            local rows = {}
+            for name, s in pairs(PERF.stats) do rows[#rows + 1] = { name = name, s = s } end
+            table.sort(rows, function(a, b) return a.s.total > b.s.total end)
+            for i = 1, math.min(#rows, 12) do
+                local s = rows[i].s
+                lines[#lines + 1] = string.format("[JBProfile]   %-18s %6.1fms/s | %5d calls avg %.2fms max %.0fms | slow %d | waited %d | err %d",
+                    rows[i].name, s.total / window * 1000, s.calls, s.total / math.max(s.calls - s.waits, 1) * 1000, s.max * 1000, s.slow, s.waits, s.errors)
+            end
+            for _, r in ipairs(rows) do
+                for msg, n in pairs(r.s.errs) do
+                    lines[#lines + 1] = string.format("[JBError] %s x%d: %s", r.name, n, msg)
+                end
+            end
+            PERF.profileLog(lines)
+            PERF.stats, maxGap, worstWho, frames, b33, b100, b250 = {}, 0, "", 0, 0, 0, 0
+            c.memr, c.memw, c.gc, c.gcTime, c.gcMax, c.draw, c.notify = 0, 0, 0, 0, 0, 0, 0
+            c.drawBy, c.notifyBy, c.memBy = {}, {}, {}
+            memLast = mem
+        end
+    end
+end)
+
+SPLASH.run()
+print("[JB Hub] successfully loaded ! Welcome " .. SPLASH.userName() .. " !")
+notify("JB", "Welcome " .. SPLASH.userName() .. " !", 4)
