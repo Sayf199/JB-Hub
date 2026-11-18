@@ -44,6 +44,9 @@
   Auto Vault [H] ........... Opens the vault automatically
   Auto Collect Loot [H] .... Collects the loot automatically
   Auto Computers [H] ....... Completes the casino computers automatically
+  Elevator Loop Call [H] ... Keeps calling the casino elevator
+  Floor / Call Elevator [H]  Pick a floor (Vaults, Ground, Security,
+                             The Roof) and call the elevator to it
 
   No Spike Damage .......... Tomb spikes no longer hurt you
   No Dart Damage ........... Tomb darts no longer hurt you
@@ -108,6 +111,17 @@
                              wave, with the number you control
   Range .................... Distance used by the NPC features
 
+  GUARD CONTROL page (next to NPC)
+  Bodyguard mode ........... Guards controlled by your game client
+                             protect you instead of attacking you
+  Follow Me ................ Your guards follow you around
+  Protect Radius ........... They attack players who come close
+  Target Team .............. Who they attack: All, Police,
+                             Criminal or None
+  Spread Targets ........... Guards split up between targets
+  Shoot Distance ........... How far your guards shoot
+  Trigger Freq ............. How fast your guards shoot
+
 
 --------------------------------------------------------------
   HUD
@@ -167,8 +181,32 @@
 
 
 --------------------------------------------------------------
+  UTILS
+--------------------------------------------------------------
+  Anti AFK ................. Prevents the idle kick
+                             (keep Roblox in the foreground)
+  Teleport to Mansion ...... Takes you to the Mansion
+  Reset All To Defaults .... Resets every feature to its default
+
+
+--------------------------------------------------------------
   CONFIG
 --------------------------------------------------------------
-  Save / Load .............. Save and load your settings by name
+  Save / Load .............. Save and load your settings by name,
+                             keybinds included
+  Display JB Hub Roles ..... See the tag of other JB Hub users in
+                             your server (Owner / Tester / JB Hub)
+  Auto Re-execute .......... Reloads JB Hub by itself when you join
+                             another server without closing Roblox
+
+
+--------------------------------------------------------------
+  AUTOMATIC  (nothing to enable)
+--------------------------------------------------------------
+  JB Hub User Notification . Tells you when other JB Hub users are
+                             in your server (anonymous, with count)
+  Crash Log ................ Saves the last events to
+                             workspace/JB Hub/crash.log, send it to
+                             us if your game crashes
 
 ==============================================================
